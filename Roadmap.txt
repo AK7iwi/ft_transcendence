@@ -72,6 +72,19 @@ IV) Modules
 7 major modules is required
 Two Minor Modules count as one Major Module
 
+Web) 
 
+Major module:
 
+- Use a framework to build the backend
 
+Minor module: 
+
+- Use a framework or a toolkit to build the frontend
+- Use a database for the backend
+
+User management) 
+
+Major module: 
+
+- Standard user management, authentication, users across tournaments
