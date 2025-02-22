@@ -14,16 +14,15 @@ single command line to run an autonomous container. (See subject for details and
 
 a) Frontend:
 
-- Typescript as base code (can be modified through the FrontEnd module)
+- Tailwind CSS in addition of the Type-script, and nothing else
 
 b) Backend:
 
-- Pure PHP without frameworks (can be overridden by the Framework
-module)
+- Fastify with Node.js
 
-- Database: follow the constraints of the Database module
+- Database: SQLite
 
-II) Game: 
+II) Game:
 
 - Users must be able to participate in a live Pong game against another player directly
 on the website. Both players will use the same keyboard. (The Remote players
