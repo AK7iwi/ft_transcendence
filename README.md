@@ -1,4 +1,4 @@
-Makefile: 
+# Makefile: 
 
 docker system prune -af is used to clean up your Docker environment by forcefully removing unused objects
 
@@ -12,5 +12,18 @@ By default, Docker only removes dangling images. Adding -a tells Docker to remov
 
 - -f / --force: This flag forces the prune operation without prompting for confirmation, which makes the process non-interactive
 
-Docker:
+# Docker:
+
+FROM node:lts
+
+Build your container using the official Node.js image that is tagged as "lts" (Long Term Support version). Ensure that you get a stable release that's maintained with security and performance updates.
+
+## back:
+
+
+
+
+## front:
+
+
 

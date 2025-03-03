@@ -1,3 +1,3 @@
-FROM node:18-alpine AS builder
+FROM node:lts
 
 RUN apt-get update -y && apt-get upgrade -y
