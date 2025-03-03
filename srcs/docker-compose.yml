@@ -1,6 +1,55 @@
 services:
   db:
+    container_name: db
+    image: #sqlit
+    env_file: ../.env
+    volumes: db_vol:/var/lib/
+    networks: back_network
+    restart: unless-stopped
+    healthcheck:
+      test:
+      interval: 5s
+      timeout: 1s
+      retries: 20
+      start_period: 5s
 
   back:
+    container_name: back
+    image: back
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    working_dir : /usr/src/app
+    ports:
+    depends_on: db
+    env_file: ../.env
+    volumes: 
+      - back_vol:/usr/src/app
+      - upload:/usr/src/app/upload
+    networks:
+      - back_network
+      - front_network
+    restart: unless-stopped 
+
 
   front:
+    container_name: front
+    image: front
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+    depends_on: back
+    env_file: ../.env
+    volumes: 
+      - front_vol:/usr/src/app
+      - upload:/usr/src/app/upload
+    networks: front_network
+    restart: unless-stopped
+
+networks:
+  back_network:
+  front_network:
+
+volumes:
+   database: {}

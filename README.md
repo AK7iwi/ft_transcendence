@@ -20,9 +20,6 @@ Build your container using the official Node.js image that is tagged as "lts" (L
 
 ## back:
 
-
-
-
 ## front:
 
 

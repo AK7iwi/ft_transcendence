@@ -1,1 +1,1 @@
-Docker set-up
+Docker config
