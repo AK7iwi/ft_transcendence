@@ -1,5 +1,5 @@
-# Use the latest LTS version of Node.js
-FROM node:lts AS build
+# Use the latest stable Node.js version
+FROM node:lts
 
 RUN apt-get update -y && apt-get upgrade -y
 
@@ -8,29 +8,14 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --omit=dev
 
-# Copy the rest of the application files
+# Copy the rest of the backend files
 COPY . .
 
-# Build the project (if using TypeScript or a build step)
-RUN npm run build
-
-# Production stage: create a minimal image
-FROM node:lts AS production
-
-WORKDIR /usr/src/app
-
-# Copy only necessary files from build stage
-COPY --from=build /usr/src/app/dist ./dist
-COPY package*.json ./
-RUN npm install --only=production
-
-# Create a volume for uploads (optional)
-VOLUME /usr/src/app/upload
-
-# Expose backend port
+# Expose the port your Fastify app runs on
 EXPOSE 3000
 
-# Start the backend server
-CMD ["node", "dist/server.js"]
+# Start the Fastify server
+CMD ["npm", "start"]
+

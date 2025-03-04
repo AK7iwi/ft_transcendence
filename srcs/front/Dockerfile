@@ -1,5 +1,5 @@
-# Use the latest LTS version of Node.js
-FROM node:lts AS build
+# Use the latest stable Node.js version
+FROM node:lts
 
 RUN apt-get update -y && apt-get upgrade -y
 
@@ -8,25 +8,13 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --omit=dev
 
-# Copy the rest of the application files
+# Copy frontend files
 COPY . .
 
-# Build the frontend
-RUN npm run build
+# Expose the port your frontend app runs on
+EXPOSE 8080
 
-# Production stage: use a lightweight web server (e.g., nginx)
-FROM nginx:alpine AS production
-
-# Set working directory
-WORKDIR /usr/share/nginx/html
-
-# Copy built frontend files from the build stage
-COPY --from=build /usr/src/app/dist ./
-
-# Expose port 80 for web traffic
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the frontend app
+CMD ["npm", "start"]
