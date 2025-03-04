@@ -1,1 +1,4 @@
-Docker config
+Docker config:
+
+Doc on sqlite for the docker_compose file
+Doc on npm
