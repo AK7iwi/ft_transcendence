@@ -1,13 +1,15 @@
 services:
   db:
     container_name: db
-    image: #sqlit
+    image: alpine #check
     env_file: ../.env
-    volumes: db_vol:/var/lib/
-    networks: back_network
+    volumes:
+      - db_vol:/usr/src/app/database
+    networks:
+      - back_network
     restart: unless-stopped
     healthcheck:
-      test:
+      test: ["CMD", "ls", "/usr/src/app/database/app.db"]
       interval: 5s
       timeout: 1s
       retries: 20
@@ -21,10 +23,14 @@ services:
       dockerfile: Dockerfile
     working_dir : /usr/src/app
     ports:
-    depends_on: db
+      - 3000:3000
+    depends_on: 
+      db:
+         condition: service_healthy
     env_file: ../.env
     volumes: 
       - back_vol:/usr/src/app
+      - db_vol:/usr/src/app/database
       - upload:/usr/src/app/upload
     networks:
       - back_network
@@ -39,12 +45,16 @@ services:
       context: ./front
       dockerfile: Dockerfile
     ports:
-    depends_on: back
+      - 80:80
+    depends_on:
+      back:
+        condition: service_started
     env_file: ../.env
     volumes: 
       - front_vol:/usr/src/app
       - upload:/usr/src/app/upload
-    networks: front_network
+    networks:
+      - front_network
     restart: unless-stopped
 
 networks:
@@ -52,4 +62,7 @@ networks:
   front_network:
 
 volumes:
-   database: {}
+  db_vol: {}
+  back_vol: {}
+  front_vol: {}
+  upload: {} 
