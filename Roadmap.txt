@@ -105,3 +105,9 @@ Major module:
 Minor: 
 
 - Game customization options
+
+Cybersecurity) 
+
+Major modules: 
+
+- Implement Two-Factor Authentication (2FA) and JWT
