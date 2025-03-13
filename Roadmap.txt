@@ -87,3 +87,21 @@ User management)
 Major module: 
 
 - Standard user management, authentication, users across tournaments
+
+Devops)
+
+Major module: 
+
+- Designing the backend as microservices
+
+Gameplay and user experience)
+
+Major module: 
+
+- Add another game with user history and matchmaking
+
+- Live chat
+
+Minor: 
+
+- Game customization options

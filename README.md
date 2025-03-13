@@ -38,9 +38,11 @@ Documentation: https://www.typescriptlang.org/docs/
 
 ## Back:
 
-Dockerize Fastify: https://dev.to/code42cate/how-to-dockerize-and-deploy-fastify-apis-3f7i
+Fastify: https://dev.to/code42cate/how-to-dockerize-and-deploy-fastify-apis-3f7i
 
 ## Front:
+
+Tailwind CSS: https://medium.com/@gustavoinzunza/how-to-set-up-node-and-tailwind-with-docker-step-by-step-e40a4cff05b3
 
 # Source:
 

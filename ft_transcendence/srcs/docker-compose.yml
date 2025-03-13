@@ -1,20 +1,4 @@
 services:
-  db:
-    container_name: db
-    image: alpine #check
-    env_file: ../.env
-    volumes:
-      - db_vol:/usr/src/app/database
-    networks:
-      - back_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ls", "/usr/src/app/database/app.db"]
-      interval: 5s
-      timeout: 1s
-      retries: 20
-      start_period: 5s
-
   back:
     container_name: back
     image: back
@@ -30,7 +14,6 @@ services:
     env_file: ../.env
     volumes: 
       - back_vol:/usr/src/app
-      - db_vol:/usr/src/app/database
       - upload:/usr/src/app/upload
     networks:
       - back_network
@@ -62,7 +45,6 @@ networks:
   front_network:
 
 volumes:
-  db_vol: {}
   back_vol: {}
   front_vol: {}
   upload: {} 
