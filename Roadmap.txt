@@ -102,9 +102,9 @@ Major module:
 
 - Live chat
 
-Minor: 
+(Minor: 
 
-- Game customization options
+- Game customization options)
 
 Cybersecurity) 
 
