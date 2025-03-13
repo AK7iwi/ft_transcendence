@@ -1,26 +1,36 @@
-# Makefile: 
+# Technical Overview
 
-docker system prune -af is used to clean up your Docker environment by forcefully removing unused objects
+## Back:
 
-- docker system prune: 
+1) Fastify
 
-This command removes unused data including stopped containers, unused networks, and dangling images (those that are not tagged and not referenced by any container)
+"Fast and low overhead web framework, for Node.js"^1
 
-- -a / --all: 
+2) Node.js
 
-By default, Docker only removes dangling images. Adding -a tells Docker to remove all unused images, even if they are tagged
+3) SQlite
 
-- -f / --force: This flag forces the prune operation without prompting for confirmation, which makes the process non-interactive
+## Front:
+
+1) Tailwind CSS
+
+2) Typescript
 
 # Docker:
 
-FROM node:lts
+## Back:
 
-Build your container using the official Node.js image that is tagged as "lts" (Long Term Support version). Ensure that you get a stable release that's maintained with security and performance updates.
+Dockerize Fastify^32
 
-## back:
-
-## front:
+## Front:
 
 
+
+# Source: 
+
+## Docker: 
+
+1) https://fastify.dev/
+
+32) https://dev.to/code42cate/how-to-dockerize-and-deploy-fastify-apis-3f7i
 

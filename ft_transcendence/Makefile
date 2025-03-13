@@ -5,10 +5,11 @@ all:
 clean:
 	docker compose -f ./srcs/docker-compose.yml down;
 
+# clean up your Docker environment by forcefully removing unused data (including stopped containers, unused networks, and dangling images)
 fclean: clean
 	-docker system prune -af
-	@clear	
+	@clear
 
 re: fclean all
 
-.Phony: all logs clean fclean
+.PHONY: all clean fclean re

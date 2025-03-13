@@ -45,7 +45,7 @@ services:
       context: ./front
       dockerfile: Dockerfile
     ports:
-      - 80:80
+      - 5173:5173
     depends_on:
       back:
         condition: service_started

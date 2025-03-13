@@ -1,4 +1,11 @@
-Docker config:
+I) Docker config:
 
-Doc on sqlite for the docker_compose file
-Doc on npm
+- Dockerize:
+
+a) Fastify with Node.js
+b) SQLite
+c) Tailwind CSS in addition of the Typescript
+
+- Complete the docker-compose file
+
+- Complete env file 

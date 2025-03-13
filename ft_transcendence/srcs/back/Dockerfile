@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # Copy the rest of the backend files
 COPY . .
@@ -17,5 +17,5 @@ COPY . .
 EXPOSE 3000
 
 # Start the Fastify server
-CMD ["npm", "start"]
+CMD ["node", "index.js"]
 
