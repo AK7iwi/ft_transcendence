@@ -11,10 +11,8 @@ services:
     env_file: ../.env
     volumes: 
       - back_vol:/usr/src/app
-      - upload:/usr/src/app/upload
     networks:
-      - back_network
-      - front_network
+      - transcendence
     restart: unless-stopped 
 
 
@@ -32,16 +30,15 @@ services:
     env_file: ../.env
     volumes: 
       - front_vol:/usr/src/app
-      - upload:/usr/src/app/upload
     networks:
-      - front_network
+      - transcendence
     restart: unless-stopped
 
 networks:
-  back_network:
-  front_network:
+  transcendence:
+    driver: bridge
+    name: transcendence
 
 volumes:
   back_vol: {}
   front_vol: {}
-  upload: {} 
