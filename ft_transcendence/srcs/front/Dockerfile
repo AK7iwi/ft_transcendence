@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install 
+RUN npm install
 
 # Copy frontend files
 COPY . .
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the frontend app
-CMD ["npm", "start"]
+CMD [ "node", "server.js" ]
