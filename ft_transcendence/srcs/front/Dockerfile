@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the frontend app
-CMD [ "node", "server.js" ]
+CMD ["node", "front.js"]

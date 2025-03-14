@@ -17,5 +17,5 @@ COPY . .
 EXPOSE 3000
 
 # Start the Fastify server
-CMD ["node", "index.js"]
+CMD ["node", "back.js"]
 
