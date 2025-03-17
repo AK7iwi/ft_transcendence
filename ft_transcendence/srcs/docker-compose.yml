@@ -11,17 +11,16 @@ services:
     env_file: ../.env
     volumes: 
       - back_vol:/usr/src/app
-      - sqlite_data:/usr/src/app/database
+      - sqlite_data:/data
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
-
 
   front:
     container_name: front
@@ -33,7 +32,7 @@ services:
       - 5173:5173
     depends_on:
       back:
-        condition: service_started
+        condition: service_healthy
     env_file: ../.env
     volumes: 
       - front_vol:/usr/src/app

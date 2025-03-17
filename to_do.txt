@@ -2,10 +2,6 @@ I) Docker config:
 
 - Dockerize:
 
-a) Fastify with Node.js OK~
-b) SQLite
-c) Tailwind CSS in addition of the Typescript OK~
-
-- Complete the docker-compose file
-
+- finish front(style.css, finish the tuto)
+- script with env var
 - Complete env file 
