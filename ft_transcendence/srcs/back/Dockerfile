@@ -18,4 +18,3 @@ EXPOSE 3000
 
 # Start the Fastify server
 CMD ["node", "back.js"]
-
