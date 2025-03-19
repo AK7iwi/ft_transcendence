@@ -1,5 +1,5 @@
 # Use the latest stable Node.js version
-FROM node:lts
+FROM node:lts-alpine
 
 RUN apt-get update -y && apt-get upgrade -y
 
