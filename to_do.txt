@@ -1,3 +1,5 @@
 I) Docker config:
 
 - Dockerize
+
+check gpt for .js and .json and
