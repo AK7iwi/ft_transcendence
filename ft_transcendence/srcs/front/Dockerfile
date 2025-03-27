@@ -1,5 +1,5 @@
 # Use the latest stable Node.js version
-FROM node:lts-alpine
+FROM node:lts
 
 RUN apt-get update -y && apt-get upgrade -y
 
@@ -14,7 +14,9 @@ RUN npm install
 COPY . .
 
 # Expose the port your frontend app runs on
-EXPOSE 8080
+EXPOSE 5173
 
 # Start the frontend app
 CMD ["node", "front.js"]
+
+# CMD ["npm", "run", "preview"]
