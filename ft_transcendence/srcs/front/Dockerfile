@@ -18,5 +18,3 @@ EXPOSE 5173
 
 # Start the frontend app
 CMD ["node", "front.js"]
-
-# CMD ["npm", "run", "preview"]
