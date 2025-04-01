@@ -2,6 +2,8 @@ I) Docker config:
 
 - Dockerize
 
-check .dockerignore for back
-env var for back.js
-check gpt for .js and .json and
+Front dockerfile: last line
+path in the front files
+ctx
+package.json front dependencies
+health_check  back

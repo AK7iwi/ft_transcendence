@@ -15,12 +15,12 @@ services:
     networks:
       - transcendence
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]  
-      interval: 10s  
-      timeout: 5s  
-      retries: 3  
-      start_period: 5s  
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000/health"]  
+    #   interval: 10s  
+    #   timeout: 5s  
+    #   retries: 3  
+    #   start_period: 5s  
 
   front:
     container_name: front
@@ -30,9 +30,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - 5173:5173
-    depends_on:
-      back:
-        condition: service_healthy
+    # depends_on:
+    #   back:
+    #     condition: service_healthy
     env_file: ../.env
     volumes: 
       - front_vol:/usr/src/app

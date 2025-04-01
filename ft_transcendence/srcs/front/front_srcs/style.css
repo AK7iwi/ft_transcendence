@@ -1,18 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
+    @apply font-sans bg-gray-100 m-0 p-0;
 }
 
 h1 {
-    color: #333;
-    text-align: center;
-    margin-top: 50px;
+    @apply text-gray-800 text-center mt-12;
 }
 
 #pong {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 18px;
+    @apply text-center mt-5 text-lg;
 }
+
+
