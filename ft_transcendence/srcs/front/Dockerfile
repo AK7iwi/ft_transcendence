@@ -17,8 +17,5 @@ COPY . .
 # Expose the port (if your app will be served on a specific port)
 EXPOSE 5173
 
-# Build the Tailwind CSS (using PostCSS) and compile TypeScript
-# RUN npx tailwindcss -o ./dist/style.css && tsc
-
 # Start the app (assuming your entry point is something like pong.ts)
 CMD ["node", "objs/pong.js"]

@@ -2,8 +2,6 @@ I) Docker config:
 
 - Dockerize
 
-Front dockerfile: last line
-path in the front files
-ctx
+
 package.json front dependencies
 health_check  back
