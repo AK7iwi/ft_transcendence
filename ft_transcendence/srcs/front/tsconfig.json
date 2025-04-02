@@ -1,10 +1,10 @@
 {
-    "compilerOptions":
-    {
-        "target": "ES6", // version of JavaScript that TypeScript should output after compilation
-        "module": "ESNext", // module system  TS uses to generate JS code
-        "outDir": "./objs", // compiled files
-        "rootDir": "./srcs"
+    "compilerOptions": {
+      "target": "ES6",
+      "module": "ESNext",
+      "outDir": "./objs",
+      "rootDir": "./srcs/front/front_srcs"
     },
-    "include": ["srcs/**/*.ts"]
-}
+    "include": ["srcs/front/front_srcs/**/*.ts"]
+  }
+  

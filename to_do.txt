@@ -2,6 +2,6 @@ I) Docker config:
 
 - Dockerize
 
-
+- Delete .dockerignore file in the back
 package.json front dependencies
 health_check  back
