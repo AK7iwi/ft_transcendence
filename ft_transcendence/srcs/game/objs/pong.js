@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 23:38:46 by marvin            #+#    #+#             */
-/*   Updated: 2025/04/03 09:43:41 by marvin           ###   ########.fr       */
+/*   Updated: 2025/04/03 15:20:18 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 window.onload = function () {
@@ -148,19 +148,20 @@ window.onload = function () {
         title.style.textShadow = "2px 2px 4px #00ffff";
         title.style.opacity = "1";
         menu.appendChild(title);
-        // Ball Color Picker
+        // ball color container
         var ballColorContainer = document.createElement("div");
         ballColorContainer.style.display = "flex";
-        ballColorContainer.style.flexDirection = "column";
+        ballColorContainer.style.flexDirection = "row";
         ballColorContainer.style.alignItems = "center";
-        ballColorContainer.style.gap = "20px";
+        ballColorContainer.style.gap = "15px";
+        // ball color label (the text)
         var ballColorLabel = document.createElement("label");
         ballColorLabel.innerText = "ball color";
         ballColorLabel.style.color = "white";
         ballColorLabel.style.font = "30px 'Gugi', sans-serif";
         ballColorLabel.style.cursor = "pointer";
         ballColorLabel.style.transition = "all 0.2s ease";
-        // Hover effect
+        // hover effect
         ballColorLabel.addEventListener("mouseenter", function () {
             ballColorLabel.style.transform = "scale(1.1)";
             ballColorLabel.style.textShadow = "0 0 8px #00ffff";
@@ -172,25 +173,34 @@ window.onload = function () {
         var ballColorInput = document.createElement("input");
         ballColorInput.type = "color";
         ballColorInput.value = ballColor || "#ffffff";
-        ballColorInput.style.borderRadius = "30px"; // Set a good size
-        ballColorInput.style.height = "20px";
         ballColorInput.style.width = "20px";
-        ballColorInput.style.border = "none";
-        ballColorInput.style.cursor = "pointer";
-        ballColorInput.style.background = "transparent";
+        ballColorInput.style.height = "20px";
+        ballColorInput.style.borderRadius = "50%";
+        ballColorInput.style.border = "2px solid white";
         ballColorInput.style.padding = "0";
-        ballColorInput.style.outline = "none";
-        // Click handler for the label
-        ballColorLabel.addEventListener("click", function () {
-            ballColorInput.click();
+        ballColorInput.style.cursor = "pointer";
+        ballColorInput.style.backgroundColor = "transparent";
+        ballColorInput.style.transition = "all 0.2s ease";
+        ballColorInput.style.appearance = "none"; // Removes default UI
+        ballColorInput.style.outline = "none"; // Prevents highlight outline
+        // hover effect
+        ballColorInput.addEventListener("mouseenter", function () {
+            ballColorInput.style.transform = "scale(1.1)";
+            ballColorInput.style.textShadow = "0 0 8px #00ffff";
         });
-        // Color change handler
+        ballColorInput.addEventListener("mouseleave", function () {
+            ballColorInput.style.transform = "scale(1)";
+            ballColorInput.style.textShadow = "none";
+        });
+        // open color picker
+        var openColorPicker = function () { return ballColorInput.click(); };
+        ballColorLabel.addEventListener("click", openColorPicker);
+        // update ball color
         ballColorInput.addEventListener("input", function (e) {
-            var target = e.target;
-            ballColor = target.value;
+            ballColor = e.target.value;
         });
         ballColorContainer.appendChild(ballColorLabel);
-        ballColorContainer.appendChild(ballColorInput);
+        ballColorContainer.appendChild(ballColorInput); // Hidden input
         menu.appendChild(ballColorContainer);
     }
     function closeMenu() {

@@ -5,7 +5,33 @@
     font-style: normal;
 }
 
-  body {
+/* General input styles */
+input[type="color"] {
+    -webkit-appearance: none; /* Removes default WebKit styles */
+    -moz-appearance: none;    /* Removes default Mozilla styles */
+    appearance: none;         /* Removes default styles */
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+/* WebKit-specific styles */
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+    padding: 0;
+}
+
+/* ME */
+body {
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
     margin: 0;

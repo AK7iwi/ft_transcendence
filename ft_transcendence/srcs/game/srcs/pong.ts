@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 23:38:46 by marvin            #+#    #+#             */
-/*   Updated: 2025/04/03 09:43:41 by marvin           ###   ########.fr       */
+/*   Updated: 2025/04/03 15:57:09 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -183,13 +183,14 @@ window.onload = () =>
         title.style.opacity = "1";
         menu.appendChild(title);
 
-        // Ball Color Picker
+        // ball color container
         const ballColorContainer = document.createElement("div");
         ballColorContainer.style.display = "flex";
-        ballColorContainer.style.flexDirection = "column";
+        ballColorContainer.style.flexDirection = "row";
         ballColorContainer.style.alignItems = "center";
-        ballColorContainer.style.gap = "20px"
+        ballColorContainer.style.gap = "15px"
 
+        // ball color label (the text)
         const ballColorLabel = document.createElement("label");
         ballColorLabel.innerText = "ball color";
         ballColorLabel.style.color = "white";
@@ -197,7 +198,7 @@ window.onload = () =>
         ballColorLabel.style.cursor = "pointer";
         ballColorLabel.style.transition = "all 0.2s ease";
         
-        // Hover effect
+        // hover effect
         ballColorLabel.addEventListener("mouseenter", () =>
         {
             ballColorLabel.style.transform = "scale(1.1)";
@@ -208,34 +209,44 @@ window.onload = () =>
             ballColorLabel.style.transform = "scale(1)";
             ballColorLabel.style.textShadow = "none";
         });
-
+        
         const ballColorInput = document.createElement("input");
         ballColorInput.type = "color";
         ballColorInput.value = ballColor || "#ffffff";
-        ballColorInput.style.borderRadius = "30px"; // Set a good size
-        ballColorInput.style.height = "20px";
         ballColorInput.style.width = "20px";
-        ballColorInput.style.border = "none";
-        ballColorInput.style.cursor = "pointer";
-        ballColorInput.style.background = "transparent";
+        ballColorInput.style.height = "20px";
+        ballColorInput.style.borderRadius = "50%";
+        ballColorInput.style.border = "2px solid white";
         ballColorInput.style.padding = "0";
-        ballColorInput.style.outline = "none";
+        ballColorInput.style.cursor = "pointer";
+        ballColorInput.style.backgroundColor = "transparent";
+        ballColorInput.style.transition = "all 0.2s ease";
+        ballColorInput.style.appearance = "none"; // Removes default UI
+        ballColorInput.style.outline = "none"; // Prevents highlight outline
         
-        // Click handler for the label
-        ballColorLabel.addEventListener("click", () =>
-        {
-            ballColorInput.click();
+        // hover effect
+        ballColorInput.addEventListener("mouseenter", () =>
+            {
+                ballColorInput.style.transform = "scale(1.1)";
+                ballColorInput.style.textShadow = "0 0 8px #00ffff";
+            });
+            ballColorInput.addEventListener("mouseleave", () =>
+            {
+                ballColorInput.style.transform = "scale(1)";
+                ballColorInput.style.textShadow = "none";
+            });
+            
+        // open color picker
+        const openColorPicker = () => ballColorInput.click();
+        ballColorLabel.addEventListener("click", openColorPicker);
+
+        // update ball color
+        ballColorInput.addEventListener("input", (e) => {
+            ballColor = (e.target as HTMLInputElement).value;
         });
-        
-        // Color change handler
-        ballColorInput.addEventListener("input", (e) =>
-        {
-            const target = e.target as HTMLInputElement;
-            ballColor = target.value;
-        });
-        
+
         ballColorContainer.appendChild(ballColorLabel);
-        ballColorContainer.appendChild(ballColorInput);
+        ballColorContainer.appendChild(ballColorInput); // Hidden input
         menu.appendChild(ballColorContainer);
     }
 
