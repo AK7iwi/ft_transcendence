@@ -1,4 +1,11 @@
-body {
+@font-face {
+    font-family: 'Gugi';
+    src: url('fonts/Gugi-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+  body {
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
     margin: 0;
