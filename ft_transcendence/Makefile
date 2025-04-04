@@ -1,6 +1,5 @@
 all: 
 	docker compose -f ./srcs/docker-compose.yml up --build -d
-	@clear
 
 logs:
 	docker logs back
