@@ -7,10 +7,6 @@ fastify.get("/", async (request, reply) => {
   return { hello: "world" };
 });
 
-fastify.get("/health", async (request, reply) => {
-  reply.status(200).send({ status: "ok" });
-});
-
 const start = async () => {
   try {
     await fastify.listen({ port: PORT, host: "0.0.0.0" });
