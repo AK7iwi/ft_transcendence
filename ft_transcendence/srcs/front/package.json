@@ -4,7 +4,7 @@
   "description": "Pong game frontend using Tailwind CSS and TypeScript",
   "main": "index.html",
   "scripts": {
-    "build": "tsc && postcss src/styles/style.css -o dist/styles.css",
+    "build": "tsc && postcss srcs/front/front_srcs/style.css -o dist/styles.css",
     "start": "echo \"No server setup. Open index.html in your browser.\""
   },
   "keywords": [

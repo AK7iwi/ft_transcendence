@@ -8,16 +8,17 @@ RUN apt-get update -y && apt-get upgrade -y
 WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
-COPY package.json package-lock.json ./
+COPY package*.json ./
+
 RUN npm install
 
 # Copy all project files into the container
 COPY . .
 
-RUN npx tsc
+# RUN npm run build
 
 # Expose the port (if your app will be served on a specific port)
 EXPOSE 5173
 
 # Start the app (assuming your entry point is something like pong.ts)
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "build"]
