@@ -3,5 +3,4 @@ I) Docker config:
 - Dockerize
 
 - Delete .dockerignore file in the back
-- node_modules
-- health_check back
+- node_modules/ package-lock.json

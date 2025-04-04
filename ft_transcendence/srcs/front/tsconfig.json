@@ -1,10 +1,9 @@
 {
-    "compilerOptions": {
-      "target": "ES6",
-      "module": "ESNext",
-      "outDir": "./objs",
-      "rootDir": "./srcs/front/front_srcs"
-    },
-    "include": ["srcs/front/front_srcs/**/*.ts"]
-  }
-  
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "outDir": "./objs",
+    "rootDir": "./front_srcs"
+  },
+  "include": ["front_srcs/**/*.ts"]
+}
