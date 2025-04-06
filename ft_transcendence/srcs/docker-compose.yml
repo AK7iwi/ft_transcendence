@@ -10,13 +10,12 @@ services:
       - 3000:3000
     env_file: ../.env
     volumes: 
-      - back_vol:/usr/src/app
       - sqlite_data:/data
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]  
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]  
       interval: 10s  
       timeout: 5s  
       retries: 3  
@@ -34,8 +33,6 @@ services:
       back:
         condition: service_healthy
     env_file: ../.env
-    volumes: 
-      - front_vol:/usr/src/app
     networks:
       - transcendence
     restart: unless-stopped
@@ -46,6 +43,4 @@ networks:
     name: transcendence
 
 volumes:
-  back_vol: {}
-  front_vol: {}
   sqlite_data: {}
