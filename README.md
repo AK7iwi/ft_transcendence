@@ -32,11 +32,13 @@ Documentation: https://tailwindcss.com/docs/installation/using-vite
 
 "TypeScript is a strongly typed programming language that builds on JavaScript, giving you better tooling at any scale."^5
 
-nodes_modules 
+nodes_modules with npm install
 
 Documentation: https://www.typescriptlang.org/docs/
 
 # Docker:
+
+docker exec -it back sh
 
 ## Back:
 

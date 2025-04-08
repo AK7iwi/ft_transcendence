@@ -2,5 +2,8 @@ I) Docker config:
 
 - Dockerize
 
-- Delete .dockerignore file in the back
-- node_modules/ package-lock.json
+Link back to front
+
+Dockerfile front:
+new global script in the .json, using vite
+.env : backend URL 

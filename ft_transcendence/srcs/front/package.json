@@ -4,6 +4,7 @@
   "description": "Pong game frontend using Tailwind CSS and TypeScript",
   "main": "index.html",
   "scripts": {
+    "dev": "vite",
     "build": "tsc && postcss front_srcs/style.css -o dist/styles.css",
     "start": "echo \"No server setup. Open index.html in your browser.\""
   },
@@ -21,7 +22,8 @@
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
     "tailwindcss": "^4.1.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.5"
   },
   "dependencies": {
     "vite": "^6.2.5"

@@ -15,10 +15,9 @@ RUN npm install
 # Copy all project files into the container
 COPY . .
 
-# RUN npm run build
-
-# Expose the port (if your app will be served on a specific port)
+# Expose the port (Vite dev server runs on port 5173)
 EXPOSE 5173
 
-# Start the app (assuming your entry point is something like pong.ts)
-CMD ["npm", "run", "build"]
+# Start the Vite dev server
+CMD ["npm", "run", "dev"]
+
