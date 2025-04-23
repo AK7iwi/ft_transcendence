@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    @apply font-sans bg-gray-100 m-0 p-0;
+}
+
+h1 {
+    @apply text-gray-800 text-center mt-12;
+}
+
+#pong {
+    @apply text-center mt-5 text-lg;
+}
+
+

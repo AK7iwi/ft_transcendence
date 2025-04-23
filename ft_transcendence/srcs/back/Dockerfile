@@ -1,21 +1,15 @@
-# Use the latest stable Node.js version
 FROM node:lts
 
-RUN apt-get update -y && apt-get upgrade -y
+# 🧱 Install sqlite3 CLI
+RUN apt-get update -y && apt-get install -y sqlite3
 
-# Set working directory
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the backend files
 COPY . .
 
-# Expose the port your Fastify app runs on
 EXPOSE 3000
 
-# Start the Fastify server
-CMD ["node", "index.js"]
-
+CMD ["node", "back.js"]

@@ -1,20 +1,22 @@
 # Use the latest stable Node.js version
 FROM node:lts
 
+# Install system dependencies
 RUN apt-get update -y && apt-get upgrade -y
 
-# Set working directory
+# Set the working directory inside the container
 WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install 
+RUN npm install
 
-# Copy frontend files
+# Copy all project files into the container
 COPY . .
 
-# Expose the port your frontend app runs on
-EXPOSE 8080
+# Expose the port (if your app will be served on a specific port)
+EXPOSE 5173
 
-# Start the frontend app
-CMD ["npm", "start"]
+# Start the app (assuming your entry point is something like pong.ts)
+CMD ["tail", "-f", "/dev/null"]
+# CMD ["node", "objs/pong.js"]

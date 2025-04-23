@@ -2,6 +2,10 @@ all:
 	docker compose -f ./srcs/docker-compose.yml up --build -d
 	@clear
 
+logs:
+	docker logs back
+	docker logs front
+
 clean:
 	docker compose -f ./srcs/docker-compose.yml down;
 
@@ -12,4 +16,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all logs clean fclean re

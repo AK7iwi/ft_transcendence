@@ -1,0 +1,24 @@
+{
+  "name": "back",
+  "version": "1.0.0",
+  "main": "back.js",
+  "scripts": {
+    "start": "node back.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/formbody": "^7.4.0",
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.9.1",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.27.0",
+    "jsonwebtoken": "^9.0.2",
+    "otplib": "^12.0.1",
+    "qrcode": "^1.5.4",
+    "typescript": "^5.8.2",
+    "zod": "^3.24.2"
+  },
+  "description": ""
+}
