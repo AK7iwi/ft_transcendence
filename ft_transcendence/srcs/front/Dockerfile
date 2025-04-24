@@ -20,4 +20,3 @@ EXPOSE 5173
 
 # Start the Vite dev server
 CMD ["npm", "run", "dev"]
-

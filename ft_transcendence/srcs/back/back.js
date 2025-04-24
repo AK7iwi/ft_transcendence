@@ -3,6 +3,11 @@ require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
 
+fastify.register(require('@fastify/cors'), {
+  origin: "http://localhost:5173",
+  credentials: true
+});
+
 fastify.get("/", async (request, reply) => {
   return { hello: "world" };
 });
