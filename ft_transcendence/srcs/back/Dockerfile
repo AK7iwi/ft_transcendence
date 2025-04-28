@@ -1,7 +1,11 @@
-# Use the latest stable Node.js version
-FROM node:lts
+# Use Node.js 18 LTS
+FROM node:18-slim
 
-RUN apt-get update -y && apt-get upgrade -y
+# Install Python and build tools
+RUN apt-get update -y && apt-get upgrade -y && \
+    apt-get install -y python3 make g++ curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /usr/src/app

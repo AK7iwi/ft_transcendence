@@ -1,5 +1,5 @@
-# Use the latest stable Node.js version
-FROM node:lts
+# Use Node.js 18
+FROM node:18-slim
 
 # Install system dependencies
 RUN apt-get update -y && apt-get upgrade -y
