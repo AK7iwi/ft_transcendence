@@ -3,12 +3,16 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Pong Brrr ganggang</title>
+        <title>Pong Game</title>
         <link href="style.css" rel="stylesheet">
     </head>
     <body class="bg-gray-100">
-        <h1 class="text-3xl text-center text-gray-800 mt-12">Ping Pong Ching Chong!</h1>
-        <canvas id="gameCanvas" width="800" height="400" class="mx-auto block"></canvas>
-        <script src="objs/pong.js"></script>
+        <div id="app" class="container mx-auto px-4">
+            <h1 class="text-3xl text-center text-gray-800 mt-12">Pong Game</h1>
+            <div class="game-container mt-8">
+                <canvas id="gameCanvas" width="800" height="400" class="mx-auto block border-2 border-gray-300"></canvas>
+            </div>
+        </div>
+        <script type="module" src="pong.ts"></script>
     </body>
 </html>

@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
+  root: 'front_srcs',
   server: {
     host: true,
     port: 5173,
@@ -10,6 +12,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+    },
+  },
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './front_srcs'),
     },
   },
 }); 

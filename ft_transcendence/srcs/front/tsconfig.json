@@ -1,9 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
     "module": "ESNext",
-    "outDir": "./objs",
-    "rootDir": "./front_srcs"
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./front_srcs/*"]
+    }
   },
-  "include": ["front_srcs/**/*.ts"]
+  "include": ["front_srcs/**/*.ts", "front_srcs/**/*.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

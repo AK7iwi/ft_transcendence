@@ -5,8 +5,9 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc && postcss front_srcs/style.css -o dist/styles.css",
-    "start": "vite preview --host"
+    "build": "tsc && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "pong",
