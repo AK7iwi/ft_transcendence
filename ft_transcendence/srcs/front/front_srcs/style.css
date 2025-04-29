@@ -2,16 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: 'Gugi';
+    src: url('fonts/Gugi-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* General input styles */
+input[type="color"] {
+    -webkit-appearance: none; /* Removes default WebKit styles */
+    -moz-appearance: none;    /* Removes default Mozilla styles */
+    appearance: none;         /* Removes default styles */
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+/* WebKit-specific styles */
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+    padding: 0;
+}
+
+/* ME */
 body {
-    @apply font-sans bg-gray-100 m-0 p-0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
 }
 
 h1 {
-    @apply text-gray-800 text-center mt-12;
+    color: #333;
+    text-align: center;
+    margin-top: 50px;
 }
 
 #pong {
-    @apply text-center mt-5 text-lg;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
 }
 
 
