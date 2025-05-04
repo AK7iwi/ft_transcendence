@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "back.js",
   "scripts": {
-    "start": "node back.js"
+    "start": "node back.js",
+    "dev": "nodemon back.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +17,10 @@
     "dotenv": "^16.3.1",
     "fastify": "^5.2.2"
   },
-  "description": ""
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "typescript": "^5.2.2",
+    "@types/node": "^20.8.9"
+  },
+  "description": "Pong game backend using Fastify and SQLite"
 }
