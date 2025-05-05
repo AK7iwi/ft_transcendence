@@ -71,10 +71,12 @@ window.onload = () => {
         ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
         ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
 
-        // Draw ball
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
-        ctx.fill();
+        // Draw ball only when game is active
+        if (isGameActive) {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         // Draw scores
         ctx.font = "32px Arial";
@@ -124,10 +126,12 @@ window.onload = () => {
         // Score points
         if (ball.x <= 0) {
             rightScore++;
+            resetObjects();
             startCountdown();
         }
         if (ball.x >= GAME_WIDTH) {
             leftScore++;
+            resetObjects();
             startCountdown();
         }
 
@@ -140,7 +144,6 @@ window.onload = () => {
     function startCountdown() {
         isGameActive = false;
         countdown = 3;
-        
         if (countdownInterval) {
             clearInterval(countdownInterval);
         }
@@ -152,7 +155,6 @@ window.onload = () => {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                 }
-                resetBall();
                 isGameActive = true;
             }
         }, 1000);
@@ -165,17 +167,32 @@ window.onload = () => {
         ball.dy = BALL_SPEED * (Math.random() > 0.5 ? 1 : -1);
     }
 
+    function resetPaddles() {
+        leftPaddle.y = GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2;
+        rightPaddle.y = GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2;
+    }
+
+    function resetScores() {
+        leftScore = 0;
+        rightScore = 0;
+    }
+
+    function resetObjects() {
+        resetBall();
+        resetPaddles();
+    }
+
+    function resetGame() {
+        resetObjects();
+        resetScores();
+    }
+
     function handleGameEnd() {
         isGameActive = false;
         const winner = leftScore > rightScore ? 1 : 2;
         alert(`Player ${winner} wins!`);
         
-        // Reset game
-        leftScore = 0;
-        rightScore = 0;
-        resetBall();
-        leftPaddle.y = GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2;
-        rightPaddle.y = GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2;
+        resetGame();
         startCountdown(); // Start countdown after game reset
     }
 
