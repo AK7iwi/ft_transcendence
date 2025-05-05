@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Pong Game</title>
-        <link href="style.css" rel="stylesheet">
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="game-title">Pong</h1>
         <div class="game-wrapper">
-            <div class="game-container">
-                <h1 class="game-title">Pong Game</h1>
-                <canvas id="gameCanvas" width="800" height="400"></canvas>
-            </div>
+            <canvas id="gameCanvas"></canvas>
         </div>
-        <script type="module" src="pong.ts"></script>
-    </body>
+    </div>
+    <script src="pong.ts"></script>
+</body>
 </html>

@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import path from 'path';
 
 export default defineConfig({
   root: 'front_srcs',
@@ -20,7 +19,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './front_srcs'),
+      '@': './front_srcs',
     },
   },
 }); 
