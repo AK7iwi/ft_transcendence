@@ -98,20 +98,39 @@ window.onload = () => {
         }
     }
 
+    function startCountdownInterval() {
+        countdownInterval = window.setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                isGameActive = true;
+            }
+        }, 1000);
+    }
+
+    function startCountdown() {
+        isGameActive = false;
+        countdown = 3;
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+
+        if (leftScore === 0 && rightScore === 0) {
+            waitingForSpace = true;
+        } 
+        else {
+            startCountdownInterval();
+        }
+    }
+
     function update() {
-        // Check for space bar to start game
+        
         if (waitingForSpace && keys[" "]) {
             waitingForSpace = false;
-            countdownInterval = window.setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    if (countdownInterval) {
-                        clearInterval(countdownInterval);
-                        countdownInterval = null;
-                    }
-                    isGameActive = true;
-                }
-            }, 1000);
+            startCountdownInterval();
         }
 
         if (!isGameActive) return;
@@ -160,30 +179,6 @@ window.onload = () => {
         // Check for game end
         if (leftScore >= 3 || rightScore >= 3) {
             handleGameEnd();
-        }
-    }
-
-    function startCountdown() {
-        isGameActive = false;
-        countdown = 3;
-        if (countdownInterval) {
-            clearInterval(countdownInterval);
-        }
-
-        if (leftScore === 0 && rightScore === 0) {
-            waitingForSpace = true;
-        } 
-        else {
-            countdownInterval = window.setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    if (countdownInterval) {
-                        clearInterval(countdownInterval);
-                        countdownInterval = null;
-                    }
-                    isGameActive = true;
-                }
-            }, 1000);
         }
     }
 
@@ -240,5 +235,5 @@ window.onload = () => {
     
     setBallTrajectory();
     startCountdown();
-        gameLoop();
+    gameLoop();
 };
