@@ -13,14 +13,15 @@ let rightScore = 0;
 let isGameActive = false;
 let countdown = 0;
 let countdownInterval: number | null = null;
+let waitingForSpace = false; 
 
 // Initialize game
 window.onload = () => {
-    const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-    const ctx = canvas.getContext("2d");
-
+        const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+        const ctx = canvas.getContext("2d");
+    
     if (!ctx) {
-        console.error("Canvas not supported.");
+            console.error("Canvas not supported.");
         throw new Error("Canvas not supported");
     }
 
@@ -84,16 +85,35 @@ window.onload = () => {
         ctx.fillText(leftScore.toString(), GAME_WIDTH / 4, 50);
         ctx.fillText(rightScore.toString(), (GAME_WIDTH / 4) * 3, 50);
 
-        // Draw countdown
+        // Draw countdown or press space message
         if (countdown > 0) {
             ctx.font = "64px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(countdown.toString(), GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            if (waitingForSpace) {
+                ctx.fillText("Press SPACE to Start", GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            } else {
+                ctx.fillText(countdown.toString(), GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            }
             ctx.textAlign = "left";
         }
     }
 
     function update() {
+        // Check for space bar to start game
+        if (waitingForSpace && keys[" "]) {
+            waitingForSpace = false;
+            countdownInterval = window.setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    isGameActive = true;
+                }
+            }, 1000);
+        }
+
         if (!isGameActive) return;
 
         // Move paddles
@@ -150,16 +170,21 @@ window.onload = () => {
             clearInterval(countdownInterval);
         }
 
-        countdownInterval = window.setInterval(() => {
-            countdown--;
-            if (countdown <= 0) {
-                if (countdownInterval) {
-                    clearInterval(countdownInterval);
-                    countdownInterval = null;
+        if (leftScore === 0 && rightScore === 0) {
+            waitingForSpace = true;
+        } 
+        else {
+            countdownInterval = window.setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    isGameActive = true;
                 }
-                isGameActive = true;
-            }
-        }, 1000);
+            }, 1000);
+        }
     }
 
     function setBallTrajectory() {
@@ -183,12 +208,12 @@ window.onload = () => {
     }
 
     function resetScores() {
-        leftScore = 0;
-        rightScore = 0;
+            leftScore = 0;
+            rightScore = 0;
     }
 
     function resetObjects() {
-        resetBall();
+            resetBall();
         resetPaddles();
     }
 
@@ -208,12 +233,12 @@ window.onload = () => {
 
     // Game loop
     function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    
     setBallTrajectory();
     startCountdown();
-    gameLoop();
+        gameLoop();
 };
