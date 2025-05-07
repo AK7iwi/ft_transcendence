@@ -13,21 +13,34 @@ let rightScore = 0;
 let isGameActive = false;
 let countdown = 0;
 let countdownInterval: number | null = null;
-let waitingForSpace = false; 
+let waitingForSpace = false;
+let isMenuOpen = false;
+
+// Menu button dimensions
+const BUTTON_WIDTH = 200;
+const BUTTON_HEIGHT = 50;
+const BUTTON_MARGIN = 20;
 
 // Initialize game
 window.onload = () => {
-        const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-        const ctx = canvas.getContext("2d");
-    
+    const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+    const ctx = canvas.getContext("2d");
+
     if (!ctx) {
-            console.error("Canvas not supported.");
+        console.error("Canvas not supported.");
         throw new Error("Canvas not supported");
     }
 
     // Set canvas dimensions
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
+
+    // Menu buttons
+    const menuButtons = [
+        { text: "Quick Play", y: GAME_HEIGHT / 2 - BUTTON_HEIGHT - BUTTON_MARGIN },
+        { text: "Tournament", y: GAME_HEIGHT / 2 },
+        { text: "Settings", y: GAME_HEIGHT / 2 + BUTTON_HEIGHT + BUTTON_MARGIN }
+    ];
 
     // Game objects
     const leftPaddle = {
@@ -59,8 +72,55 @@ window.onload = () => {
     document.addEventListener("keydown", (e) => keys[e.key] = true);
     document.addEventListener("keyup", (e) => keys[e.key] = false);
 
+    function drawMenu() {
+        if (!ctx) return;
 
-    // Game functions
+        // Semi-transparent background
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // Draw buttons
+        menuButtons.forEach(button => {
+            // Button background
+            ctx.fillStyle = "white";
+            ctx.fillRect(
+                GAME_WIDTH / 2 - BUTTON_WIDTH / 2,
+                button.y,
+                BUTTON_WIDTH,
+                BUTTON_HEIGHT
+            );
+
+            // Button text
+            ctx.fillStyle = "black";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+                button.text,
+                GAME_WIDTH / 2,
+                button.y + BUTTON_HEIGHT / 2
+            );
+        });
+    }
+
+    function isMouseOverButton(mouseY: number, buttonY: number): boolean {
+        return mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
+    }
+
+    // Add mouse event listeners for menu
+    canvas.addEventListener("click", (e) => {
+        if (!isMenuOpen) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseY = e.clientY - rect.top;
+
+        menuButtons.forEach(button => {
+            if (isMouseOverButton(mouseY, button.y)) {
+                console.log(`Clicked ${button.text}`);  // For now, just log the click
+            }
+        });
+    });
+
     function draw() {
         if (!ctx) return;
 
@@ -68,33 +128,39 @@ window.onload = () => {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        // Draw paddles
-        ctx.fillStyle = "white";
-        ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
-        ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
+        // Draw game elements
+        if (!isMenuOpen) {
+            // Draw paddles
+            ctx.fillStyle = "white";
+            ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+            ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
 
-        // Draw ball only when game is active
-        if (isGameActive) {
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Draw scores
-        ctx.font = "32px Arial";
-        ctx.fillText(leftScore.toString(), GAME_WIDTH / 4, 50);
-        ctx.fillText(rightScore.toString(), (GAME_WIDTH / 4) * 3, 50);
-
-        // Draw countdown or press space message
-        if (countdown > 0) {
-            ctx.font = "64px Arial";
-            ctx.textAlign = "center";
-            if (waitingForSpace) {
-                ctx.fillText("Press SPACE to Start", GAME_WIDTH / 2, GAME_HEIGHT / 2);
-            } else {
-                ctx.fillText(countdown.toString(), GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            // Draw ball only when game is active
+            if (isGameActive) {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+                ctx.fill();
             }
+
+            // Draw scores
+            ctx.font = "32px Arial";
             ctx.textAlign = "left";
+            ctx.fillText(leftScore.toString(), GAME_WIDTH / 4, 50);
+            ctx.fillText(rightScore.toString(), (GAME_WIDTH / 4) * 3, 50);
+
+            // Draw countdown or press space message
+            if (countdown > 0) {
+                ctx.font = "64px Arial";
+                ctx.textAlign = "center";
+                if (waitingForSpace) {
+                    ctx.fillText("Press SPACE to Start", GAME_WIDTH / 2, GAME_HEIGHT / 2);
+                } else {
+                    ctx.fillText(countdown.toString(), GAME_WIDTH / 2, GAME_HEIGHT / 2);
+                }
+                ctx.textAlign = "left";
+            }
+        } else {
+            drawMenu();
         }
     }
 
@@ -127,7 +193,15 @@ window.onload = () => {
     }
 
     function update() {
-        
+        // Toggle menu with M key
+        if (keys["m"] || keys["M"]) {
+            isMenuOpen = !isMenuOpen;
+            keys["m"] = false;  // Reset the key state
+            keys["M"] = false;
+        }
+
+        if (isMenuOpen) return;  // Don't update game if menu is open
+
         if (waitingForSpace && keys[" "]) {
             waitingForSpace = false;
             startCountdownInterval();
