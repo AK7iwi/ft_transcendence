@@ -5,12 +5,12 @@ const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
 const BALL_SIZE = 10;
 const PADDLE_SPEED = 5;
-const BALL_SPEED = 4;
+const BALL_SPEED = 5;
 
 // Game state
 let leftScore = 0;
 let rightScore = 0;
-let isGameActive = false; // Start with game inactive
+let isGameActive = false;
 let countdown = 0;
 let countdownInterval: number | null = null;
 
@@ -49,14 +49,15 @@ window.onload = () => {
         x: GAME_WIDTH / 2,
         y: GAME_HEIGHT / 2,
         size: BALL_SIZE,
-        dx: BALL_SPEED,
-        dy: BALL_SPEED
+        dx: 0,
+        dy: 0   
     };
 
     // Keyboard controls
     const keys: { [key: string]: boolean } = {};
     document.addEventListener("keydown", (e) => keys[e.key] = true);
     document.addEventListener("keyup", (e) => keys[e.key] = false);
+
 
     // Game functions
     function draw() {
@@ -129,6 +130,7 @@ window.onload = () => {
             resetObjects();
             startCountdown();
         }
+        
         if (ball.x >= GAME_WIDTH) {
             leftScore++;
             resetObjects();
@@ -160,11 +162,19 @@ window.onload = () => {
         }, 1000);
     }
 
+    function setBallTrajectory() {
+        const angle = (Math.random() * 55 + 15) * Math.PI / 180;
+        const directionX = Math.random() > 0.5 ? 1 : -1;
+        const directionY = Math.random() > 0.5 ? 1 : -1;
+        
+        ball.dx = BALL_SPEED * Math.cos(angle) * directionX;
+        ball.dy = BALL_SPEED * Math.sin(angle) * directionY;
+    }
+
     function resetBall() {
         ball.x = GAME_WIDTH / 2;
         ball.y = GAME_HEIGHT / 2;
-        ball.dx = BALL_SPEED * (Math.random() > 0.5 ? 1 : -1);
-        ball.dy = BALL_SPEED * (Math.random() > 0.5 ? 1 : -1);
+        setBallTrajectory();
     }
 
     function resetPaddles() {
@@ -193,7 +203,7 @@ window.onload = () => {
         alert(`Player ${winner} wins!`);
         
         resetGame();
-        startCountdown(); // Start countdown after game reset
+        startCountdown();
     }
 
     // Game loop
@@ -203,7 +213,7 @@ window.onload = () => {
         requestAnimationFrame(gameLoop);
     }
 
-    // Start the game with initial countdown
+    setBallTrajectory();
     startCountdown();
     gameLoop();
 };
