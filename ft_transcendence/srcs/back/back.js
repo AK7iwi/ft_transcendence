@@ -14,6 +14,15 @@ fastify.register(require('@fastify/cors'),
   allowedHeaders: ['Content-Type', 'Authorization']
 });
 
+// Register auth plugin
+fastify.register(require('./plugins/auth'));
+
+// Register auth routes
+fastify.register(require('./routes/auth'));
+
+// Make db available globally
+fastify.decorate('db', db);
+
 fastify.get("/", async (request, reply) =>
 {
   return {status: "ok", message: "Server is running"};
@@ -35,8 +44,10 @@ fastify.get("/health", async (request, reply) =>
   }
 });
 
-// Example user route
-fastify.get("/users", async (request, reply) =>
+// Example user route (now protected)
+fastify.get("/users", {
+  onRequest: [fastify.authenticate]
+}, async (request, reply) =>
 {
   try
   {
