@@ -14,7 +14,7 @@ let isGameActive = false;
 let countdown = 0;
 let countdownInterval: number | null = null;
 let waitingForSpace = false;
-let isMenuOpen = false;
+let isMenuOpen = true;
 
 // Menu button dimensions
 const BUTTON_WIDTH = 200;
@@ -79,6 +79,12 @@ window.onload = () => {
         ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+        // Draw title
+        // ctx.fillStyle = "white";
+        // ctx.font = "48px Arial";
+        // ctx.textAlign = "center";
+        // // ctx.fillText("PONG", GAME_WIDTH / 2, GAME_HEIGHT / 4);
+
         // Draw buttons
         menuButtons.forEach(button => {
             // Button background
@@ -107,6 +113,12 @@ window.onload = () => {
         return mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
     }
 
+    function startGame() {
+        isMenuOpen = false;
+        resetGame();
+        startCountdown();
+    }
+
     // Add mouse event listeners for menu
     canvas.addEventListener("click", (e) => {
         if (!isMenuOpen) return;
@@ -116,7 +128,13 @@ window.onload = () => {
 
         menuButtons.forEach(button => {
             if (isMouseOverButton(mouseY, button.y)) {
-                console.log(`Clicked ${button.text}`);  // For now, just log the click
+                if (button.text === "Quick Play") {
+                    startGame();
+                } else if (button.text === "Tournament") {
+                    console.log("Tournament mode selected"); // To be implemented
+                } else if (button.text === "Settings") {
+                    console.log("Settings selected"); // To be implemented
+                }
             }
         });
     });
