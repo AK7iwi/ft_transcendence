@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pong Game</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.ts"></script>
+    <script type="module" src="./views/base-view.ts"></script>
+    <script type="module" src="./views/home-view.ts"></script>
+    <script type="module" src="./views/game-view.ts"></script>
+    <script type="module" src="./views/tournament-view.ts"></script>
+    <script type="module" src="./views/settings-view.ts"></script>
+    <script type="module" src="./views/profile-view.ts"></script>
     </head>
 <body>
-    <div class="game-container">
-        <h1 class="game-title">Pong</h1>
-        <div class="game-wrapper">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-    </div>
-    <script src="pong.ts"></script>
-    </body>
+    <pong-app></pong-app>
+</body>
 </html>

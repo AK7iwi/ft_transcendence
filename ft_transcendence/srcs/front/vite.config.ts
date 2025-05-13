@@ -1,25 +1,28 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  root: 'front_srcs',
   server: {
-    host: true,
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://back:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
+    host: '0.0.0.0',
+    strictPort: true,
+    cors: true,
+    hmr: {
+      host: 'localhost',
+      port: 5173
     },
+    watch: {
+      usePolling: true
+    }
   },
   build: {
-    outDir: '../dist',
-    emptyOutDir: true,
+    target: 'esnext',
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true
   },
   resolve: {
     alias: {
-      '@': './front_srcs',
-    },
-  },
+      '@': '/front_srcs'
+    }
+  }
 }); 
