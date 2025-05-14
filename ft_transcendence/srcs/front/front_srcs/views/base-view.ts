@@ -98,7 +98,7 @@ export class BaseView extends LitElement {
 
   render() {
     return html`
-      <div class="container">
+      <div style="width: 100vw; height: 100vh;">
         <slot></slot>
       </div>
     `;
