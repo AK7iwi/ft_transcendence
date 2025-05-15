@@ -1,5 +1,3 @@
-import { LitElement } from 'lit';
-
 export interface GameSettings {
   ballColor: string;
   paddleColor: string;

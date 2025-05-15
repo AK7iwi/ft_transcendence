@@ -9,6 +9,122 @@ export class SettingsView extends LitElement {
     :host {
       display: block;
     }
+    .settings-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .section {
+      background: var(--color-surface);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      color: var(--color-text);
+    }
+    .setting-group {
+      margin-bottom: 2rem;
+    }
+    .setting-label {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+    .color-options {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .color-button {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .color-button:hover {
+      transform: scale(1.1);
+    }
+    .color-button.selected {
+      border-color: var(--color-accent);
+    }
+    .number-input {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1.2rem;
+      border-radius: 0.5rem;
+      border: 2px solid var(--color-border);
+      background: var(--color-background);
+      color: var(--color-text);
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+    .toggle-label {
+      font-size: 1.2rem;
+      color: var(--color-text);
+    }
+    .toggle-switch {
+      position: relative;
+      width: 4rem;
+      height: 2rem;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--color-border);
+      transition: .4s;
+      border-radius: 2rem;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 1.6rem;
+      width: 1.6rem;
+      left: 0.2rem;
+      bottom: 0.2rem;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--color-accent);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(2rem);
+    }
+    .save-button {
+      background-color: var(--color-accent);
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .save-button:hover {
+      opacity: 0.9;
+    }
   `;
 
   @state()
@@ -34,128 +150,81 @@ export class SettingsView extends LitElement {
   render() {
     return html`
       <base-view>
-        <div class="max-w-2xl mx-auto">
-          <h1 class="text-3xl font-bold mb-8">Settings</h1>
+        <div class="settings-container">
+          <h1 class="section-title">Game Settings</h1>
 
-          <div class="space-y-8">
-            <!-- Game Settings -->
-            <section class="bg-primary p-6 rounded-lg">
-              <h2 class="text-xl font-bold mb-4">Game Settings</h2>
-              
-              <div class="space-y-4">
-                <!-- Ball Color -->
-                <div>
-                  <label class="block text-sm font-medium mb-2">Ball Color</label>
-                  <div class="flex space-x-2">
-                    ${this.colorOptions.map(color => html`
-                      <button
-                        @click=${() => this.handleSettingChange('ballColor', color)}
-                        class="w-8 h-8 rounded-full ${this.settings.ballColor === color ? 'ring-2 ring-accent' : ''}"
-                        style="background-color: ${color}"
-                      ></button>
-                    `)}
-                  </div>
-                </div>
-
-                <!-- Paddle Color -->
-                <div>
-                  <label class="block text-sm font-medium mb-2">Paddle Color</label>
-                  <div class="flex space-x-2">
-                    ${this.colorOptions.map(color => html`
-                      <button
-                        @click=${() => this.handleSettingChange('paddleColor', color)}
-                        class="w-8 h-8 rounded-full ${this.settings.paddleColor === color ? 'ring-2 ring-accent' : ''}"
-                        style="background-color: ${color}"
-                      ></button>
-                    `)}
-                  </div>
-                </div>
-
-                <!-- End Score -->
-                <div>
-                  <label class="block text-sm font-medium mb-2">End Score</label>
-                  <input
-                    type="number"
-                    .value=${this.settings.endScore}
-                    @input=${(e: Event) => this.handleSettingChange('endScore', +(e.target as HTMLInputElement).value)}
-                    min="1"
-                    max="20"
-                    class="w-full"
-                  />
-                </div>
-
-                <!-- Ball Speed -->
-                <div>
-                  <label class="block text-sm font-medium mb-2">Ball Speed</label>
-                  <input
-                    type="number"
-                    .value=${this.settings.ballSpeed}
-                    @input=${(e: Event) => this.handleSettingChange('ballSpeed', +(e.target as HTMLInputElement).value)}
-                    min="1"
-                    max="10"
-                    class="w-full"
-                  />
-                </div>
-
-                <!-- Paddle Speed -->
-                <div>
-                  <label class="block text-sm font-medium mb-2">Paddle Speed</label>
-                  <input
-                    type="number"
-                    .value=${this.settings.paddleSpeed}
-                    @input=${(e: Event) => this.handleSettingChange('paddleSpeed', +(e.target as HTMLInputElement).value)}
-                    min="1"
-                    max="10"
-                    class="w-full"
-                  />
-                </div>
+          <div class="section">
+            <div class="setting-group">
+              <label class="setting-label">Ball Color</label>
+              <div class="color-options">
+                ${this.colorOptions.map(color => html`
+                  <button
+                    @click=${() => this.handleSettingChange('ballColor', color)}
+                    class="color-button ${this.settings.ballColor === color ? 'selected' : ''}"
+                    style="background-color: ${color}"
+                  ></button>
+                `)}
               </div>
-            </section>
-
-            <!-- Audio Settings -->
-            <section class="bg-primary p-6 rounded-lg">
-              <h2 class="text-xl font-bold mb-4">Audio Settings</h2>
-              
-              <div class="space-y-4">
-                <!-- Sound Effects -->
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-medium">Sound Effects</label>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      .checked=${this.settings.soundEnabled}
-                      @change=${(e: Event) => this.handleSettingChange('soundEnabled', (e.target as HTMLInputElement).checked)}
-                      class="sr-only peer"
-                    />
-                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                  </label>
-                </div>
-
-                <!-- Background Music -->
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-medium">Background Music</label>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      .checked=${this.settings.musicEnabled}
-                      @change=${(e: Event) => this.handleSettingChange('musicEnabled', (e.target as HTMLInputElement).checked)}
-                      class="sr-only peer"
-                    />
-                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            <!-- Save Button -->
-            <div class="flex justify-end">
-              <button
-                @click=${this.saveSettings}
-                class="bg-accent text-white py-2 px-6 rounded hover:bg-opacity-90"
-              >
-                Save Settings
-              </button>
             </div>
+
+            <div class="setting-group">
+              <label class="setting-label">Paddle Color</label>
+              <div class="color-options">
+                ${this.colorOptions.map(color => html`
+                  <button
+                    @click=${() => this.handleSettingChange('paddleColor', color)}
+                    class="color-button ${this.settings.paddleColor === color ? 'selected' : ''}"
+                    style="background-color: ${color}"
+                  ></button>
+                `)}
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">End Score</label>
+              <input
+                type="number"
+                .value=${this.settings.endScore}
+                @input=${(e: Event) => this.handleSettingChange('endScore', +(e.target as HTMLInputElement).value)}
+                min="1"
+                max="20"
+                class="number-input"
+              />
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">Ball Speed</label>
+              <input
+                type="number"
+                .value=${this.settings.ballSpeed}
+                @input=${(e: Event) => this.handleSettingChange('ballSpeed', +(e.target as HTMLInputElement).value)}
+                min="1"
+                max="10"
+                class="number-input"
+              />
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">Paddle Speed</label>
+              <input
+                type="number"
+                .value=${this.settings.paddleSpeed}
+                @input=${(e: Event) => this.handleSettingChange('paddleSpeed', +(e.target as HTMLInputElement).value)}
+                min="1"
+                max="10"
+                class="number-input"
+              />
+            </div>
+          </div>
+
+
+          <div class="flex justify-end">
+            <button
+              @click=${this.saveSettings}
+              class="save-button"
+            >
+              Save Settings
+            </button>
           </div>
         </div>
       </base-view>
