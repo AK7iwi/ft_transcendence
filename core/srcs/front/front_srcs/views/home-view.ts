@@ -6,9 +6,15 @@ export class HomeView extends LitElement {
   static styles = css`
     :host {
       display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       padding: 2rem;
       width: 100%;
-      min-height: 100vh;
+      height: 100%;
+      overflow: hidden;
     }
 
     .main-container {
@@ -16,9 +22,10 @@ export class HomeView extends LitElement {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      min-height: 100vh;
+      height: 100%;
       width: 100%;
       padding-top: 5rem;
+      overflow: hidden;
     }
 
     .welcome-title {
@@ -35,6 +42,8 @@ export class HomeView extends LitElement {
       gap: 2rem;
       justify-content: center;
       width: 100%;
+      max-height: calc(100% - 15rem);
+      overflow: hidden;
     }
 
     .auth-block {
