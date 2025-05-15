@@ -63,6 +63,9 @@ export class GameView extends LitElement {
   @state()
   private isInitialCountdown = false;
 
+  @state()
+  private isPaused = false;
+
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private animationFrameId: number = 0;
@@ -126,8 +129,17 @@ export class GameView extends LitElement {
     if (!this.canvas) return;
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
-    this.ball.dx = Math.random() > 0.5 ? this.settings.ballSpeed : -this.settings.ballSpeed;
-    this.ball.dy = Math.random() > 0.5 ? this.settings.ballSpeed : -this.settings.ballSpeed;
+    
+    // Random angle between -60 and 60 degrees (in radians)
+    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+    
+    // Random direction (left or right)
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    
+    // Calculate dx and dy based on angle and constant speed
+    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+    
     this.isBallActive = false;
     this.startBallCountdown();
   }
@@ -139,6 +151,10 @@ export class GameView extends LitElement {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
+    if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
+      this.togglePause();
+      return;
+    }
     if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
       this.isInitialCountdown = true;
       this.startInitialCountdown();
@@ -148,7 +164,7 @@ export class GameView extends LitElement {
       this.resetGame();
       return;
     }
-    if (!this.isGameStarted || this.isGameOver) return;
+    if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
     
     if (e.key.toLowerCase() === 'w') this.paddle1.dy = -this.paddle1.speed;
     if (e.key.toLowerCase() === 's') this.paddle1.dy = this.paddle1.speed;
@@ -188,7 +204,7 @@ export class GameView extends LitElement {
   }
 
   private startGameLoop() {
-    if (!this.gameLoop) return;
+    if (!this.gameLoop || this.isPaused) return;
     this.updateGame();
     this.draw();
     this.animationFrameId = requestAnimationFrame(() => this.startGameLoop());
@@ -264,6 +280,17 @@ export class GameView extends LitElement {
     this.initGame();
   }
 
+  private togglePause() {
+    this.isPaused = !this.isPaused;
+    if (this.isPaused) {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+      }
+    } else {
+      this.startGameLoop();
+    }
+  }
+
   private draw() {
     if (!this.ctx || !this.canvas) return;
 
@@ -305,6 +332,11 @@ export class GameView extends LitElement {
       this.ctx.fillText(`${this.winner} Wins!`, this.canvas.width / 2, this.canvas.height / 2 - 30);
       this.ctx.font = '24px Arial';
       this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+    } else if (this.isPaused) {
+      this.ctx.font = '48px Arial';
+      this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2 - 30);
+      this.ctx.font = '24px Arial';
+      this.ctx.fillText('Press P to Resume', this.canvas.width / 2, this.canvas.height / 2 + 30);
     } else if (!this.isGameStarted) {
       if (this.isInitialCountdown) {
         this.ctx.font = '48px Arial';
@@ -345,13 +377,15 @@ export class GameView extends LitElement {
         <div class="controls-info">
           ${this.isGameOver
             ? 'Press SPACE to Play Again'
-            : !this.isGameStarted 
-              ? (this.isInitialCountdown
-                  ? `Game starting in ${this.countdown}...`
-                  : 'Press SPACE to Start')
-              : (!this.isBallActive && this.countdown > 0
-                  ? `New ball in ${this.countdown}...`
-                  : 'Player 1: W/S keys | Player 2: ↑/↓ arrows')}
+            : this.isPaused
+              ? 'Press P to Resume'
+              : !this.isGameStarted 
+                ? (this.isInitialCountdown
+                    ? `Game starting in ${this.countdown}...`
+                    : 'Press SPACE to Start')
+                : (!this.isBallActive && this.countdown > 0
+                    ? `New ball in ${this.countdown}...`
+                    : 'Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause')}
         </div>
       </div>
     `;
