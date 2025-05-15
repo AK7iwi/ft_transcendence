@@ -337,7 +337,7 @@ export class GameView extends LitElement {
     this.ctx.setLineDash([]);
 
     // Draw messages with improved visibility
-    this.ctx.textAlign = 'center';
+    this.ctx.textAlign = 'center'; 
     this.ctx.fillStyle = '#000';
 
     if (this.isGameOver) {
