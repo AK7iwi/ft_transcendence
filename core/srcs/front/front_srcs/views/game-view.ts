@@ -232,15 +232,20 @@ export class GameView extends LitElement {
       }
 
       // Ball collision with paddles
-      if (
-        (this.ball.x <= this.paddle1.x + this.paddle1.width &&
-         this.ball.y >= this.paddle1.y &&
-         this.ball.y <= this.paddle1.y + this.paddle1.height) ||
-        (this.ball.x + this.ball.size >= this.paddle2.x &&
-         this.ball.y >= this.paddle2.y &&
-         this.ball.y <= this.paddle2.y + this.paddle2.height)
-      ) {
-        this.ball.dx *= -1;
+      if (this.ball.dx < 0) { // Moving left
+        if (this.ball.x <= this.paddle1.x + this.paddle1.width && 
+            this.ball.x >= this.paddle1.x &&
+            this.ball.y + this.ball.size/2 >= this.paddle1.y &&
+            this.ball.y - this.ball.size/2 <= this.paddle1.y + this.paddle1.height) {
+          this.ball.dx *= -1;
+        }
+      } else { // Moving right
+        if (this.ball.x + this.ball.size >= this.paddle2.x &&
+            this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+            this.ball.y + this.ball.size/2 >= this.paddle2.y &&
+            this.ball.y - this.ball.size/2 <= this.paddle2.y + this.paddle2.height) {
+          this.ball.dx *= -1;
+        }
       }
 
       // Score points
@@ -391,7 +396,3 @@ export class GameView extends LitElement {
     `;
   }
 }
-
-
-//!!!Space to play and pauses game sur le field du jeu et pas en dessous
-//!!!Le field du jeu ne bouge pas quand on reduit la taille de la fenetre
