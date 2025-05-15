@@ -99,6 +99,7 @@ export class GameView extends LitElement {
       this.ctx = this.canvas.getContext('2d');
       this.initGame();
       this.setupEventListeners();
+      this.draw();
     }
   }
 
@@ -277,12 +278,20 @@ export class GameView extends LitElement {
   }
 
   private resetGame() {
+    // Reset all game states
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
     this.winner = '';
     this.isGameStarted = false;
     this.isBallActive = false;
+    this.isInitialCountdown = false;
+    this.gameLoop = false;
+    
+    // Reinitialize the game
     this.initGame();
+    
+    // Draw the initial state
+    this.draw();
   }
 
   private togglePause() {
@@ -327,31 +336,36 @@ export class GameView extends LitElement {
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
-    // Draw messages
-    this.ctx.font = '24px Arial';
-    this.ctx.fillStyle = '#000';
+    // Draw messages with improved visibility
     this.ctx.textAlign = 'center';
+    this.ctx.fillStyle = '#000';
 
     if (this.isGameOver) {
-      this.ctx.font = '48px Arial';
+      this.ctx.font = 'bold 48px Arial';
       this.ctx.fillText(`${this.winner} Wins!`, this.canvas.width / 2, this.canvas.height / 2 - 30);
-      this.ctx.font = '24px Arial';
+      this.ctx.font = 'bold 24px Arial';
       this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
-      this.ctx.font = '48px Arial';
+      this.ctx.font = 'bold 48px Arial';
       this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2 - 30);
-      this.ctx.font = '24px Arial';
+      this.ctx.font = 'bold 24px Arial';
       this.ctx.fillText('Press P to Resume', this.canvas.width / 2, this.canvas.height / 2 + 30);
     } else if (!this.isGameStarted) {
       if (this.isInitialCountdown) {
-        this.ctx.font = '48px Arial';
+        this.ctx.font = 'bold 72px Arial';
         this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
       } else {
+        this.ctx.font = 'bold 48px Arial';
         this.ctx.fillText('Press SPACE to Start', this.canvas.width / 2, this.canvas.height / 2);
       }
     } else if (!this.isBallActive && this.countdown > 0) {
-      this.ctx.font = '48px Arial';
+      this.ctx.font = 'bold 72px Arial';
       this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
+    }
+
+    // Request next frame if game is not started
+    if (!this.isGameStarted) {
+      requestAnimationFrame(() => this.draw());
     }
   }
 
@@ -380,19 +394,9 @@ export class GameView extends LitElement {
         </div>
         <canvas class="responsive-canvas"></canvas>
         <div class="controls-info">
-          ${this.isGameOver
-            ? 'Press SPACE to Play Again'
-            : this.isPaused
-              ? 'Press P to Resume'
-              : !this.isGameStarted 
-                ? (this.isInitialCountdown
-                    ? `Game starting in ${this.countdown}...`
-                    : 'Press SPACE to Start')
-                : (!this.isBallActive && this.countdown > 0
-                    ? `New ball in ${this.countdown}...`
-                    : 'Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause')}
+          Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause
         </div>
       </div>
     `;
   }
-}
+} 
