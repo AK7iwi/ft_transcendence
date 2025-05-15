@@ -390,4 +390,8 @@ export class GameView extends LitElement {
       </div>
     `;
   }
-} 
+}
+
+
+//!!!Space to play and pauses game sur le field du jeu et pas en dessous
+//!!!Le field du jeu ne bouge pas quand on reduit la taille de la fenetre
