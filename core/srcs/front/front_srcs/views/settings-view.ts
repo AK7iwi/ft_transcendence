@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { SettingsService } from '../services/settings-service';
+import type { GameSettings } from '../services/settings-service';
 
 @customElement('settings-view')
 export class SettingsView extends LitElement {
@@ -10,17 +12,24 @@ export class SettingsView extends LitElement {
   `;
 
   @state()
-  private settings = {
-    ballColor: 'white',
-    paddleColor: 'white',
-    endScore: 3,
-    ballSpeed: 5,
-    paddleSpeed: 5,
-    soundEnabled: true,
-    musicEnabled: true
-  };
+  private settings: GameSettings;
 
-  private colorOptions = ['white', 'red', 'blue', 'green', 'yellow', 'purple'];
+  private colorOptions = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
+  private settingsService: SettingsService;
+
+  constructor() {
+    super();
+    this.settingsService = SettingsService.getInstance();
+    this.settings = this.settingsService.getSettings();
+  }
+
+  private handleSettingChange(setting: keyof GameSettings, value: any) {
+    this.settings = { ...this.settings, [setting]: value };
+  }
+
+  private saveSettings() {
+    this.settingsService.updateSettings(this.settings);
+  }
 
   render() {
     return html`
@@ -40,7 +49,7 @@ export class SettingsView extends LitElement {
                   <div class="flex space-x-2">
                     ${this.colorOptions.map(color => html`
                       <button
-                        @click=${() => this.settings = {...this.settings, ballColor: color}}
+                        @click=${() => this.handleSettingChange('ballColor', color)}
                         class="w-8 h-8 rounded-full ${this.settings.ballColor === color ? 'ring-2 ring-accent' : ''}"
                         style="background-color: ${color}"
                       ></button>
@@ -54,7 +63,7 @@ export class SettingsView extends LitElement {
                   <div class="flex space-x-2">
                     ${this.colorOptions.map(color => html`
                       <button
-                        @click=${() => this.settings = {...this.settings, paddleColor: color}}
+                        @click=${() => this.handleSettingChange('paddleColor', color)}
                         class="w-8 h-8 rounded-full ${this.settings.paddleColor === color ? 'ring-2 ring-accent' : ''}"
                         style="background-color: ${color}"
                       ></button>
@@ -68,7 +77,7 @@ export class SettingsView extends LitElement {
                   <input
                     type="number"
                     .value=${this.settings.endScore}
-                    @input=${(e: Event) => this.settings = {...this.settings, endScore: +(e.target as HTMLInputElement).value}}
+                    @input=${(e: Event) => this.handleSettingChange('endScore', +(e.target as HTMLInputElement).value)}
                     min="1"
                     max="20"
                     class="w-full"
@@ -81,7 +90,7 @@ export class SettingsView extends LitElement {
                   <input
                     type="number"
                     .value=${this.settings.ballSpeed}
-                    @input=${(e: Event) => this.settings = {...this.settings, ballSpeed: +(e.target as HTMLInputElement).value}}
+                    @input=${(e: Event) => this.handleSettingChange('ballSpeed', +(e.target as HTMLInputElement).value)}
                     min="1"
                     max="10"
                     class="w-full"
@@ -94,7 +103,7 @@ export class SettingsView extends LitElement {
                   <input
                     type="number"
                     .value=${this.settings.paddleSpeed}
-                    @input=${(e: Event) => this.settings = {...this.settings, paddleSpeed: +(e.target as HTMLInputElement).value}}
+                    @input=${(e: Event) => this.handleSettingChange('paddleSpeed', +(e.target as HTMLInputElement).value)}
                     min="1"
                     max="10"
                     class="w-full"
@@ -115,7 +124,7 @@ export class SettingsView extends LitElement {
                     <input
                       type="checkbox"
                       .checked=${this.settings.soundEnabled}
-                      @change=${(e: Event) => this.settings = {...this.settings, soundEnabled: (e.target as HTMLInputElement).checked}}
+                      @change=${(e: Event) => this.handleSettingChange('soundEnabled', (e.target as HTMLInputElement).checked)}
                       class="sr-only peer"
                     />
                     <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
@@ -129,7 +138,7 @@ export class SettingsView extends LitElement {
                     <input
                       type="checkbox"
                       .checked=${this.settings.musicEnabled}
-                      @change=${(e: Event) => this.settings = {...this.settings, musicEnabled: (e.target as HTMLInputElement).checked}}
+                      @change=${(e: Event) => this.handleSettingChange('musicEnabled', (e.target as HTMLInputElement).checked)}
                       class="sr-only peer"
                     />
                     <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
@@ -151,10 +160,5 @@ export class SettingsView extends LitElement {
         </div>
       </base-view>
     `;
-  }
-
-  private saveSettings() {
-    // Settings saving logic will be added here
-    console.log('Saving settings:', this.settings);
   }
 } 

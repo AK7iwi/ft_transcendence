@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { SettingsService } from '../services/settings-service';
+import type { GameSettings } from '../services/settings-service';
 
 @customElement('game-view')
 export class GameView extends LitElement {
@@ -47,20 +49,46 @@ export class GameView extends LitElement {
   private isGameStarted = false;
 
   @state()
+  private isGameOver = false;
+
+  @state()
+  private winner = '';
+
+  @state()
   private countdown = 0;
 
   @state()
   private isBallActive = false;
 
+  @state()
+  private isInitialCountdown = false;
+
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private animationFrameId: number = 0;
   private gameLoop: boolean = false;
+  private settingsService: SettingsService;
+  private settings: GameSettings;
 
   // Game objects
   private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
+
+  constructor() {
+    super();
+    this.settingsService = SettingsService.getInstance();
+    this.settings = this.settingsService.getSettings();
+    window.addEventListener('settingsChanged', this.handleSettingsChanged);
+  }
+
+  private updateGameSettings() {
+    this.paddle1.speed = this.settings.paddleSpeed;
+    this.paddle2.speed = this.settings.paddleSpeed;
+    this.ball.speed = this.settings.ballSpeed;
+    this.ball.dx = this.settings.ballSpeed;
+    this.ball.dy = this.settings.ballSpeed;
+  }
 
   firstUpdated() {
     this.canvas = this.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
@@ -90,27 +118,18 @@ export class GameView extends LitElement {
     // Don't start game loop automatically
     this.gameLoop = false;
     this.isGameStarted = false;
+    this.isBallActive = false;
+    this.updateGameSettings();
   }
 
   private resetBall() {
     if (!this.canvas) return;
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
-    this.ball.dx = Math.random() > 0.5 ? 5 : -5;
-    this.ball.dy = Math.random() > 0.5 ? 5 : -5;
+    this.ball.dx = Math.random() > 0.5 ? this.settings.ballSpeed : -this.settings.ballSpeed;
+    this.ball.dy = Math.random() > 0.5 ? this.settings.ballSpeed : -this.settings.ballSpeed;
     this.isBallActive = false;
     this.startBallCountdown();
-  }
-
-  private startBallCountdown() {
-    this.countdown = 3;
-    const countdownInterval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(countdownInterval);
-        this.isBallActive = true;
-      }
-    }, 1000);
   }
 
   private setupEventListeners() {
@@ -120,24 +139,29 @@ export class GameView extends LitElement {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if (e.key === ' ' && !this.isGameStarted && this.countdown === 0) {
-      this.startCountdown();
+    if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
+      this.isInitialCountdown = true;
+      this.startInitialCountdown();
       return;
     }
-    if (!this.isGameStarted) return;
+    if (e.key === ' ' && this.isGameOver) {
+      this.resetGame();
+      return;
+    }
+    if (!this.isGameStarted || this.isGameOver) return;
     
-    if (e.key === 'w') this.paddle1.dy = -this.paddle1.speed;
-    if (e.key === 's') this.paddle1.dy = this.paddle1.speed;
+    if (e.key.toLowerCase() === 'w') this.paddle1.dy = -this.paddle1.speed;
+    if (e.key.toLowerCase() === 's') this.paddle1.dy = this.paddle1.speed;
     if (e.key === 'ArrowUp') this.paddle2.dy = -this.paddle2.speed;
     if (e.key === 'ArrowDown') this.paddle2.dy = this.paddle2.speed;
   }
 
   private handleKeyUp(e: KeyboardEvent) {
-    if (e.key === 'w' || e.key === 's') this.paddle1.dy = 0;
+    if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's') this.paddle1.dy = 0;
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') this.paddle2.dy = 0;
   }
 
-  private startCountdown() {
+  private startInitialCountdown() {
     this.countdown = 3;
     const countdownInterval = setInterval(() => {
       this.countdown--;
@@ -145,7 +169,20 @@ export class GameView extends LitElement {
         clearInterval(countdownInterval);
         this.isGameStarted = true;
         this.gameLoop = true;
+        this.isBallActive = true;
+        this.isInitialCountdown = false;
         this.startGameLoop();
+      }
+    }, 1000);
+  }
+
+  private startBallCountdown() {
+    this.countdown = 3;
+    const countdownInterval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(countdownInterval);
+        this.isBallActive = true;
       }
     }, 1000);
   }
@@ -168,8 +205,8 @@ export class GameView extends LitElement {
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-    // Move ball only if active
-    if (this.isBallActive) {
+    // Move ball only if active and game is not over
+    if (this.isBallActive && !this.isGameOver) {
       this.ball.x += this.ball.dx;
       this.ball.y += this.ball.dy;
 
@@ -193,12 +230,38 @@ export class GameView extends LitElement {
       // Score points
       if (this.ball.x <= 0) {
         this.score.player2++;
-        this.resetBall();
+        if (this.score.player2 >= this.settings.endScore) {
+          this.endGame('Player 2');
+        } else {
+          this.resetBall();
+        }
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
-        this.resetBall();
+        if (this.score.player1 >= this.settings.endScore) {
+          this.endGame('Player 1');
+        } else {
+          this.resetBall();
+        }
       }
     }
+  }
+
+  private endGame(winner: string) {
+    this.isGameOver = true;
+    this.winner = winner;
+    this.gameLoop = false;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  }
+
+  private resetGame() {
+    this.score = { player1: 0, player2: 0 };
+    this.isGameOver = false;
+    this.winner = '';
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.initGame();
   }
 
   private draw() {
@@ -208,18 +271,20 @@ export class GameView extends LitElement {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw paddles
-    this.ctx.fillStyle = '#000';
+    this.ctx.fillStyle = this.settings.paddleColor;
     this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
     this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
+    
 
     // Draw ball only if game is started and ball is active
-    if (this.isGameStarted && this.isBallActive) {
+    if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
       this.ctx.beginPath();
       this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = '#000';
+      this.ctx.fillStyle = this.settings.ballColor;
       this.ctx.fill();
       this.ctx.closePath();
     }
+    
 
     // Draw center line
     this.ctx.beginPath();
@@ -230,12 +295,18 @@ export class GameView extends LitElement {
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
-    // Draw start message or countdown
-    if (!this.isGameStarted) {
+    // Draw messages
+    this.ctx.font = '24px Arial';
+    this.ctx.fillStyle = '#000';
+    this.ctx.textAlign = 'center';
+
+    if (this.isGameOver) {
+      this.ctx.font = '48px Arial';
+      this.ctx.fillText(`${this.winner} Wins!`, this.canvas.width / 2, this.canvas.height / 2 - 30);
       this.ctx.font = '24px Arial';
-      this.ctx.fillStyle = '#000';
-      this.ctx.textAlign = 'center';
-      if (this.countdown > 0) {
+      this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+    } else if (!this.isGameStarted) {
+      if (this.isInitialCountdown) {
         this.ctx.font = '48px Arial';
         this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
       } else {
@@ -243,8 +314,6 @@ export class GameView extends LitElement {
       }
     } else if (!this.isBallActive && this.countdown > 0) {
       this.ctx.font = '48px Arial';
-      this.ctx.fillStyle = '#000';
-      this.ctx.textAlign = 'center';
       this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
     }
   }
@@ -257,7 +326,14 @@ export class GameView extends LitElement {
     }
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener('settingsChanged', this.handleSettingsChanged);
   }
+
+  private handleSettingsChanged = (e: Event) => {
+    const customEvent = e as CustomEvent<GameSettings>;
+    this.settings = customEvent.detail;
+    this.updateGameSettings();
+  };
 
   render() {
     return html`
@@ -267,13 +343,15 @@ export class GameView extends LitElement {
         </div>
         <canvas class="responsive-canvas"></canvas>
         <div class="controls-info">
-          ${!this.isGameStarted 
-            ? (this.countdown > 0 
-                ? `Game starting in ${this.countdown}...` 
-                : 'Press SPACE to Start')
-            : (!this.isBallActive && this.countdown > 0
-                ? `New ball in ${this.countdown}...`
-                : 'Player 1: W/S keys | Player 2: ↑/↓ arrows')}
+          ${this.isGameOver
+            ? 'Press SPACE to Play Again'
+            : !this.isGameStarted 
+              ? (this.isInitialCountdown
+                  ? `Game starting in ${this.countdown}...`
+                  : 'Press SPACE to Start')
+              : (!this.isBallActive && this.countdown > 0
+                  ? `New ball in ${this.countdown}...`
+                  : 'Player 1: W/S keys | Player 2: ↑/↓ arrows')}
         </div>
       </div>
     `;
