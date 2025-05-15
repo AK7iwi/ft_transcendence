@@ -19,10 +19,6 @@ export class HomeView extends LitElement {
           <div class="bg-secondary/10 p-8 rounded-lg">
             <p class="text-2xl mb-6">Jump right into a game of Pong!</p>
           </div>
-          <div class="bg-secondary/10 p-8 rounded-lg">
-            <p class="text-2xl mb-6">Join a tournament!</p>
-            <button class="btn btn-secondary text-xl px-8 py-4">Join Tournament</button>
-          </div>
         </div>
       </div>
     `;

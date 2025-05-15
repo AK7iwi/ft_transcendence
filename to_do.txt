@@ -1,9 +1,0 @@
-I) Docker config:
-
-- Dockerize
-
-Link back to front
-
-Dockerfile front:
-new global script in the .json, using vite
-.env : backend URL 
