@@ -119,13 +119,6 @@ export class PongApp extends LitElement {
       { path: '/profile', component: 'profile-view' },
       { path: '(.*)', redirect: '/' }
     ]);
-
-    // const canvas = this.shadowRoot?.querySelector('.responsive-canvas') as HTMLCanvasElement;
-    // if (canvas) {
-    //   canvas.width = canvas.offsetWidth;
-    //   canvas.height = canvas.offsetHeight;
-    //   // ... your drawing logic ...
-    // }
   }
 
   render() {

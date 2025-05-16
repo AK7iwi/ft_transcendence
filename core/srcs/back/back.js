@@ -1,18 +1,48 @@
-const fastify = require("fastify")({logger:true});
+const fastify = require("fastify")({
+    logger: true,
+    https: {
+        key: require('fs').readFileSync(process.env.SSL_KEY_PATH),
+        cert: require('fs').readFileSync(process.env.SSL_CERT_PATH)
+    }
+});
 require("dotenv").config();
 const db = require('./db');
+const authRoutes = require('./routes/auth.routes');
+const { xssProtection, sqlInjectionProtection } = require('./middleware/security.middleware');
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
 
-// Configure CORS
-fastify.register(require('@fastify/cors'),
-{
-  origin: true, // Allow all origins in development
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+// Configure CORS with secure options
+fastify.register(require('@fastify/cors'), {
+    origin: process.env.FRONTEND_URL || 'https://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Type', 'Authorization']
 });
+
+// Add security headers
+fastify.addHook('onRequest', async (request, reply) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('X-XSS-Protection', '1; mode=block');
+    reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    reply.header('Content-Security-Policy', "default-src 'self'");
+});
+
+// Add security middleware
+fastify.addHook('preHandler', async (request, reply) => {
+    try {
+        await xssProtection(request, reply);
+        await sqlInjectionProtection(request, reply);
+    } catch (error) {
+        reply.code(400).send({ error: error.message });
+    }
+});
+
+// Register routes
+fastify.register(authRoutes, { prefix: '/auth' });
 
 fastify.get("/", async (request, reply) =>
 {
@@ -35,27 +65,12 @@ fastify.get("/health", async (request, reply) =>
   }
 });
 
-// Example user route
-fastify.get("/users", async (request, reply) =>
-{
-  try
-  {
-    const users = db.prepare('SELECT id, username, email, created_at FROM users').all();
-    return {users};
-  }
-  catch (error)
-  {
-    fastify.log.error(error);
-    reply.code(500).send({ error: 'Internal server error' });
-  }
-});
-
 const start = async () =>
 {
   try
   {
     await fastify.listen({port: PORT, host: HOST});
-    fastify.log.info(`Server listening on http://${HOST}:${PORT}`);
+    fastify.log.info(`Server listening on https://${HOST}:${PORT}`);
   } 
   catch (err)
   {
