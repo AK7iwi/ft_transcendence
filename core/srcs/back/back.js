@@ -1,3 +1,7 @@
+// Load environment variables first
+require("dotenv").config();
+
+// Then create the Fastify instance with SSL configuration
 const fastify = require("fastify")({
     logger: true,
     https: {
@@ -5,7 +9,7 @@ const fastify = require("fastify")({
         cert: require('fs').readFileSync(process.env.SSL_CERT_PATH)
     }
 });
-require("dotenv").config();
+
 const db = require('./db');
 const authRoutes = require('./routes/auth.routes');
 const { xssProtection, sqlInjectionProtection } = require('./middleware/security.middleware');
