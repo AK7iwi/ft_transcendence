@@ -13,8 +13,7 @@ export class PongApp extends LitElement {
     }
 
     .nav-container {
-      width: 100vw;
-      min-width: 0;
+      width: 100%;
       background: rgba(30, 41, 59, 0.8);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       position: sticky;
@@ -27,14 +26,14 @@ export class PongApp extends LitElement {
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 5vw; /* Responsive horizontal padding */
-      width: 100%;
-      min-width: 0;
+      padding: 1rem 5vw;
+      max-width: 1920px;
+      margin: 0 auto;
       box-sizing: border-box;
     }
 
     .logo {
-      font-size: 2rem;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
       font-weight: 700;
       background: linear-gradient(135deg, var(--color-accent), #8b5cf6);
       -webkit-background-clip: text;
@@ -52,7 +51,7 @@ export class PongApp extends LitElement {
     .nav-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 2vw;
+      gap: clamp(1rem, 2vw, 2rem);
       align-items: center;
     }
 
@@ -60,7 +59,7 @@ export class PongApp extends LitElement {
       color: var(--color-text);
       text-decoration: none;
       font-weight: 500;
-      font-size: 1.1rem;
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
       padding: 0.5em 1em;
       border-radius: var(--radius-md);
       transition: all var(--transition-fast);
@@ -72,29 +71,30 @@ export class PongApp extends LitElement {
       background: rgba(99, 102, 241, 0.1);
     }
 
-    /* Responsive adjustments for small screens */
-    @media (max-width: 600px) {
-      .nav-content {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.5rem 2vw;
-      }
-      .nav-links {
-        gap: 1vw;
-        width: 100%;
-        justify-content: flex-start;
-      }
-      .logo {
-        font-size: 1.3rem;
-      }
-    }
-
     main {
       max-width: 1920px;
       margin: 0 auto;
-      padding: 3rem 4rem;
+      padding: clamp(1rem, 3vw, 3rem);
       width: 100%;
+      box-sizing: border-box;
       animation: fadeIn var(--transition-normal);
+    }
+
+    @media (max-width: 768px) {
+      .nav-content {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.5rem 2vw;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: center;
+      }
+
+      main {
+        padding: 1rem;
+      }
     }
 
     @keyframes fadeIn {

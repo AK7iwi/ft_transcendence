@@ -8,21 +8,24 @@ export class GameView extends LitElement {
   static styles = css`
     :host {
       display: block;
+      width: 100%;
+      height: 100%;
     }
     .game-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 80vh;
-      min-width: 80vw;
+      width: 100%;
+      height: 100vh;
       box-sizing: border-box;
+      padding: 1rem;
     }
     .responsive-canvas {
-      width: 90vw;
-      height: 70vh;
-      max-width: 1000px;
-      max-height: 700px;
+      width: 100%;
+      height: 100%;
+      max-width: 1200px;
+      max-height: 800px;
       min-width: 300px;
       min-height: 200px;
       background: white;
@@ -31,7 +34,7 @@ export class GameView extends LitElement {
     }
     .score-display {
       color: var(--color-text);
-      font-size: 2rem;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
       margin: 1rem 0;
       font-family: var(--font-mono);
     }
@@ -39,6 +42,16 @@ export class GameView extends LitElement {
       color: var(--color-text-secondary);
       margin-top: 1rem;
       text-align: center;
+      font-size: clamp(0.8rem, 2vw, 1.2rem);
+    }
+
+    @media (max-width: 768px) {
+      .game-container {
+        padding: 0.5rem;
+      }
+      .score-display {
+        margin: 0.5rem 0;
+      }
     }
   `;
 
@@ -93,27 +106,34 @@ export class GameView extends LitElement {
     this.ball.dy = this.settings.ballSpeed;
   }
 
-  firstUpdated() {
-    this.canvas = this.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
-    if (this.canvas) {
-      this.ctx = this.canvas.getContext('2d');
-      this.initGame();
-      this.setupEventListeners();
-      this.draw();
-    }
-  }
-
   private initGame() {
     if (!this.canvas || !this.ctx) return;
 
-    // Set canvas size
-    this.canvas.width = this.canvas.offsetWidth;
-    this.canvas.height = this.canvas.offsetHeight;
+    // Set canvas size based on container size
+    const container = this.canvas.parentElement;
+    if (container) {
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      // Calculate aspect ratio (16:9)
+      const aspectRatio = 16 / 9;
+      let width = containerWidth;
+      let height = width / aspectRatio;
+
+      // If height is too large, scale based on height instead
+      if (height > containerHeight) {
+        height = containerHeight;
+        width = height * aspectRatio;
+      }
+
+      this.canvas.width = width;
+      this.canvas.height = height;
+    }
 
     // Initialize paddle positions
-    this.paddle1.x = 20;
+    this.paddle1.x = this.canvas.width * 0.02; // 2% from left
     this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width - 30;
+    this.paddle2.x = this.canvas.width * 0.98 - this.paddle2.width; // 2% from right
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
     // Initialize ball position
@@ -369,6 +389,24 @@ export class GameView extends LitElement {
     }
   }
 
+  // Add resize handler
+  private handleResize = () => {
+    if (this.isGameStarted) return; // Don't resize during gameplay
+    this.initGame();
+    this.draw();
+  };
+
+  firstUpdated() {
+    this.canvas = this.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
+    if (this.canvas) {
+      this.ctx = this.canvas.getContext('2d');
+      this.initGame();
+      this.setupEventListeners();
+      this.draw();
+      window.addEventListener('resize', this.handleResize);
+    }
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
     this.gameLoop = false;
@@ -378,6 +416,7 @@ export class GameView extends LitElement {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
     window.removeEventListener('settingsChanged', this.handleSettingsChanged);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   private handleSettingsChanged = (e: Event) => {
