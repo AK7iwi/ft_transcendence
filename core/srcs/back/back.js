@@ -9,6 +9,7 @@ require("dotenv").config();
 const db = require('./db');
 const authRoutes = require('./routes/auth.routes');
 const { xssProtection, sqlInjectionProtection } = require('./middleware/security.middleware');
+const WebSocketService = require('./services/websocket.service');
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
@@ -28,7 +29,7 @@ fastify.addHook('onRequest', async (request, reply) => {
     reply.header('X-Frame-Options', 'DENY');
     reply.header('X-XSS-Protection', '1; mode=block');
     reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    reply.header('Content-Security-Policy', "default-src 'self'");
+    reply.header('Content-Security-Policy', "default-src 'self' wss: https:; connect-src 'self' wss: https:;");
 });
 
 // Add security middleware
