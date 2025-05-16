@@ -10,6 +10,10 @@ export class GameView extends LitElement {
       display: block;
       width: 100%;
       height: 100%;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
     }
     .game-container {
       display: flex;
@@ -17,40 +21,53 @@ export class GameView extends LitElement {
       align-items: center;
       justify-content: center;
       width: 100%;
-      height: 100vh;
+      height: calc(100vh - 80px);
       box-sizing: border-box;
-      padding: 1rem;
+      padding: 0.5rem;
+      overflow: hidden;
+      position: relative;
+      margin-top: 2rem;
     }
     .responsive-canvas {
-      width: 100%;
-      height: 100%;
-      max-width: 1200px;
-      max-height: 800px;
+      width: 80%;
+      height: 60vh;
+      max-width: 1000px;
+      max-height: 60vh;
       min-width: 300px;
       min-height: 200px;
       background: white;
       border: 2px solid var(--color-accent);
       display: block;
+      margin: 0.25rem auto;
     }
     .score-display {
       color: var(--color-text);
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
-      margin: 1rem 0;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      margin: 0.25rem 0;
       font-family: var(--font-mono);
     }
     .controls-info {
       color: var(--color-text-secondary);
-      margin-top: 1rem;
+      margin-top: 0.25rem;
       text-align: center;
-      font-size: clamp(0.8rem, 2vw, 1.2rem);
+      font-size: clamp(0.8rem, 1.5vw, 1rem);
     }
 
     @media (max-width: 768px) {
       .game-container {
-        padding: 0.5rem;
+        padding: 0.25rem;
+        height: calc(100vh - 120px);
+        margin-top: 1rem;
+      }
+      .responsive-canvas {
+        width: 95%;
+        height: 50vh;
       }
       .score-display {
-        margin: 0.5rem 0;
+        margin: 0.15rem 0;
+      }
+      .controls-info {
+        margin-top: 0.15rem;
       }
     }
   `;
