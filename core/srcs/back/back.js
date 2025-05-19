@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth.routes');
 const { xssProtection, sqlInjectionProtection } = require('./middleware/security.middleware');
 const WebSocketService = require('./services/websocket.service');
 const crypto = require('crypto');
+const { sanitizeInput } = require('./middleware/validation.middleware');
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
@@ -109,6 +110,9 @@ fastify.addHook('preHandler', async (request, reply) => {
         reply.code(413).send({ error: 'Request entity too large' });
     }
 });
+
+// Add validation middleware
+fastify.addHook('preHandler', sanitizeInput);
 
 // Register routes
 fastify.register(authRoutes, { prefix: '/auth' });
