@@ -34,6 +34,8 @@ services:
       back:
         condition: service_healthy
     env_file: ../.env
+    volumes:
+      - ./back/certs:/usr/src/app/certs
     networks:
       - transcendence
     restart: unless-stopped

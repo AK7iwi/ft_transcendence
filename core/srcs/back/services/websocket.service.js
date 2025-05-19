@@ -4,12 +4,8 @@ const fs = require('fs');
 class WebSocketService {
     constructor(server) {
         this.wss = new WebSocket.Server({
-            server,
-            // SSL configuration
-            ssl: {
-                key: fs.readFileSync(process.env.SSL_KEY_PATH),
-                cert: fs.readFileSync(process.env.SSL_CERT_PATH)
-            }
+            server, // The server is already HTTPS, so WSS will be used automatically
+            path: '/ws'
         });
 
         this.clients = new Map();
