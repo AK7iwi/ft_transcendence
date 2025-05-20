@@ -9,8 +9,8 @@ logs:
 clean:
 	docker compose -f ./srcs/docker-compose.yml down;
 
-# clean up your Docker environment by forcefully removing unused data (including stopped containers, unused networks, and dangling images)
-fclean: clean
+fclean:
+	docker compose -f ./srcs/docker-compose.yml down -v;
 	-docker system prune -af
 	@clear
 
