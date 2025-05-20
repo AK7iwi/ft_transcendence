@@ -14,6 +14,6 @@ fclean:
 	-docker system prune -af
 	@clear
 
-re: fclean all
+re: clean all
 
 .PHONY: all logs clean fclean re
