@@ -115,7 +115,7 @@ export class HomeView extends LitElement {
 
   @state()
   private signInForm = {
-    email: '',
+    username: '',
     password: ''
   };
 
@@ -150,12 +150,12 @@ export class HomeView extends LitElement {
             <h2 class="auth-title">Sign In</h2>
             <form @submit=${this.handleSignIn}>
               <div class="form-group">
-                <label class="form-label">Email</label>
+                <label class="form-label">Username</label>
                 <input
-                  type="email"
+                  type="text"
                   class="form-input"
-                  .value=${this.signInForm.email}
-                  @input=${(e: Event) => this.signInForm.email = (e.target as HTMLInputElement).value}
+                  .value=${this.signInForm.username}
+                  @input=${(e: Event) => this.signInForm.username = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="off"
                 />
