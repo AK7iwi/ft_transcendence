@@ -14,7 +14,6 @@ const db = require('./db');
 const authRoutes = require('./routes/auth.routes');
 const { xssProtection, sqlInjectionProtection } = require('./middleware/security.middleware');
 const WebSocketService = require('./services/websocket.service');
-const crypto = require('crypto');
 const { sanitizeInput } = require('./middleware/validation.middleware');
 
 const PORT = process.env.PORT || 3000;
@@ -80,7 +79,6 @@ fastify.addHook('onRequest', async (request, reply) => {
         "base-uri 'self'",
         "object-src 'none'"
     ].join('; '));
-    reply.header('X-CSRF-Token', generateCSRFToken());
 });
 
 // Add security middleware
@@ -90,16 +88,6 @@ fastify.addHook('preHandler', async (request, reply) => {
         await sqlInjectionProtection(request, reply);
     } catch (error) {
         reply.code(400).send({ error: error.message });
-    }
-});
-
-// Add CSRF middleware
-fastify.addHook('preHandler', async (request, reply) => {
-    if (request.method !== 'GET') {
-        const token = request.headers['x-csrf-token'];
-        if (!token || !validateCSRFToken(token)) {
-            reply.code(403).send({ error: 'Invalid CSRF token' });
-        }
     }
 });
 
@@ -137,16 +125,6 @@ fastify.get("/health", async (request, reply) =>
     reply.code(500).send({status: "error", message: "Database connection failed"});
   }
 });
-
-function generateCSRFToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-function validateCSRFToken(token) {
-    // Implement token validation logic
-    // This could include checking against a stored token or validating the token format
-    return token && token.length === 64; // Basic validation
-}
 
 const start = async () =>
 {
