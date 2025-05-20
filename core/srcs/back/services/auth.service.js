@@ -70,34 +70,39 @@ class AuthService {
 
     // Login user with password verification
     static async loginUser(username, password) {
-        // Validate input
-        if (!username || !password) {
-            throw new Error('Username and password are required');
-        }
+        try {
+            // Validate input
+            if (!username || !password) {
+                throw new Error('Username and password are required');
+            }
 
-        // Use parameterized queries to prevent SQL injection
-        const stmt = db.prepare(`
-            SELECT id, username, password_hash
-            FROM users
-            WHERE username = ?
-        `);
-        
-        const user = stmt.get(username);
-        
-        if (!user) {
-            throw new Error('User not found');
-        }
+            // Use parameterized queries to prevent SQL injection
+            const stmt = db.prepare(`
+                SELECT id, username, password_hash
+                FROM users
+                WHERE username = ?
+            `);
+            
+            const user = stmt.get(username);
+            
+            if (!user) {
+                throw new Error('User not found');
+            }
 
-        const isValid = await this.verifyPassword(password, user.password_hash);
-        
-        if (!isValid) {
-            throw new Error('Invalid password');
-        }
+            const isValid = await this.verifyPassword(password, user.password_hash);
+            
+            if (!isValid) {
+                throw new Error('Invalid password');
+            }
 
-        return {
-            id: user.id,
-            username: user.username
-        };
+            return {
+                id: user.id,
+                username: user.username
+            };
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
     }
 }
 

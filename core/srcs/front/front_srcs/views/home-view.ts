@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import ApiService from '../services/api.service';
 
 @customElement('home-view')
 export class HomeView extends LitElement {
@@ -111,6 +112,18 @@ export class HomeView extends LitElement {
     .submit-button:hover {
       opacity: 0.9;
     }
+
+    .error-message {
+      color: var(--color-error);
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .submit-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
   `;
 
   @state()
@@ -127,16 +140,95 @@ export class HomeView extends LitElement {
     confirmPassword: ''
   };
 
-  private handleSignIn(e: Event) {
+  @state()
+  private signInError = '';
+
+  @state()
+  private signUpError = '';
+
+  @state()
+  private isLoading = false;
+
+  private async handleSignIn(e: Event) {
     e.preventDefault();
-    // TODO: Implement sign in logic
-    console.log('Sign in:', this.signInForm);
+    this.signInError = '';
+    this.isLoading = true;
+
+    try {
+        const { username, password } = this.signInForm;
+        
+        if (!username || !password) {
+            throw new Error('Please fill in all fields');
+        }
+
+        const response = await ApiService.register(username, password);
+
+        console.log('Login successful:', response);
+        this.resetForms(); // Reset forms after successful login
+        // TODO: Handle successful login (e.g., redirect to game view)
+    } catch (error) {
+        this.signInError = error instanceof Error ? error.message : 'Login failed';
+    } finally {
+        this.isLoading = false;
+    }
   }
 
-  private handleSignUp(e: Event) {
+  private async handleSignUp(e: Event) {
     e.preventDefault();
-    // TODO: Implement sign up logic
-    console.log('Sign up:', this.signUpForm);
+    this.signUpError = '';
+    this.isLoading = true;
+
+    try {
+        const { username, email, password, confirmPassword } = this.signUpForm;
+        
+        if (!username || !email || !password || !confirmPassword) {
+            throw new Error('Please fill in all fields');
+        }
+
+        if (password !== confirmPassword) {
+            throw new Error('Passwords do not match');
+        }
+
+        // Add password validation
+        const passwordErrors = this.validatePassword(password);
+        if (passwordErrors.length > 0) {
+            throw new Error(passwordErrors.join(', '));
+        }
+
+        console.log("Sign-up payload:", this.signUpForm);
+        const response = await ApiService.register(username, email, password);
+
+        console.log('Registration successful:', response);
+        this.resetForms(); // Reset forms after successful registration
+    } catch (error) {
+        this.signUpError = error instanceof Error ? error.message : 'Registration failed';
+    } finally {
+        this.isLoading = false;
+    }
+  }
+
+  private resetForms() {
+    this.signInForm = { username: '', password: '' };
+    this.signUpForm = { username: '', email: '', password: '', confirmPassword: '' };
+    this.signInError = '';
+    this.signUpError = '';
+  }
+
+  private validatePassword(password: string): string[] {
+    const errors = [];
+    if (password.length < 8) {
+        errors.push('Password must be at least 8 characters long');
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+        errors.push('Password must contain at least one lowercase letter');
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+        errors.push('Password must contain at least one uppercase letter');
+    }
+    if (!/(?=.*\d)/.test(password)) {
+        errors.push('Password must contain at least one number');
+    }
+    return errors;
   }
 
   render() {
@@ -158,6 +250,7 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signInForm.username = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="off"
+                  ?disabled=${this.isLoading}
                 />
               </div>
               <div class="form-group">
@@ -169,9 +262,19 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signInForm.password = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="new-password"
+                  ?disabled=${this.isLoading}
                 />
               </div>
-              <button type="submit" class="submit-button">Sign In</button>
+              ${this.signInError ? html`
+                <div class="error-message">${this.signInError}</div>
+              ` : ''}
+              <button 
+                type="submit" 
+                class="submit-button"
+                ?disabled=${this.isLoading}
+              >
+                ${this.isLoading ? 'Signing in...' : 'Sign In'}
+              </button>
             </form>
           </div>
 
@@ -188,6 +291,7 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signUpForm.username = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="off"
+                  ?disabled=${this.isLoading}
                 />
               </div>
               <div class="form-group">
@@ -199,6 +303,7 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signUpForm.email = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="off"
+                  ?disabled=${this.isLoading}
                 />
               </div>
               <div class="form-group">
@@ -210,6 +315,7 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signUpForm.password = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="new-password"
+                  ?disabled=${this.isLoading}
                 />
               </div>
               <div class="form-group">
@@ -221,9 +327,19 @@ export class HomeView extends LitElement {
                   @input=${(e: Event) => this.signUpForm.confirmPassword = (e.target as HTMLInputElement).value}
                   required
                   autocomplete="new-password"
+                  ?disabled=${this.isLoading}
                 />
               </div>
-              <button type="submit" class="submit-button">Sign Up</button>
+              ${this.signUpError ? html`
+                <div class="error-message">${this.signUpError}</div>
+              ` : ''}
+              <button 
+                type="submit" 
+                class="submit-button"
+                ?disabled=${this.isLoading}
+              >
+                ${this.isLoading ? 'Signing up...' : 'Sign Up'}
+              </button>
             </form>
           </div>
         </div>

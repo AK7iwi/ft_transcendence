@@ -22,6 +22,14 @@ export default defineConfig({
     },
     watch: {
       usePolling: true
+    },
+    proxy: {
+      '/api': {
+        target: 'https://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
     }
   },
   build: {

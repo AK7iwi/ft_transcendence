@@ -9,14 +9,18 @@ async function authRoutes(fastify, options) {
             try {
                 const { username, email, password } = request.body;
                 const userId = await AuthService.registerUser(username, email, password);
-                return { 
+                
+                // Ensure we're sending a proper JSON response
+                return reply.code(200).send({ 
                     success: true, 
                     message: 'User registered successfully',
                     userId 
-                };
+                });
             } catch (error) {
                 fastify.log.error(error);
+                // Ensure error response is properly formatted
                 return reply.code(400).send({ 
+                    success: false,
                     error: error.message 
                 });
             }
@@ -29,15 +33,20 @@ async function authRoutes(fastify, options) {
         handler: async (request, reply) => {
             try {
                 const { username, password } = request.body;
+                console.log('Login attempt for user:', username); // Add logging
+                
                 const user = await AuthService.loginUser(username, password);
-                return { 
+                console.log('Login successful for user:', username); // Add logging
+                
+                return reply.code(200).send({ 
                     success: true, 
                     message: 'Login successful',
                     user 
-                };
+                });
             } catch (error) {
-                fastify.log.error(error);
+                console.error('Login error:', error); // Add logging
                 return reply.code(401).send({ 
+                    success: false,
                     error: error.message 
                 });
             }
