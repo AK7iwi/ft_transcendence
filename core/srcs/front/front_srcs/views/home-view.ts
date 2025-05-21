@@ -133,13 +133,13 @@ export class HomeView extends LitElement {
   @state() private isLoading = false;
   @state() private isAuthenticated = false;
 
-  connectedCallback() {
-    super.connectedCallback();
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      this.isAuthenticated = true;
-    }
+connectedCallback() {
+  super.connectedCallback();
+  const token = localStorage.getItem('token');
+  if (token) {
+    this.isAuthenticated = true;
   }
+}
 
   private async handleSignIn(e: Event) {
     e.preventDefault();

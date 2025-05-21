@@ -79,14 +79,18 @@ export class ProfileView extends LitElement {
   @state() private newPassword = '';
   @state() private confirmPassword = '';
 
-  connectedCallback() {
-    super.connectedCallback();
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      this.user = JSON.parse(stored);
-      this.newUsername = this.user.username;
-    }
-  }
+connectedCallback() {
+  super.connectedCallback();
+
+  ApiService.getProfile()
+    .then(data => {
+      this.user = { username: data.username, email: data.email };
+    })
+    .catch(err => {
+      console.error('Failed to load profile:', err);
+      window.location.href = '/'; // facultatif : redirige si token invalide
+    });
+}
 
 
 private async updateUsername() {
@@ -126,10 +130,12 @@ private async changePassword() {
 }
 
 
-  private logout() {
+private logout() {
+  localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.location.href = '/';
 }
+
 
   render() {
     return html`

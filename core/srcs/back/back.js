@@ -6,6 +6,9 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const db = require('./db');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET
+
 
 const app = express();
 
@@ -38,11 +41,35 @@ app.use((req, res, next) => {
   );
   next();
 });
+// 🔐 Route pour obtenir les infos de l'utilisateur connecté
+app.get('/auth/me', authenticateToken, async (req, res) => {
+  const user = await db.getUserByUsername(req.user.username);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  res.json({ username: user.username, email: user.email });
+});
+
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Expecting "Bearer <token>"
+
+  if (!token) return res.status(401).json({ error: 'Token missing' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Token invalid' });
+    req.user = user; // Attach decoded user info
+    next();
+  });
+}
+
 
 // 🧪 Healthcheck
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+
 
 // ✅ Inscription
 app.post('/auth/register', async (req, res) => {
@@ -70,8 +97,6 @@ app.post('/auth/register', async (req, res) => {
 
 // ✅ Connexion
 app.post('/auth/login', async (req, res) => {
-  console.log("LOGIN PAYLOAD:", req.body);
-
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Missing username or password' });
@@ -88,17 +113,53 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // ✅ Retourner les infos utilisateur utiles
+    // ✅ Generate JWT token
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, {
+      expiresIn: '2h'
+    });
+
     res.status(200).json({
       message: 'Login successful',
-      username: user.username,
-      email: user.email
+      token,
+      user: { username: user.username, email: user.email }
     });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
+// app.post('/auth/login', async (req, res) => {
+//   console.log("LOGIN PAYLOAD:", req.body);
+
+//   const { username, password } = req.body;
+//   if (!username || !password) {
+//     return res.status(400).json({ error: 'Missing username or password' });
+//   }
+
+//   try {
+//     const user = await db.getUserByUsername(username);
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     const valid = await bcrypt.compare(password, user.password_hash);
+//     if (!valid) {
+//       return res.status(401).json({ error: 'Invalid credentials' });
+//     }
+
+//     // ✅ Retourner les infos utilisateur utiles
+//     res.status(200).json({
+//       message: 'Login successful',
+//       username: user.username,
+//       email: user.email
+//     });
+//   } catch (err) {
+//     console.error("Login error:", err);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
 
 app.put('/auth/update', async (req, res) => {
   const { username, newUsername} = req.body;
