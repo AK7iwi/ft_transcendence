@@ -149,29 +149,35 @@ export class HomeView extends LitElement {
   @state()
   private isLoading = false;
 
-  private async handleSignIn(e: Event) {
-    e.preventDefault();
-    this.signInError = '';
-    this.isLoading = true;
+private async handleSignIn(e: Event) {
+  e.preventDefault();
+  this.signInError = '';
+  this.isLoading = true;
 
-    try {
-        const { username, password } = this.signInForm;
-        
-        if (!username || !password) {
-            throw new Error('Please fill in all fields');
-        }
+  try {
+    const { username, password } = this.signInForm;
 
-        const response = await ApiService.register(username, password);
-
-        console.log('Login successful:', response);
-        this.resetForms(); // Reset forms after successful login
-        // TODO: Handle successful login (e.g., redirect to game view)
-    } catch (error) {
-        this.signInError = error instanceof Error ? error.message : 'Login failed';
-    } finally {
-        this.isLoading = false;
+    if (!username || !password) {
+      throw new Error('Please fill in all fields');
     }
+
+    const response = await ApiService.login(username, password);
+    console.log('Login successful:', response);
+
+    // ✅ Enregistrer l'utilisateur connecté
+    localStorage.setItem('user', JSON.stringify({ username }));
+
+    this.resetForms(); // Reset forms after successful login
+
+    // ✅ (Optionnel) Redirection vers la page profil
+    window.location.href = '/profile'; // Assure-toi que ce chemin correspond à ta route
+  } catch (error) {
+    this.signInError = error instanceof Error ? error.message : 'Login failed';
+  } finally {
+    this.isLoading = false;
   }
+}
+
 
   private async handleSignUp(e: Event) {
     e.preventDefault();

@@ -3,67 +3,103 @@ const https = require('https');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
+const bcrypt = require('bcrypt');
 const db = require('./db');
 
 const app = express();
 
-// Load HTTPS certs
+// 🔐 Certificats SSL
 const options = {
   key: fs.readFileSync('./certs/key.pem'),
   cert: fs.readFileSync('./certs/cert.pem')
 };
 
-const path = require('path');
-
+// 🖼️ Favicon (ou remplacer par un vrai plus tard)
 app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, 'certs', 'cert.pem')); // 👈 or use a real favicon file
+  res.sendFile(path.join(__dirname, 'certs', 'cert.pem'));
 });
 
-// Middleware
+// 🌐 CORS
 app.use(cors({
   origin: 'https://localhost:5173',
   credentials: true
 }));
+
+// 📦 Middlewares JSON + URL-encoded
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// 🛡️ CSP headers
 app.use((req, res, next) => {
-    res.setHeader(
-      "Content-Security-Policy",
-      "default-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'"
-    );
-    next();
-  });
-  
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'"
+  );
+  next();
+});
 
-// Healthcheck
+// 🧪 Healthcheck
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Register route example
+// ✅ Inscription
 app.post('/auth/register', async (req, res) => {
   const { username, email, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ error: 'Missing username or password' });
+
+  console.log("REGISTER PAYLOAD:", req.body);
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Missing username, email, or password' });
+  }
 
   try {
     const exists = await db.getUserByUsername(username);
-    if (exists)
+    if (exists) {
       return res.status(409).json({ error: 'User already exists' });
+    }
 
-    await db.createUser({ username, email,password });
+    await db.createUser({ username, email, password });
     res.status(201).json({ message: 'User created' });
   } catch (err) {
-    console.error(err);
+    console.error("Register error:", err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Start HTTPS server
+// ✅ Connexion
+app.post('/auth/login', async (req, res) => {
+  console.log("LOGIN PAYLOAD:", req.body);
+
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Missing username or password' });
+  }
+
+  try {
+    const user = await db.getUserByUsername(username);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    res.status(200).json({ message: 'Login successful' });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// 🚀 Lancer le serveur HTTPS
 https.createServer(options, app).listen(3000, () => {
   console.log('Backend running at https://localhost:3000');
 });
+
 
 
 // // Load environment variables first
