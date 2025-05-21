@@ -88,12 +88,32 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful' });
+    // ✅ Retourner les infos utilisateur utiles
+    res.status(200).json({
+      message: 'Login successful',
+      username: user.username,
+      email: user.email
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+app.put('/auth/update', async (req, res) => {
+  const { username, newUsername} = req.body;
+  if (!username) return res.status(400).json({ error: 'Missing current username' });
+
+  try {
+    await db.updateUser(username, newUsername);
+    const user = await db.getUserByUsername(newUsername || username);
+    res.status(200).json({ message: 'User updated', user });
+  } catch (err) {
+    console.error('Update failed:', err);
+    res.status(500).json({ error: 'Update error' });
+  }
+});
+
 
 // 🚀 Lancer le serveur HTTPS
 https.createServer(options, app).listen(3000, () => {

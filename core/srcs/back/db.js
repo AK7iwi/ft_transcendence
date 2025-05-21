@@ -88,13 +88,34 @@ async function createUser({ username, email, password }) {
     stmt.run(username, email, password_hash);
 }
 
+async function updateUser(currentUsername, newUsername) {
+  let updates = [];
+  let params = [];
+
+  if (newUsername) {
+    updates.push('username = ?');
+    params.push(newUsername);
+  }
+
+  if (updates.length === 0) return;
+
+  params.push(currentUsername);
+
+  const stmt = db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE username = ?`);
+  stmt.run(...params);
+}
+
+module.exports.updateUser = updateUser;
+
+
 // Initialize DB
 initializeDatabase();
 
 // ✅ Export custom API
 module.exports = {
     getUserByUsername,
-    createUser
+    createUser,
+    updateUser,
 };
 
 

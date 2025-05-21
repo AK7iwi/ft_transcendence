@@ -26,6 +26,23 @@ export default class ApiService {
         }
     }
 
+static async updateUser(data: { username: string; newUsername?: string }) {
+  const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/update`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+  const json = await this.safeParseJSON(response);
+
+  if (!response.ok) {
+    throw new Error(json?.error || 'Update failed');
+  }
+
+  return json.user; // ⬅️ retourne le nouvel utilisateur
+}
+
+
+
     private static async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
