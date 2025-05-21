@@ -129,6 +129,10 @@ export class SettingsView extends LitElement {
 
   @state()
   private settings: GameSettings;
+@state()
+private showConfirmation = false;
+
+
 
   private colorOptions = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
   private settingsService: SettingsService;
@@ -143,9 +147,15 @@ export class SettingsView extends LitElement {
     this.settings = { ...this.settings, [setting]: value };
   }
 
-  private saveSettings() {
-    this.settingsService.updateSettings(this.settings);
-  }
+private saveSettings() {
+  this.settingsService.updateSettings(this.settings);
+  this.showConfirmation = true;
+  setTimeout(() => {
+    this.showConfirmation = false;
+  }, 3000); // Cache après 3 secondes
+}
+
+
 
   render() {
     return html`
@@ -219,6 +229,12 @@ export class SettingsView extends LitElement {
 
 
           <div class="flex justify-end">
+          ${this.showConfirmation ? html`
+  <div style="margin-bottom: 1rem; color: green; font-weight: bold;">
+    Settings saved successfully
+  </div>
+` : ''}
+
             <button
               @click=${this.saveSettings}
               class="save-button"

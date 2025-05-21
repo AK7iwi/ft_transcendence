@@ -126,7 +126,7 @@ export class PongApp extends LitElement {
       <div class="min-h-screen flex flex-col">
         <nav class="nav-container">
           <div class="nav-content">
-            <a href="/" class="logo">Main menu</a>
+            <a href="/" class="logo">Connexion</a>
             <div class="nav-links">
               <a href="/game" class="nav-link">Game</a>
               <a href="/tournament" class="nav-link">Tournament</a>

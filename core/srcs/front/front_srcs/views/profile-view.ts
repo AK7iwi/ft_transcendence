@@ -80,24 +80,33 @@ export class ProfileView extends LitElement {
   @state() private confirmPassword = '';
   @state() private qrCode = '';
   @state() private code2FA = '';
+  @state() private isAuthenticated = false;
+
 
 
 connectedCallback() {
   super.connectedCallback();
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    this.isAuthenticated = false;
+    return;
+  }
 
   ApiService.getProfile()
     .then(data => {
       this.user = {
         username: data.username,
         email: data.email,
-        twoFactorEnabled: data.twoFactorEnabled ?? false
+        twoFactorEnabled: data.twoFactorEnabled,
       };
+      this.isAuthenticated = true;
     })
     .catch(err => {
       console.error('Failed to load profile:', err);
+      this.isAuthenticated = false;
     });
 }
-
 
 
 private async updateUsername() {
@@ -170,15 +179,21 @@ private logout() {
 }
 
 
-  render() {
-    return html`
-      <div class="profile-container">
-        <h2>My Profile</h2>
+render() {
+  return html`
+    <div class="profile-container">
+      <h2>My Profile</h2>
 
+      ${!this.isAuthenticated ? html`
+        <p style="color: var(--color-error); font-weight: bold; margin-top: 2rem;">
+          🚫 Vous n'êtes pas connecté. Rendez-vous dans le menu principal pour vous connecter.
+        </p>
+      ` : html`
         <div class="readonly-info">
           <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
           <div class="info-line"><span class="label">Email:</span> ${this.user.email}</div>
         </div>
+
         <h3>Update Username</h3>
         <div class="form-group">
           <label class="form-label">New Username</label>
@@ -196,97 +211,31 @@ private logout() {
           <input type="password" class="form-input" .value=${this.confirmPassword} @input=${(e: Event) => this.confirmPassword = (e.target as HTMLInputElement).value} />
         </div>
         <button class="button" @click=${this.changePassword}>Update Password</button>
-        
-        ${!this.user.twoFactorEnabled ? html`
-  <div style="margin-top: 2rem;">
-    <h3>Two-Factor Authentication (2FA)</h3>
-    ${this.qrCode ? html`
-      <p>Scanne ce code QR avec Authy :</p>
-      <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
-      <form @submit=${this.handleVerify2FA}>
-        <label>Code 2FA :</label>
-        <input type="text" .value=${this.code2FA} @input=${(e: any) => this.code2FA = e.target.value} />
-        <button type="submit">Vérifier</button>
-      </form>
-    ` : html`
-      <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
-    `}
-  </div>
-` : html`
-  <p>✅ 2FA activée</p>
-`}
 
+        ${!this.user.twoFactorEnabled ? html`
+          <div style="margin-top: 2rem;">
+            <h3>Two-Factor Authentication (2FA)</h3>
+            ${this.qrCode ? html`
+              <p>Scanne ce code QR avec Authy :</p>
+              <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
+              <form @submit=${this.handleVerify2FA}>
+                <label>Code 2FA :</label>
+                <input type="text" .value=${this.code2FA} @input=${(e: any) => this.code2FA = e.target.value} />
+                <button type="submit">Vérifier</button>
+              </form>
+            ` : html`
+              <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
+            `}
+          </div>
+        ` : html`
+          <p>✅ 2FA activée</p>
+        `}
 
         <button class="button" @click=${this.logout} style="margin-top: 3rem; background: #e74c3c;">
-        Log Out
+          Log Out
         </button>
-        </div>
-    `;
-  }
+      `}
+    </div>
+  `;
 }
-
-
-// import { LitElement, html, css } from 'lit';
-// import { customElement, state } from 'lit/decorators.js';
-
-// @customElement('profile-view')
-// export class ProfileView extends LitElement {
-//   static styles = css`
-//     .profile-container {
-//       padding: 2rem;
-//       text-align: center;
-//       color: var(--color-text);
-//     }
-
-//     h2 {
-//       font-size: 2rem;
-//       margin-bottom: 1rem;
-//     }
-
-//     .logout-button {
-//       padding: 0.8rem 1.2rem;
-//       font-size: 1rem;
-//       border: none;
-//       border-radius: 0.5rem;
-//       background-color: var(--color-accent);
-//       color: white;
-//       cursor: pointer;
-//     }
-
-//     .logout-button:hover {
-//       opacity: 0.9;
-//     }
-//   `;
-
-//   @state()
-//   private user: { username: string } | null = null;
-
-//   connectedCallback() {
-//     super.connectedCallback();
-//     const stored = localStorage.getItem('user');
-//     if (stored) {
-//       this.user = JSON.parse(stored);
-//     }
-//   }
-
-//   private logout() {
-//     localStorage.removeItem('user');
-//     this.user = null;
-//   }
-
-//   render() {
-//     return html`
-//       <div class="profile-container">
-//         ${this.user
-//           ? html`
-//               <h2>Bienvenue, ${this.user.username} 👋</h2>
-//               <button class="logout-button" @click=${this.logout}>Se déconnecter</button>
-//             `
-//           : html`
-//               <h2>Vous n'êtes pas connecté.</h2>
-//               <p>Veuillez vous connecter pour accéder à votre profil.</p>
-//             `}
-//       </div>
-//     `;
-//   }
-// }
+}
