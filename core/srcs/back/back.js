@@ -8,6 +8,9 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET
+const speakeasy = require('speakeasy');
+const qrcode = require('qrcode');
+
 
 
 const app = express();
@@ -46,7 +49,11 @@ app.get('/auth/me', authenticateToken, async (req, res) => {
   const user = await db.getUserByUsername(req.user.username);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  res.json({ username: user.username, email: user.email });
+  res.json({
+    username: user.username,
+    email: user.email,
+    twoFactorEnabled: user.two_factor_enabled // 🔐 important
+  });
 });
 
 
@@ -128,6 +135,45 @@ app.post('/auth/login', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// ✅ Génération du secret 2FA et QR code (pour Authy)
+app.post('/auth/2fa/setup', authenticateToken, async (req, res) => {
+  const user = await db.getUserByUsername(req.user.username);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const secret = speakeasy.generateSecret({ name: `PongApp (${user.username})` });
+
+  await db.storeTwoFactorSecret(user.username, secret.base32);
+
+  qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+    if (err) return res.status(500).json({ error: 'Failed to generate QR code' });
+    res.status(200).json({ qrCode: data_url });
+  });
+});
+
+// ✅ Vérification du code 2FA et activation
+app.post('/auth/2fa/verify', authenticateToken, async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: '2FA token missing' });
+
+  const user = await db.getUserByUsername(req.user.username);
+  if (!user || !user.two_factor_secret) {
+    return res.status(404).json({ error: '2FA not configured for this user' });
+  }
+
+  const verified = speakeasy.totp.verify({
+    secret: user.two_factor_secret,
+    encoding: 'base32',
+    token
+  });
+
+  if (!verified) {
+    return res.status(401).json({ error: 'Invalid 2FA token' });
+  }
+
+  await db.enableTwoFactor(user.username);
+  res.status(200).json({ message: '2FA enabled successfully' });
+});
+
 
 
 // app.post('/auth/login', async (req, res) => {

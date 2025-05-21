@@ -37,6 +37,7 @@ static async getProfile() {
 }
 
 
+
     private static async fetchWithRetry(url: string, options: RequestInit, retries = this.MAX_RETRIES): Promise<Response> {
         try {
             return await fetch(url, this.getFetchOptions(options));
@@ -155,6 +156,38 @@ static async login(username: string, password: string) {
     throw new Error('An unexpected error occurred');
   }
 }
+
+static async setup2FA() {
+  const token = localStorage.getItem('token');
+  const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/2fa/setup`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const json = await this.safeParseJSON(response); // ✅ Une seule lecture
+
+if (!response.ok) {
+  throw new Error(json?.error || 'Failed to setup 2FA');
+}
+
+return json;
+
+}
+
+static async verify2FA(token2FA: string) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${this.baseUrl}/auth/2fa/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ token: token2FA })
+  });
+  if (!res.ok) throw new Error('Échec vérification 2FA');
+  return res.json();
+}
+
 
 static logout() {
   localStorage.removeItem('token');

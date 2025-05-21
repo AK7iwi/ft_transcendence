@@ -111,6 +111,16 @@ async function updatePassword(username, newPassword) {
   stmt.run(password_hash, username);
 }
 
+async function storeTwoFactorSecret(username, secret) {
+  const stmt = db.prepare(`UPDATE users SET two_factor_secret = ? WHERE username = ?`);
+  stmt.run(secret, username);
+}
+
+async function enableTwoFactor(username) {
+  const stmt = db.prepare(`UPDATE users SET two_factor_enabled = 1 WHERE username = ?`);
+  stmt.run(username);
+}
+
 
 module.exports.updateUser = updateUser;
 
@@ -124,6 +134,8 @@ module.exports = {
     createUser,
     updateUser,
     updatePassword,
+    storeTwoFactorSecret,
+    enableTwoFactor
 };
 
 

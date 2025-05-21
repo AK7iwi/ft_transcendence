@@ -78,19 +78,26 @@ export class ProfileView extends LitElement {
   @state() private newUsername = '';
   @state() private newPassword = '';
   @state() private confirmPassword = '';
+  @state() private qrCode = '';
+  @state() private code2FA = '';
+
 
 connectedCallback() {
   super.connectedCallback();
 
   ApiService.getProfile()
     .then(data => {
-      this.user = { username: data.username, email: data.email };
+      this.user = {
+        username: data.username,
+        email: data.email,
+        twoFactorEnabled: data.twoFactorEnabled ?? false
+      };
     })
     .catch(err => {
       console.error('Failed to load profile:', err);
-      window.location.href = '/'; // facultatif : redirige si token invalide
     });
 }
+
 
 
 private async updateUsername() {
@@ -129,6 +136,32 @@ private async changePassword() {
   }
 }
 
+private async setup2FA() {
+  try {
+    const res = await ApiService.setup2FA();
+    this.qrCode = res.qrCode;
+  } catch (err) {
+    alert('Erreur lors de la génération du QR code');
+    console.error(err);
+  }
+}
+
+private async handleVerify2FA(e: Event) {
+  e.preventDefault();
+  try {
+    await ApiService.verify2FA(this.code2FA);
+    alert('2FA activée avec succès');
+    this.user.twoFactorEnabled = true;
+    localStorage.setItem('user', JSON.stringify(this.user));
+    this.qrCode = '';
+    this.code2FA = '';
+  } catch (err) {
+    alert('Échec de l’activation 2FA');
+    console.error(err);
+  }
+}
+
+
 
 private logout() {
   localStorage.removeItem('token');
@@ -164,6 +197,26 @@ private logout() {
         </div>
         <button class="button" @click=${this.changePassword}>Update Password</button>
         
+        ${!this.user.twoFactorEnabled ? html`
+  <div style="margin-top: 2rem;">
+    <h3>Two-Factor Authentication (2FA)</h3>
+    ${this.qrCode ? html`
+      <p>Scanne ce code QR avec Authy :</p>
+      <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
+      <form @submit=${this.handleVerify2FA}>
+        <label>Code 2FA :</label>
+        <input type="text" .value=${this.code2FA} @input=${(e: any) => this.code2FA = e.target.value} />
+        <button type="submit">Vérifier</button>
+      </form>
+    ` : html`
+      <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
+    `}
+  </div>
+` : html`
+  <p>✅ 2FA activée</p>
+`}
+
+
         <button class="button" @click=${this.logout} style="margin-top: 3rem; background: #e74c3c;">
         Log Out
         </button>
