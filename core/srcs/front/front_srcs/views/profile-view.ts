@@ -109,15 +109,22 @@ private async updateUsername() {
   }
 }
 
-  private async changePassword() {
-    if (this.newPassword !== this.confirmPassword) {
-      alert('Passwords do not match.');
-      return;
-    }
-
-    console.log('Changing password to:', this.newPassword);
-    // TODO: call backend API to change password
+private async changePassword() {
+  if (this.newPassword !== this.confirmPassword) {
+    alert('Passwords do not match.');
+    return;
   }
+
+  try {
+    await ApiService.updatePassword(this.user.username, this.newPassword);
+    alert('Password updated successfully');
+    this.newPassword = '';
+    this.confirmPassword = '';
+  } catch (err) {
+    alert('Failed to update password');
+  }
+}
+
 
   private logout() {
   localStorage.removeItem('user');

@@ -114,6 +114,21 @@ app.put('/auth/update', async (req, res) => {
   }
 });
 
+app.post('/user/password', async (req, res) => {
+  const { username, newPassword } = req.body;
+  if (!username || !newPassword) {
+    return res.status(400).json({ error: 'Missing username or new password' });
+  }
+
+  try {
+    await db.updatePassword(username, newPassword);
+    res.status(200).json({ message: 'Password updated' });
+  } catch (err) {
+    console.error("Update password error:", err);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
 
 // 🚀 Lancer le serveur HTTPS
 https.createServer(options, app).listen(3000, () => {

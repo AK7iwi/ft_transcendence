@@ -105,6 +105,13 @@ async function updateUser(currentUsername, newUsername) {
   stmt.run(...params);
 }
 
+async function updatePassword(username, newPassword) {
+  const password_hash = await bcrypt.hash(newPassword, 10);
+  const stmt = db.prepare(`UPDATE users SET password_hash = ? WHERE username = ?`);
+  stmt.run(password_hash, username);
+}
+
+
 module.exports.updateUser = updateUser;
 
 
@@ -116,6 +123,7 @@ module.exports = {
     getUserByUsername,
     createUser,
     updateUser,
+    updatePassword,
 };
 
 

@@ -41,6 +41,19 @@ static async updateUser(data: { username: string; newUsername?: string }) {
   return json.user; // ⬅️ retourne le nouvel utilisateur
 }
 
+static async updatePassword(username: string, newPassword: string) {
+  const response = await this.fetchWithTimeout(`${this.baseUrl}/user/password`, {
+    method: 'POST',
+    body: JSON.stringify({ username, newPassword })
+  });
+
+  const json = await this.safeParseJSON(response);
+  if (!response.ok) {
+    throw new Error(json?.error || 'Failed to update password');
+  }
+
+  return json;
+}
 
 
     private static async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
