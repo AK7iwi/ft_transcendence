@@ -3,6 +3,8 @@ const { db } = require('../db');
 const jwt = require('jsonwebtoken');
 
 class AuthService {
+
+    
     // Input validation
     static validateUserInput(username, email, password) {
         const errors = [];
@@ -76,10 +78,11 @@ class AuthService {
         }
 
         const stmt = db.prepare(`
-        SELECT id, username, email, password_hash
-        FROM users
-        WHERE username = ?
-        `);
+  SELECT id, username, email, password_hash
+  FROM users
+  WHERE username = ?
+`);
+
 
         const user = stmt.get(username);
 
@@ -102,16 +105,42 @@ class AuthService {
 
         // ✅ Renvoie le profil + token
         return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        token
-        };
+  id: user.id,
+  username: user.username,
+  email: user.email
+};
+
     } catch (error) {
         console.error('Login error:', error);
         throw error;
     }
     }
+
+static async updateUser(currentUsername, newUsername) {
+  if (!newUsername || newUsername.length < 3 || newUsername.length > 20) {
+    throw new Error('New username must be between 3 and 20 characters');
+  }
+
+  const stmt = db.prepare(`UPDATE users SET username = ? WHERE username = ?`);
+  const result = stmt.run(newUsername, currentUsername);
+
+  if (result.changes === 0) {
+    throw new Error('User not found or username unchanged');
+  }
+
+  return { username: newUsername };
 }
+
+
+static async updatePassword(username, newPassword) {
+  const hashed = await this.hashPassword(newPassword);
+  const stmt = db.prepare(`UPDATE users SET password_hash = ? WHERE username = ?`);
+  stmt.run(hashed, username);
+}
+
+    
+}
+
+
 
 module.exports = AuthService;

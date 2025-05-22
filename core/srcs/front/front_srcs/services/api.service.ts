@@ -66,8 +66,8 @@ static async updateUser(data: { username: string; newUsername?: string }) {
 }
 
 static async updatePassword(username: string, newPassword: string) {
-  const response = await this.fetchWithTimeout(`${this.baseUrl}/user/password`, {
-    method: 'POST',
+  const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/password`, {
+    method: 'PUT',
     body: JSON.stringify({ username, newPassword })
   });
 
@@ -78,6 +78,7 @@ static async updatePassword(username: string, newPassword: string) {
 
   return json;
 }
+
 
 
     private static async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
@@ -143,7 +144,11 @@ static async login(username: string, password: string) {
 
     // ✅ Store token + user
     localStorage.setItem('token', json.token);
-    localStorage.setItem('user', JSON.stringify({ username: json.username, email: json.email }));
+    localStorage.setItem('user', JSON.stringify({
+  username: json.user.username,
+  email: json.user.email
+}));
+
 
     return json;
   } catch (error) {
@@ -160,19 +165,20 @@ static async login(username: string, password: string) {
 static async setup2FA() {
   const token = localStorage.getItem('token');
   const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/2fa/setup`, {
-  method: 'POST',
-  headers: { Authorization: `Bearer ${token}` },
-});
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({}) // ✅ Ajout d’un body vide pour éviter l’erreur Fastify
+  });
 
-const json = await this.safeParseJSON(response); // ✅ Une seule lecture
+  const json = await this.safeParseJSON(response);
 
-if (!response.ok) {
-  throw new Error(json?.error || 'Failed to setup 2FA');
+  if (!response.ok) {
+    throw new Error(json?.error || 'Failed to setup 2FA');
+  }
+
+  return json;
 }
 
-return json;
-
-}
 
 static async verify2FA(token2FA: string) {
   const token = localStorage.getItem('token');
