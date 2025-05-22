@@ -6,10 +6,16 @@ export class WebSocketService {
     private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
 
     constructor(private url: string) {
-        // Ensure the URL uses WSS protocol
-        if (!url.startsWith('wss://')) {
+        // Auto-correction de l'URL vers WSS si besoin
+        const isSecure = window.location.protocol === 'https:';
+        if (isSecure && this.url.startsWith('ws://')) {
+            this.url = this.url.replace('ws://', 'wss://');
+        }
+
+        if (!this.url.startsWith('wss://') && isSecure) {
             throw new Error('WebSocket URL must use WSS protocol for secure connection');
         }
+
         this.connect();
     }
 
@@ -91,4 +97,4 @@ export class WebSocketService {
             this.ws = null;
         }
     }
-} 
+}

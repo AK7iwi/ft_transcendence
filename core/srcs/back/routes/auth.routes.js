@@ -1,5 +1,7 @@
 const AuthService = require('../services/auth.service');
 const authSchema = require('../schemas/auth.schema');
+const jwt = require('jsonwebtoken');
+
 
 async function authRoutes(fastify, options) {
     // Register new user
@@ -27,31 +29,46 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // Login user
-    fastify.post('/login', {
-        schema: authSchema.login,
-        handler: async (request, reply) => {
-            try {
-                const { username, password } = request.body;
-                console.log('Login attempt for user:', username); // Add logging
-                
-                const user = await AuthService.loginUser(username, password);
-                console.log('Login successful for user:', username); // Add logging
-                
-                return reply.code(200).send({ 
-                    success: true, 
-                    message: 'Login successful',
-                    user 
-                });
-            } catch (error) {
-                console.error('Login error:', error); // Add logging
-                return reply.code(401).send({ 
-                    success: false,
-                    error: error.message 
-                });
-            }
+    fastify.get('/me', {
+  preHandler: [fastify.authenticate],
+  handler: async (request, reply) => {
+    const user = request.user;
+    return { id: user.id, username: user.username };
+  }
+});
+
+// Login user
+fastify.post('/login', {
+    schema: authSchema.login,
+    handler: async (request, reply) => {
+        try {
+            const { username, password } = request.body;
+            const user = await AuthService.loginUser(username, password);
+
+            // ✅ Générer un token JWT
+            const token = jwt.sign(
+                { id: user.id, username: user.username },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            return reply.code(200).send({ 
+                success: true, 
+                message: 'Login successful',
+                token,             // ✅ retourne le token
+                username: user.username,
+                userId: user.id
+            });
+        } catch (error) {
+            console.error('Login error:', error);
+            return reply.code(401).send({ 
+                success: false,
+                error: error.message 
+            });
         }
-    });
+    }
+});
+
 }
 
 module.exports = authRoutes;

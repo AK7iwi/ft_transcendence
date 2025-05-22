@@ -2,6 +2,14 @@ import { LitElement, html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './styles.css';
+// app.ts
+import { WebSocketService } from './services/websocket-service';
+
+const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
+
+export default wsService;
+
 
 @customElement('pong-app')
 export class PongApp extends LitElement {

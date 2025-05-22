@@ -67,14 +67,46 @@ class WebSocketService {
         }
     }
 
-    handleGameMessage(clientId, data) {
-        // Broadcast game state to all clients
-        this.broadcast({
-            type: 'game',
-            clientId,
-            data: data.payload
-        });
+handleGameMessage(clientId, data) {
+    const { action, ...payload } = data.payload || {};
+
+    switch (action) {
+        case 'pause':
+            console.log(`[WS] Game paused by ${clientId}`);
+            this.broadcast({
+                type: 'game',
+                data: { action: 'pause', by: clientId }
+            });
+            break;
+
+        case 'scoreUpdate':
+            console.log(`[WS] Score updated`, payload);
+            this.broadcast({
+                type: 'game',
+                data: {
+                    action: 'scoreUpdate',
+                    score: payload.score,
+                    by: clientId
+                }
+            });
+            break;
+
+        case 'join':
+            console.log(`[WS] Player joined: ${clientId}`);
+            this.broadcast({
+                type: 'game',
+                data: {
+                    action: 'playerJoined',
+                    clientId
+                }
+            });
+            break;
+
+        default:
+            console.warn(`[WS] Unknown game action:`, action);
     }
+}
+}
 
     handleChatMessage(clientId, data) {
         // Broadcast chat message to all clients
