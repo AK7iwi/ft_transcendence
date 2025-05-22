@@ -1,54 +1,37 @@
 const AuthService = require('../services/auth.service');
 const authSchema = require('../schemas/auth.schema');
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const dbApi = require('../db'); // ✅ C’est bien celui-ci qu’on utilise
 const authenticate = require('../middleware/authenticate');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 
 async function authRoutes(fastify, options) {
-    // Register new user
-    fastify.post('/register', {
-        schema: authSchema.register,
-        handler: async (request, reply) => {
-            try {
-                const { username, email, password } = request.body;
-                const userId = await AuthService.registerUser(username, email, password);
-                
-                // Ensure we're sending a proper JSON response
-                return reply.code(200).send({ 
-                    success: true, 
-                    message: 'User registered successfully',
-                    userId 
-                });
-            } catch (error) {
-                fastify.log.error(error);
-                // Ensure error response is properly formatted
-                return reply.code(400).send({ 
-                    success: false,
-                    error: error.message 
-                });
-            }
+  fastify.get('/me', {
+    preHandler: authenticate,
+    handler: async (req, reply) => {
+      try {
+        const id = req.user.id;
+
+        const user = dbApi.db.prepare('SELECT id, username, email, avatar FROM users WHERE id = ?').get(id);
+
+        if (!user) {
+          return reply.status(404).send({ error: 'Utilisateur non trouvé' });
         }
-    });
 
-fastify.get('/me', {
-  preHandler: authenticate,
-  handler: async (request, reply) => {
-    const { id } = request.user;
-    const user = db.db.prepare('SELECT id, username, email FROM users WHERE id = ?').get(id);
-    
-    if (!user) {
-      return reply.code(404).send({ error: 'User not found' });
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar: user.avatar || '/avatars/default.png'
+        };
+      } catch (err) {
+        console.error('[ERROR] /auth/me failed:', err);
+        return reply.status(500).send({ error: 'Internal Server Error' });
+      }
     }
+  });
 
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email
-    };
-  }
-});
 
 
 // Login user
@@ -142,7 +125,7 @@ fastify.post('/2fa/setup', {
       });
 
       // ✅ Stocker le secret directement en base
-      db.db.prepare('UPDATE users SET two_factor_secret = ? WHERE id = ?')
+      db.prepare('UPDATE users SET two_factor_secret = ? WHERE id = ?')
         .run(secret.base32, user.id);
 
       const qrCode = await qrcode.toDataURL(secret.otpauth_url);
@@ -167,7 +150,7 @@ fastify.post('/2fa/verify', {
         return reply.code(400).send({ error: 'Token is required' });
       }
 
-   const row = db.db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
+   const row = db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
       if (!row || !row.two_factor_secret) {
         return reply.code(400).send({ error: '2FA secret not found' });
       }
@@ -184,7 +167,7 @@ fastify.post('/2fa/verify', {
         return reply.code(401).send({ error: 'Invalid 2FA token' });
       }
 
-     db.db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
+     db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
 
 
       return reply.send({ success: true });

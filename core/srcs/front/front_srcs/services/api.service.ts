@@ -4,6 +4,9 @@ export default class ApiService {
     private static readonly TIMEOUT_MS = 5000;
     private static readonly baseUrl = 'https://localhost:3000';
 
+
+
+    
 private static getFetchOptions(options: RequestInit): RequestInit {
   const token = localStorage.getItem('token');
 
@@ -180,6 +183,8 @@ static async setup2FA() {
 }
 
 
+
+
 static async verify2FA(token2FA: string) {
   const token = localStorage.getItem('token');
   const res = await fetch(`${this.baseUrl}/auth/2fa/verify`, {
@@ -195,8 +200,37 @@ static async verify2FA(token2FA: string) {
 }
 
 
+
+
 static logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 }
+
+static async uploadAvatar(file: File): Promise<string> {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('Not authenticated');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${this.baseUrl}/user/upload-avatar`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`
+      // NE PAS inclure 'Content-Type': multipart est automatiquement défini par le navigateur
+    },
+    body: formData
+  });
+
+  const json = await this.safeParseJSON(response);
+
+  if (!response.ok) {
+    throw new Error(json?.error || 'Failed to upload avatar');
+  }
+
+  return json.avatarUrl; // 📸 Le chemin relatif du fichier, ex: "/avatars/avatar_1.png"
+}
+
+
 }

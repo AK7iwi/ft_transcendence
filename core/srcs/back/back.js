@@ -11,8 +11,10 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const xss = require('xss');
 const validator = require('validator');
+const fastifyMultipart = require('@fastify/multipart');
+const fastifyStatic = require('@fastify/static');
 
-// Créer Fastify avec HTTPS intégré
+// Créer Fastify
 const fastify = fastifyModule({
   logger: true,
   https: {
@@ -21,7 +23,38 @@ const fastify = fastifyModule({
   },
 });
 
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, 'public'),
+  prefix: '/',
+  decorateReply: false // ⚠️ important pour compatibilité Fastify v4
+});
+
+// Route manuelle pour servir les avatars (fallback sans sendFile)
+fastify.get('/avatars/:filename', async (req, reply) => {
+  const file = req.params.filename;
+  const filePath = path.join(__dirname, 'public', 'avatars', file);
+
+  if (fs.existsSync(filePath)) {
+    return reply
+      .type('image/png') // ou adapte à image/jpeg si nécessaire
+      .send(fs.createReadStream(filePath));
+  } else {
+    return reply.status(404).send({ error: 'Fichier non trouvé' });
+  }
+});
+
+
+
+// ✅ Maintenant que fastify existe, on peut enregistrer le plugin
+fastify.register(fastifyMultipart);
+
+
 fastify.decorate('authenticate', require('./middleware/authenticate'));
+
+
+
+fastify.register(require('./routes/avatar.routes'), { prefix: '/user' });
+
 
 
 // Base de données SQLite
@@ -64,6 +97,20 @@ fastify.get('/2fa/setup', async () => {
   const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
   return { qrCodeDataURL, secret: secret.base32 };
 });
+
+fastify.get('/', async (request, reply) => {
+  return { message: 'Welcome to the backend API 🚀' };
+});
+
+
+fastify.get('/debug-static', (req, reply) => {
+  const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');
+  return {
+    path: filePath,
+    exists: fs.existsSync(filePath)
+  };
+});
+
 
 // Démarrer le serveur Fastify et attacher WebSocket
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {

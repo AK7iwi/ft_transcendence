@@ -81,6 +81,7 @@ export class ProfileView extends LitElement {
   @state() private qrCode = '';
   @state() private code2FA = '';
   @state() private isAuthenticated = false;
+  @state() private avatarUrl: string = '';
 
 
 
@@ -94,14 +95,20 @@ connectedCallback() {
   }
 
   ApiService.getProfile()
-    .then(data => {
-      this.user = {
-        username: data.username,
-        email: data.email,
-        twoFactorEnabled: data.twoFactorEnabled,
-      };
-      this.isAuthenticated = true;
-    })
+  .then(data => {
+    this.user = {
+      username: data.username,
+      email: data.email,
+      twoFactorEnabled: data.twoFactorEnabled,
+    };
+    this.avatarUrl = data.avatar?.startsWith('/')
+  ? `https://localhost:3000${data.avatar}`
+  : data.avatar;
+
+
+    this.isAuthenticated = true;
+  })
+
     .catch(err => {
       console.error('Failed to load profile:', err);
       this.isAuthenticated = false;
@@ -179,6 +186,22 @@ private logout() {
   window.location.href = '/';
 }
 
+private async handleAvatarUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const avatar = await ApiService.uploadAvatar(file);
+    this.avatarUrl = `${window.location.origin}${avatar}`;
+    alert('✅ Avatar mis à jour !');
+  } catch (err) {
+    console.error('Avatar upload failed:', err);
+    alert('❌ Échec du téléchargement de l’avatar');
+  }
+}
+
+
 
 render() {
   return html`
@@ -194,6 +217,13 @@ render() {
           <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
           <div class="info-line"><span class="label">Email:</span> ${this.user.email}</div>
         </div>
+<h3>Avatar</h3>
+<div style="text-align: center; margin-bottom: 1.5rem;">
+  <img src="${this.avatarUrl}" alt="Avatar" width="120" height="120" style="border-radius: 50%; border: 2px solid #ccc;" />
+  <div style="margin-top: 1rem;">
+    <input type="file" accept="image/*" @change=${this.handleAvatarUpload} />
+  </div>
+</div>
 
         <h3>Update Username</h3>
         <div class="form-group">
