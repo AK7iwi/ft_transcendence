@@ -109,6 +109,7 @@ connectedCallback() {
 }
 
 
+
 private async updateUsername() {
   try {
     const payload = {

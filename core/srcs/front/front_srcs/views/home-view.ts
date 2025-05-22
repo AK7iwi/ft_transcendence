@@ -135,10 +135,24 @@ export class HomeView extends LitElement {
 
 connectedCallback() {
   super.connectedCallback();
+
   const token = localStorage.getItem('token');
-  if (token) {
-    this.isAuthenticated = true;
+  if (!token) {
+    this.isAuthenticated = false;
+    return;
   }
+
+  // Vérifie le token côté serveur
+  ApiService.getProfile()
+    .then(() => {
+      this.isAuthenticated = true;
+    })
+    .catch(() => {
+      // Token invalide → utilisateur déconnecté
+      this.isAuthenticated = false;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    });
 }
 
   private async handleSignIn(e: Event) {

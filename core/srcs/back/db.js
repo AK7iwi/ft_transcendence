@@ -130,6 +130,7 @@ initializeDatabase();
 
 // ✅ Export custom API
 module.exports = {
+    initializeDatabase,
     getUserByUsername,
     createUser,
     updateUser,
