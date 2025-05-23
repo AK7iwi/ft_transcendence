@@ -11,14 +11,12 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     cors: true,
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'certs/key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'certs/cert.pem'))
-    },
+    // Désactivation du HTTPS en développement
+    https: false,
     hmr: {
       host: 'localhost',
       port: 5173,
-      protocol: 'wss'
+      protocol: 'ws'
     },
     watch: {
       usePolling: true
@@ -28,7 +26,7 @@ export default defineConfig({
         target: 'https://localhost:3000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (p) => p.replace(/^\/api/, '')
       }
     }
   },
@@ -43,4 +41,4 @@ export default defineConfig({
       '@': '/front_srcs'
     }
   }
-}); 
+});
