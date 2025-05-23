@@ -127,7 +127,7 @@ export class HomeView extends LitElement {
   `;
 
   @state() private signInForm = { username: '', password: '' };
-  @state() private signUpForm = { username: '', email: '', password: '', confirmPassword: '' };
+  @state() private signUpForm = { username: '', password: '', confirmPassword: '' };
   @state() private signInError = '';
   @state() private signUpError = '';
   @state() private isLoading = false;
@@ -166,7 +166,7 @@ connectedCallback() {
 
       const response = await ApiService.login(username, password);
       console.log('Login successful:', response);
-     localStorage.setItem('user', JSON.stringify({ username: response.username, email: response.email }));
+     localStorage.setItem('user', JSON.stringify({ username: response.username }));
       this.resetForms();
       window.location.href = '/profile';
     } catch (error) {
@@ -182,14 +182,14 @@ connectedCallback() {
     this.isLoading = true;
 
     try {
-      const { username, email, password, confirmPassword } = this.signUpForm;
-      if (!username || !email || !password || !confirmPassword) throw new Error('Please fill in all fields');
+      const { username, password, confirmPassword } = this.signUpForm;
+      if (!username || !password || !confirmPassword) throw new Error('Please fill in all fields');
       if (password !== confirmPassword) throw new Error('Passwords do not match');
 
       const passwordErrors = this.validatePassword(password);
       if (passwordErrors.length > 0) throw new Error(passwordErrors.join(', '));
 
-      const response = await ApiService.register(username, email, password);
+      const response = await ApiService.register(username, password);
       console.log('Registration successful:', response);
       this.resetForms();
     } catch (error) {
@@ -201,7 +201,7 @@ connectedCallback() {
 
   private resetForms() {
     this.signInForm = { username: '', password: '' };
-    this.signUpForm = { username: '', email: '', password: '', confirmPassword: '' };
+    this.signUpForm = { username: '', password: '', confirmPassword: '' };
     this.signInError = '';
     this.signUpError = '';
   }
@@ -248,10 +248,6 @@ connectedCallback() {
                 <div class="form-group">
                   <label class="form-label">Username</label>
                   <input type="text" class="form-input" .value=${this.signUpForm.username} @input=${(e: Event) => this.signUpForm.username = (e.target as HTMLInputElement).value} required ?disabled=${this.isLoading} />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Email</label>
-                  <input type="email" class="form-input" .value=${this.signUpForm.email} @input=${(e: Event) => this.signUpForm.email = (e.target as HTMLInputElement).value} required ?disabled=${this.isLoading} />
                 </div>
                 <div class="form-group">
                   <label class="form-label">Password</label>

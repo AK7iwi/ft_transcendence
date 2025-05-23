@@ -106,11 +106,11 @@ static async updatePassword(username: string, newPassword: string) {
         }
     }
 
-    static async register(username: string, email: string, password: string) {
+    static async register(username: string, password: string) {
         try {
             const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/register`, {
                 method: 'POST',
-                body: JSON.stringify({ username, email, password })
+                body: JSON.stringify({ username, password })
             });
 
             const json = await this.safeParseJSON(response);
@@ -148,7 +148,6 @@ static async login(username: string, password: string) {
     localStorage.setItem('token', json.token);
     localStorage.setItem('user', JSON.stringify({
   username: json.user.username,
-  email: json.user.email
 }));
 
 

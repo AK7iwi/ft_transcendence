@@ -74,7 +74,7 @@ export class ProfileView extends LitElement {
     }
   `;
 
-  @state() private user = { username: '', email: '', twoFactorEnabled: false, avatar: '' };
+  @state() private user = { username: '', twoFactorEnabled: false, avatar: '' };
   @state() private newUsername = '';
   @state() private newPassword = '';
   @state() private confirmPassword = '';
@@ -96,7 +96,6 @@ export class ProfileView extends LitElement {
       .then(data => {
         this.user = {
           username: data.username,
-          email: data.email,
           twoFactorEnabled: data.twoFactorEnabled,
           avatar: data.avatar
         };
@@ -207,7 +206,6 @@ export class ProfileView extends LitElement {
         ` : html`
           <div class="readonly-info">
             <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
-            <div class="info-line"><span class="label">Email:</span> ${this.user.email}</div>
           </div>
 
           <h3>Avatar</h3>

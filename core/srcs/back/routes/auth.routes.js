@@ -17,7 +17,7 @@ async function authRoutes(fastify, options) {
       try {
         const id = req.user.id;
 
-        const user = dbApi.db.prepare('SELECT id, username, email, avatar FROM users WHERE id = ?').get(id);
+        const user = dbApi.db.prepare('SELECT id, username, avatar FROM users WHERE id = ?').get(id);
 
         if (!user) {
           return reply.status(404).send({ error: 'Utilisateur non trouvé' });
@@ -26,7 +26,6 @@ async function authRoutes(fastify, options) {
         return {
           id: user.id,
           username: user.username,
-          email: user.email,
           avatar: user.avatar || '/avatars/default.png'
         };
       } catch (err) {
@@ -40,9 +39,9 @@ fastify.post('/register', {
   schema: authSchema.register,
   handler: async (request, reply) => {
     try {
-      const { username, email, password } = request.body;
+      const { username, password } = request.body;
 
-      const userId = await AuthService.registerUser(username, email, password);
+      const userId = await AuthService.registerUser(username, password);
 
       return reply.code(200).send({
         success: true,
@@ -82,7 +81,6 @@ fastify.post('/login', {
     user: {
         id: user.id,
         username: user.username,
-        email: user.email
     }
 });
 

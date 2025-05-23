@@ -6,7 +6,7 @@ class AuthService {
 
     
     // Input validation
-    static validateUserInput(username, email, password) {
+    static validateUserInput(username, password) {
         const errors = [];
         
         // Username validation
@@ -15,11 +15,6 @@ class AuthService {
         }
         if (!/^[a-zA-Z0-9_]+$/.test(username)) {
             errors.push('Username can only contain letters, numbers, and underscores');
-        }
-
-        // Email validation
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            errors.push('Invalid email format');
         }
 
         // Password validation
@@ -45,10 +40,10 @@ class AuthService {
     }
 
     // Register new user with hashed password
-    static async registerUser(username, email, password) {
+    static async registerUser(username, password) {
         try {
             // Validate input
-            const errors = this.validateUserInput(username, email, password);
+            const errors = this.validateUserInput(username, password);
             if (errors.length > 0) {
                 throw new Error(errors.join(', '));
             }
@@ -57,15 +52,15 @@ class AuthService {
             
             // Use parameterized queries to prevent SQL injection
             const stmt = db.prepare(`
-                INSERT INTO users (username, email, password_hash)
-                VALUES (?, ?, ?)
+                INSERT INTO users (username, password_hash)
+                VALUES (?, ?)
             `);
             
-            const result = stmt.run(username, email, hashedPassword);
+            const result = stmt.run(username, hashedPassword);
             return result.lastInsertRowid;
         } catch (error) {
             if (error.code === 'SQLITE_CONSTRAINT') {
-                throw new Error('Username or email already exists');
+                throw new Error('Username already exists');
             }
             throw error;
         }
@@ -78,7 +73,7 @@ class AuthService {
         }
 
         const stmt = db.prepare(`
-  SELECT id, username, email, password_hash
+  SELECT id, username, password_hash
   FROM users
   WHERE username = ?
 `);
@@ -107,7 +102,6 @@ class AuthService {
         return {
   id: user.id,
   username: user.username,
-  email: user.email
 };
 
     } catch (error) {

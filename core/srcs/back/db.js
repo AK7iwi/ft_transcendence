@@ -26,7 +26,6 @@ function initializeDatabase() {
         db.exec(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             two_factor_secret TEXT,
             avatar TEXT,
@@ -79,13 +78,13 @@ async function getUserByUsername(username) {
     return stmt.get(username);
 }
 
-async function createUser({ username, email, password }) {
+async function createUser({ username, password }) {
     const password_hash = await bcrypt.hash(password, 10);
     const stmt = db.prepare(`
-        INSERT INTO users (username, email, password_hash)
-        VALUES (?, ?, ?)
+        INSERT INTO users (username, password_hash)
+        VALUES (?, ?)
     `);
-    stmt.run(username, email, password_hash);
+    stmt.run(username, password_hash);
 }
 
 async function updateUser(currentUsername, newUsername) {
