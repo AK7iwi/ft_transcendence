@@ -91,12 +91,18 @@ fastify.get('/profile', async (request, reply) => {
 });
 
 // 2FA Setup
-fastify.get('/2fa/setup', async () => {
-  const secret = speakeasy.generateSecret({ length: 20 });
-  const otpauthUrl = secret.otpauth_url;
-  const qrCodeDataURL = await QRCode.toDataURL(otpauthUrl);
-  return { qrCodeDataURL, secret: secret.base32 };
+fastify.get('/2fa/setup', async (request, reply) => {
+  try {
+    const secret = speakeasy.generateSecret({ length: 20 });
+    console.log('Generated secret:', secret); // 🪵 log ici
+    const qrCodeDataURL = await qrcode.toDataURL(secret.otpauth_url);
+    return { qrCodeDataURL, secret: secret.base32 };
+  } catch (err) {
+    console.error('QR Code generation error:', err); // 🛠 debug ici
+    reply.code(500).send({ error: 'Failed to generate QR code' });
+  }
 });
+
 
 fastify.get('/', async (request, reply) => {
   return { message: 'Welcome to the backend API 🚀' };

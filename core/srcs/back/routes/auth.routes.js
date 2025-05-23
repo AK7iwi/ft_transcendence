@@ -134,35 +134,34 @@ fastify.put('/password', {
   }
 });
 
-
-
 fastify.post('/2fa/setup', {
   preHandler: authenticate,
   handler: async (request, reply) => {
     try {
       const user = request.user;
-
-      if (!user || !user.id) {
-        return reply.code(401).send({ error: 'Unauthorized' });
-      }
+      if (!user?.id) return reply.code(401).send({ error: 'Unauthorized' });
 
       const secret = speakeasy.generateSecret({
         name: `Transcendence (${user.username})`,
       });
 
-      // ✅ Stocker le secret directement en base
-      db.prepare('UPDATE users SET two_factor_secret = ? WHERE id = ?')
+      if (!secret.otpauth_url) throw new Error('Missing otpauth_url');
+
+      dbApi.db.prepare('UPDATE users SET two_factor_secret = ? WHERE id = ?')
         .run(secret.base32, user.id);
 
       const qrCode = await qrcode.toDataURL(secret.otpauth_url);
 
       return reply.send({ qrCode });
+
     } catch (err) {
-      console.error('2FA setup failed:', err.message);
+      console.error('❌ Erreur setup 2FA:', err);
       reply.code(500).send({ error: 'Failed to setup 2FA' });
     }
   }
 });
+
+
 
 fastify.post('/2fa/verify', {
   preHandler: authenticate, // ⬅️ n'oublie pas ce middleware
@@ -176,7 +175,7 @@ fastify.post('/2fa/verify', {
         return reply.code(400).send({ error: 'Token is required' });
       }
 
-   const row = db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
+   const row = dbApi.db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
       if (!row || !row.two_factor_secret) {
         return reply.code(400).send({ error: '2FA secret not found' });
       }
@@ -193,7 +192,7 @@ fastify.post('/2fa/verify', {
         return reply.code(401).send({ error: 'Invalid 2FA token' });
       }
 
-     db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
+     dbApi.db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
 
 
       return reply.send({ success: true });
