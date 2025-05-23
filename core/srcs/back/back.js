@@ -14,6 +14,8 @@ const validator = require('validator');
 const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
 const authRoutes = require('./routes/auth.routes');
+const WebSocketService = require('./services/websocket.service');
+
 
 // Créer Fastify
 const fastify = fastifyModule({
@@ -27,7 +29,7 @@ const fastify = fastifyModule({
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, 'public'),
   prefix: '/',
-  decorateReply: false // ⚠️ important pour compatibilité Fastify v4
+  decorateReply: false // important pour compatibilité Fastify v4
 });
 
 
@@ -43,21 +45,17 @@ fastify.get('/avatars/:filename', async (req, reply) => {
 
   if (fs.existsSync(filePath)) {
     return reply
-      .type('image/png') // ou adapte à image/jpeg si nécessaire
+      .type('image/png')
       .send(fs.createReadStream(filePath));
   } else {
     return reply.status(404).send({ error: 'Fichier non trouvé' });
   }
 });
 
-
-
-// ✅ Maintenant que fastify existe, on peut enregistrer le plugin
 fastify.register(fastifyMultipart);
 
-
+//avatar de merde
 fastify.decorate('authenticate', require('./middleware/authenticate'));
-
 
 
 // Base de données SQLite
@@ -125,27 +123,7 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
     process.exit(1);
   }
 
-  const server = fastify.server;
-  const wss = new WebSocket.Server({ server, path: '/ws' });
-
-  wss.on('connection', (ws) => {
-    console.log('✅ Client WebSocket connecté');
-    ws.send(JSON.stringify({ type: 'connection', message: 'Bienvenue !' }));
-
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        console.log('📩 Message WS reçu :', data);
-      } catch (err) {
-        console.error('❌ Erreur parsing message :', err);
-        ws.send(JSON.stringify({ type: 'error', message: 'Format invalide' }));
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('❌ Client WebSocket déconnecté');
-    });
-  });
+  new WebSocketService(fastify.server); // C'est suffisant
 
   console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
 });

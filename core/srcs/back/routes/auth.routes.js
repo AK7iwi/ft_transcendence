@@ -1,7 +1,7 @@
 const AuthService = require('../services/auth.service');
 const authSchema = require('../schemas/auth.schema');
 const jwt = require('jsonwebtoken');
-const dbApi = require('../db'); // ✅ C’est bien celui-ci qu’on utilise
+const dbApi = require('../db');
 const authenticate = require('../middleware/authenticate');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
@@ -68,7 +68,7 @@ fastify.post('/login', {
             const { username, password } = request.body;
             const user = await AuthService.loginUser(username, password);
 
-            // ✅ Générer un token JWT
+            // Générer token JWT
             const token = jwt.sign(
                 { id: user.id, username: user.username },
                 process.env.JWT_SECRET,
@@ -82,7 +82,7 @@ fastify.post('/login', {
     user: {
         id: user.id,
         username: user.username,
-        email: user.email   // ✅ Ajoute l'email ici
+        email: user.email
     }
 });
 
@@ -164,7 +164,7 @@ fastify.post('/2fa/setup', {
 
 
 fastify.post('/2fa/verify', {
-  preHandler: authenticate, // ⬅️ n'oublie pas ce middleware
+  preHandler: authenticate,
   handler: async (request, reply) => {
     try {
       const { token } = request.body;
@@ -184,7 +184,7 @@ fastify.post('/2fa/verify', {
         secret: row.two_factor_secret,
         encoding: 'base32',
         token,
-        window: 1 // permet une petite marge de décalage horaire
+        window: 1
         
       });
 

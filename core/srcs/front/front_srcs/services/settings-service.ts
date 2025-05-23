@@ -42,7 +42,6 @@ export class SettingsService {
   public updateSettings(newSettings: Partial<GameSettings>): void {
     this.settings = { ...this.settings, ...newSettings };
     localStorage.setItem('gameSettings', JSON.stringify(this.settings));
-    // Dispatch event to notify components of settings change
     window.dispatchEvent(new CustomEvent('settingsChanged', { detail: this.settings }));
   }
 } 

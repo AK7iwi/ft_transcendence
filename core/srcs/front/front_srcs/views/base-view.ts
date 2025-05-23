@@ -97,10 +97,17 @@ export class BaseView extends LitElement {
   `;
 
   render() {
-    return html`
-      <div style="width: 100vw; height: 100vh;">
-        <slot></slot>
-      </div>
-    `;
-  }
+  return html`
+    <div style="width: 100vw; height: 100vh;">
+      <nav style="padding: 1rem; background: var(--color-surface); border-bottom: 1px solid var(--color-border);">
+        <a href="/" style="margin-right: 1rem;">🏠 Accueil</a>
+        <a href="/profil" style="margin-right: 1rem;">👤 Profil</a>
+        <a href="/tournament" style="margin-right: 1rem;">🏆 Tournois</a>
+        <a href="/settings" style="margin-right: 1rem;">⚙️ Réglages</a>
+      </nav>
+      <slot></slot>
+    </div>
+  `;
+}
+
 } 

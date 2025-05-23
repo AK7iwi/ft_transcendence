@@ -64,7 +64,7 @@ static async updateUser(data: { username: string; newUsername?: string }) {
     throw new Error(json?.error || 'Update failed');
   }
 
-  return json.user; // ⬅️ retourne le nouvel utilisateur
+  return json.user; // retourne le nouvel utilisateur
 }
 
 static async updatePassword(username: string, newPassword: string) {
@@ -144,7 +144,7 @@ static async login(username: string, password: string) {
       throw new Error(json?.error || 'Login failed');
     }
 
-    // ✅ Store token + user
+    // Store token + user
     localStorage.setItem('token', json.token);
     localStorage.setItem('user', JSON.stringify({
   username: json.user.username,
@@ -169,7 +169,7 @@ static async setup2FA() {
   const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/2fa/setup`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({}) // ✅ Ajout d’un body vide pour éviter l’erreur Fastify
+    body: JSON.stringify({})
   });
 
   const json = await this.safeParseJSON(response);
@@ -217,7 +217,6 @@ static async uploadAvatar(file: File): Promise<string> {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`
-      // NE PAS inclure 'Content-Type': multipart est automatiquement défini par le navigateur
     },
     body: formData
   });
@@ -228,7 +227,7 @@ static async uploadAvatar(file: File): Promise<string> {
     throw new Error(json?.error || 'Failed to upload avatar');
   }
 
-  return json.avatarUrl; // 📸 Le chemin relatif du fichier, ex: "/avatars/avatar_1.png"
+  return json.avatarUrl;
 }
 
 

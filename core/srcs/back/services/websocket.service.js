@@ -1,154 +1,165 @@
 const WebSocket = require('ws');
-const fs = require('fs');
 
 class WebSocketService {
-    constructor(server) {
-        this.wss = new WebSocket.Server({
-            server, // The server is already HTTPS, so WSS will be used automatically
-            path: '/ws'
-        });
+  constructor(server) {
+    this.wss = new WebSocket.Server({
+      server,
+      path: '/ws'
+    });
 
-        this.clients = new Map();
-        this.setupWebSocket();
-    }
+    this.clients = new Map();
+    this.setupWebSocket();
+  }
 
-    setupWebSocket() {
-        this.wss.on('connection', (ws, req) => {
-            // Generate unique client ID
-            const clientId = this.generateClientId();
-            this.clients.set(clientId, ws);
+  setupWebSocket() {
+    this.wss.on('connection', (ws, req) => {
+      const clientId = this.generateClientId();
+      this.clients.set(clientId, ws);
 
-            // Handle client messages
-            ws.on('message', (message) => {
-                try {
-                    const data = JSON.parse(message);
-                    this.handleMessage(clientId, data);
-                } catch (error) {
-                    console.error('Error processing message:', error);
-                    ws.send(JSON.stringify({
-                        type: 'error',
-                        message: 'Invalid message format'
-                    }));
-                }
-            });
+      console.log(`✅ Client connected: ${clientId}`);
 
-            // Handle client disconnection
-            ws.on('close', () => {
-                this.clients.delete(clientId);
-                this.broadcastUserDisconnected(clientId);
-            });
+      ws.send(JSON.stringify({
+        type: 'connection',
+        clientId,
+        message: 'Connected to secure WebSocket server'
+      }));
 
-            // Send welcome message
-            ws.send(JSON.stringify({
-                type: 'connection',
-                clientId,
-                message: 'Connected to secure WebSocket server'
-            }));
-        });
-    }
-
-    generateClientId() {
-        return Math.random().toString(36).substring(2, 15);
-    }
-
-    handleMessage(clientId, data) {
-        switch (data.type) {
-            case 'game':
-                this.handleGameMessage(clientId, data);
-                break;
-            case 'chat':
-                this.handleChatMessage(clientId, data);
-                break;
-            case 'tournament':
-                this.handleTournamentMessage(clientId, data);
-                break;
-            default:
-                console.warn('Unknown message type:', data.type);
+      ws.on('message', (rawMessage) => {
+        try {
+          const data = JSON.parse(rawMessage);
+          this.handleMessage(clientId, data);
+        } catch (err) {
+          console.error('❌ Invalid JSON message:', err);
+          ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
         }
+      });
+
+      ws.on('close', () => {
+        console.log(`❌ Client disconnected: ${clientId}`);
+        this.clients.delete(clientId);
+        this.broadcast({
+          type: 'disconnection',
+          clientId,
+          message: 'User disconnected'
+        });
+      });
+
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
+
+      ws.isAlive = true;
+    });
+
+    // Heartbeat to prevent stale clients
+    setInterval(() => {
+      for (const [clientId, ws] of this.clients.entries()) {
+        if (!ws.isAlive) {
+          console.log(`⚠️ Terminating stale client: ${clientId}`);
+          ws.terminate();
+          this.clients.delete(clientId);
+          this.broadcastUserDisconnected(clientId);
+        } else {
+          ws.isAlive = false;
+          ws.ping();
+        }
+      }
+    }, 30000); // every 30 sec
+  }
+
+  generateClientId() {
+    return Math.random().toString(36).substring(2, 15);
+  }
+
+  handleMessage(clientId, data) {
+    switch (data.type) {
+      case 'chat':
+        this.handleChatMessage(clientId, data.payload);
+        break;
+      case 'game':
+        this.handleGameMessage(clientId, data.payload);
+        break;
+      case 'tournament':
+        this.handleTournamentMessage(clientId, data.payload);
+        break;
+      default:
+        console.warn(`⚠️ Unknown message type: ${data.type}`);
+        this.sendToClient(clientId, {
+          type: 'error',
+          message: `Unknown message type: ${data.type}`
+        });
+    }
+  }
+
+  handleChatMessage(clientId, payload) {
+    if (!payload || typeof payload.text !== 'string' || !payload.text.trim()) {
+      return this.sendToClient(clientId, {
+        type: 'error',
+        message: 'Invalid chat message'
+      });
     }
 
-handleGameMessage(clientId, data) {
-    const { action, ...payload } = data.payload || {};
+    const chatMessage = {
+      type: 'chat',
+      clientId,
+      timestamp: Date.now(),
+      data: {
+        text: payload.text.trim()
+      }
+    };
 
+    console.log(`[Chat] ${clientId}: ${payload.text.trim()}`);
+    this.broadcast(chatMessage);
+  }
+
+  handleGameMessage(clientId, payload) {
+    const { action, ...rest } = payload || {};
     switch (action) {
-        case 'pause':
-            console.log(`[WS] Game paused by ${clientId}`);
-            this.broadcast({
-                type: 'game',
-                data: { action: 'pause', by: clientId }
-            });
-            break;
-
-        case 'scoreUpdate':
-            console.log(`[WS] Score updated`, payload);
-            this.broadcast({
-                type: 'game',
-                data: {
-                    action: 'scoreUpdate',
-                    score: payload.score,
-                    by: clientId
-                }
-            });
-            break;
-
-        case 'join':
-            console.log(`[WS] Player joined: ${clientId}`);
-            this.broadcast({
-                type: 'game',
-                data: {
-                    action: 'playerJoined',
-                    clientId
-                }
-            });
-            break;
-
-        default:
-            console.warn(`[WS] Unknown game action:`, action);
+      case 'pause':
+        this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
+        break;
+      case 'scoreUpdate':
+        this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
+        break;
+      case 'join':
+        this.broadcast({ type: 'game', data: { action: 'playerJoined', clientId } });
+        break;
+      default:
+        console.warn(`[WS] Unknown game action:`, action);
     }
-}
-}
+  }
 
-    handleChatMessage(clientId, data) {
-        // Broadcast chat message to all clients
-        this.broadcast({
-            type: 'chat',
-            clientId,
-            data: data.payload
-        });
-    }
+  handleTournamentMessage(clientId, payload) {
+    this.broadcast({
+      type: 'tournament',
+      clientId,
+      data: payload
+    });
+  }
 
-    handleTournamentMessage(clientId, data) {
-        // Handle tournament-related messages
-        this.broadcast({
-            type: 'tournament',
-            clientId,
-            data: data.payload
-        });
+  broadcast(message) {
+    const msg = JSON.stringify(message);
+    for (const ws of this.clients.values()) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+      }
     }
+  }
 
-    broadcast(message) {
-        const messageStr = JSON.stringify(message);
-        this.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(messageStr);
-            }
-        });
+  sendToClient(clientId, message) {
+    const ws = this.clients.get(clientId);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
     }
+  }
 
-    broadcastUserDisconnected(clientId) {
-        this.broadcast({
-            type: 'disconnection',
-            clientId,
-            message: 'User disconnected'
-        });
-    }
-
-    sendToClient(clientId, message) {
-        const client = this.clients.get(clientId);
-        if (client && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
-    }
+  broadcastUserDisconnected(clientId) {
+    this.broadcast({
+      type: 'disconnection',
+      clientId,
+      message: 'User disconnected'
+    });
+  }
 }
 
-module.exports = WebSocketService; 
+module.exports = WebSocketService;

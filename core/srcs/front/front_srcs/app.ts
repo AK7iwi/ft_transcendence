@@ -2,8 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './styles.css';
+import './views/chat-view.ts';
 
-// app.ts
 import { WebSocketService } from './services/websocket-service';
 
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
@@ -124,6 +124,7 @@ export class PongApp extends LitElement {
       { path: '/', component: 'home-view' },
       { path: '/game', component: 'game-view' },
       { path: '/tournament', component: 'tournament-view' },
+      { path: '/chat', component: 'chat-view' },
       { path: '/settings', component: 'settings-view' },
       { path: '/profile', component: 'profile-view' },
       { path: '(.*)', redirect: '/' }
@@ -139,6 +140,7 @@ export class PongApp extends LitElement {
             <div class="nav-links">
               <a href="/game" class="nav-link">Game</a>
               <a href="/tournament" class="nav-link">Tournament</a>
+              <a href="/chat" class="nav-link">Chat</a>
               <a href="/settings" class="nav-link">Settings</a>
               <a href="/profile" class="nav-link">Profile</a>
             </div>

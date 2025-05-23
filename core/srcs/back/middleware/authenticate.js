@@ -11,7 +11,7 @@ module.exports = async function authenticate(request, reply) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    request.user = decoded; // ✅ Important
+    request.user = decoded; // Important
   } catch (err) {
     console.error('[AUTH MIDDLEWARE]', err.message);
     return reply.code(401).send({ error: 'Invalid token' });
