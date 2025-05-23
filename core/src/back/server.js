@@ -20,11 +20,6 @@ fastify.register(websocket);
 // Register routes
 fastify.register(routes);
 
-// Health check endpoint
-fastify.get('/health', async (request, reply) => {
-  return { status: 'ok' };
-});
-
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);
