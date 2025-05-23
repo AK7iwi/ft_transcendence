@@ -1,5 +1,5 @@
 all: 
-	docker compose -f ./srcs/docker-compose.yml build --no-cache && docker compose -f ./srcs/docker-compose.yml up -d
+	docker compose -f docker-compose.yml build --no-cache && docker compose -f docker-compose.yml up -d
 	@clear
 	
 logs:
@@ -7,10 +7,10 @@ logs:
 	docker logs front
 
 clean:
-	docker compose -f ./srcs/docker-compose.yml down;
+	docker compose -f docker-compose.yml down;
 
 fclean:
-	docker compose -f ./srcs/docker-compose.yml down -v;
+	docker compose -f docker-compose.yml down -v;
 	-docker system prune -af
 	@clear
 

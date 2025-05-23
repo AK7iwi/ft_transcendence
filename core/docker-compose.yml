@@ -3,20 +3,19 @@ services:
     container_name: back
     image: back
     build:
-      context: ./back
+      context: ./src/back
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
       - "3000:3000"
-    env_file: ../.env
+    env_file: .env
     volumes: 
       - sqlite_data:/data
-      - ./back/certs:/usr/src/app/certs
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:3000/health", "--insecure"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health", "--insecure"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -26,16 +25,14 @@ services:
     container_name: front
     image: front
     build:
-      context: ./front
+      context: ./src/front
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
     depends_on:
       back:
         condition: service_healthy
-    env_file: ../.env
-    volumes:
-      - ./back/certs:/usr/src/app/certs
+    env_file: .env
     networks:
       - transcendence
     restart: unless-stopped
