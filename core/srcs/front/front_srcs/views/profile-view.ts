@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
+import { API_BASE_URL } from '../config';
 
 
 @customElement('profile-view')
@@ -102,8 +103,9 @@ connectedCallback() {
       twoFactorEnabled: data.twoFactorEnabled,
     };
     this.avatarUrl = data.avatar?.startsWith('/')
-  ? `https://localhost:3000${data.avatar}`
+  ? `${API_BASE_URL}${data.avatar}`
   : data.avatar;
+
 
 
     this.isAuthenticated = true;

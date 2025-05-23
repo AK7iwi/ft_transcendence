@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './styles.css';
+
 // app.ts
 import { WebSocketService } from './services/websocket-service';
 

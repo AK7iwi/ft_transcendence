@@ -30,6 +30,7 @@ function initializeDatabase() {
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             two_factor_secret TEXT,
+            avatar TEXT,
             two_factor_enabled BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

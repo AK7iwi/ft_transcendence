@@ -6,6 +6,10 @@ const authenticate = require('../middleware/authenticate');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 
+
+console.log('[INIT] auth.routes.js loaded');
+
+
 async function authRoutes(fastify, options) {
   fastify.get('/me', {
     preHandler: authenticate,
@@ -32,6 +36,28 @@ async function authRoutes(fastify, options) {
     }
   });
 
+fastify.post('/register', {
+  schema: authSchema.register,
+  handler: async (request, reply) => {
+    try {
+      const { username, email, password } = request.body;
+
+      const userId = await AuthService.registerUser(username, email, password);
+
+      return reply.code(200).send({
+        success: true,
+        message: 'User registered successfully',
+        userId
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(400).send({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+});
 
 
 // Login user

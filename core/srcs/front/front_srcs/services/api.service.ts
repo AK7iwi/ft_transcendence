@@ -1,11 +1,10 @@
+import { API_BASE_URL } from '../config';
+
 export default class ApiService {
     private static readonly MAX_RETRIES = 3;
     private static readonly RETRY_DELAY_MS = 1000;
     private static readonly TIMEOUT_MS = 5000;
-    private static readonly baseUrl = 'https://localhost:3000';
-
-
-
+    private static readonly baseUrl = API_BASE_URL;
     
 private static getFetchOptions(options: RequestInit): RequestInit {
   const token = localStorage.getItem('token');

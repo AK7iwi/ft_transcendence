@@ -13,6 +13,7 @@ const xss = require('xss');
 const validator = require('validator');
 const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
+const authRoutes = require('./routes/auth.routes');
 
 // Créer Fastify
 const fastify = fastifyModule({
@@ -28,6 +29,12 @@ fastify.register(fastifyStatic, {
   prefix: '/',
   decorateReply: false // ⚠️ important pour compatibilité Fastify v4
 });
+
+
+// Auth Routes
+fastify.register(require('./routes/auth.routes'), { prefix: '/auth' });
+
+
 
 // Route manuelle pour servir les avatars (fallback sans sendFile)
 fastify.get('/avatars/:filename', async (req, reply) => {
@@ -53,10 +60,6 @@ fastify.decorate('authenticate', require('./middleware/authenticate'));
 
 
 
-fastify.register(require('./routes/avatar.routes'), { prefix: '/user' });
-
-
-
 // Base de données SQLite
 const db = new Database('/data/database.sqlite');
 
@@ -65,9 +68,6 @@ fastify.register(require('@fastify/cors'), {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
-
-// Auth Routes
-fastify.register(require('./routes/auth.routes'), { prefix: '/auth' });
 
 
 // Route healthcheck

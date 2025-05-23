@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-
-function authenticate(request, reply, done) {
+module.exports = async function authenticate(request, reply) {
   const authHeader = request.headers.authorization;
 
-  if (!authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return reply.code(401).send({ error: 'Authorization header missing' });
   }
 
@@ -12,11 +11,9 @@ function authenticate(request, reply, done) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    request.user = decoded;
-    done();
+    request.user = decoded; // ✅ Important
   } catch (err) {
+    console.error('[AUTH MIDDLEWARE]', err.message);
     return reply.code(401).send({ error: 'Invalid token' });
   }
-}
-
-module.exports = authenticate;
+};
