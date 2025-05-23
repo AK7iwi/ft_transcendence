@@ -33,6 +33,8 @@ fastify.register(fastifyStatic, {
   decorateReply: false // important pour compatibilité Fastify v4
 });
 
+fastify.register(fastifyMultipart);
+
 
 // Auth Routes
 fastify.register(require('./routes/auth.routes'), { prefix: '/auth' });
@@ -53,7 +55,6 @@ fastify.get('/avatars/:filename', async (req, reply) => {
   }
 });
 
-fastify.register(fastifyMultipart);
 
 //avatar de merde
 fastify.decorate('authenticate', require('./middleware/authenticate'));

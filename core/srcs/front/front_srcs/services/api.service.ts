@@ -211,10 +211,10 @@ static async uploadAvatar(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${this.baseUrl}/avatar/upload-avatar`, {
+  const response = await fetch(`${this.baseUrl}/auth/upload-avatar`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}` // 👈 important pour l'auth
     },
     body: formData
   });
@@ -226,6 +226,7 @@ static async uploadAvatar(file: File): Promise<string> {
   const data = await response.json();
   return data.avatarUrl;
 }
+
 
 
 
