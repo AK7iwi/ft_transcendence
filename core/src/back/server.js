@@ -2,7 +2,7 @@ require('dotenv').config();
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-const routes = require('./src/routes/routes');
+const routes = require('./src/routes/basic.routes');
 require('./src/database/schema');
 
 // Initialize Fastify
