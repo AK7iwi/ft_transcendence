@@ -1,9 +1,12 @@
-require('dotenv').config();
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-const routes = require('./src/routes/basic.routes');
-require('./src/database/schema');
+
+
+//Load environment variables
+require('dotenv').config();
+//Initialize database schema
+require('./src/database/db.schema'); 
 
 // Initialize Fastify
 const fastify = fastifyModule({
@@ -16,12 +19,21 @@ fastify.register(cors, {
 });
 
 fastify.register(websocket);
-fastify.register(routes);
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);
   reply.status(500).send({ error: 'Internal Server Error' });
+});
+
+//Test route
+fastify.get('/', async (request, reply) => {
+  return { message: 'Server is running' };
+});
+
+// Health check endpoint
+fastify.get('/health', async (request, reply) => {
+  return { status: 'Server is healthy' };
 });
 
 // Start server

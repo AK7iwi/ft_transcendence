@@ -1,4 +1,4 @@
-const db = require('./index');
+const db = require('./db.index');
 
 // Create users table
 db.exec(`
