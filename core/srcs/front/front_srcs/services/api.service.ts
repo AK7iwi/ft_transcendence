@@ -208,12 +208,10 @@ static logout() {
 
 static async uploadAvatar(file: File): Promise<string> {
   const token = localStorage.getItem('token');
-  if (!token) throw new Error('Not authenticated');
-
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${this.baseUrl}/user/upload-avatar`, {
+  const response = await fetch(`${this.baseUrl}/avatar/upload-avatar`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`
@@ -221,14 +219,14 @@ static async uploadAvatar(file: File): Promise<string> {
     body: formData
   });
 
-  const json = await this.safeParseJSON(response);
-
   if (!response.ok) {
-    throw new Error(json?.error || 'Failed to upload avatar');
+    throw new Error('Avatar upload failed');
   }
 
-  return json.avatarUrl;
+  const data = await response.json();
+  return data.avatarUrl;
 }
+
 
 
 }

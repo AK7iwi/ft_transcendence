@@ -18,7 +18,8 @@ async function avatarRoutes(fastify, options) {
 
       const ext = path.extname(file.filename);
       const fileName = `avatar_${userId}${ext}`;
-      const filePath = path.join(__dirname, '..', '..', 'public', 'avatars', fileName);
+      const filePath = path.join(__dirname, '..', 'public', 'avatars', fileName);
+
 
       await pump(file.file, fs.createWriteStream(filePath));
 

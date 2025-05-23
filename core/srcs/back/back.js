@@ -15,6 +15,7 @@ const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
 const authRoutes = require('./routes/auth.routes');
 const WebSocketService = require('./services/websocket.service');
+const avatarRoutes = require('./routes/avatar.routes');
 
 
 // Créer Fastify
@@ -35,7 +36,7 @@ fastify.register(fastifyStatic, {
 
 // Auth Routes
 fastify.register(require('./routes/auth.routes'), { prefix: '/auth' });
-
+fastify.register(avatarRoutes, { prefix: '/auth' });
 
 
 // Route manuelle pour servir les avatars (fallback sans sendFile)
