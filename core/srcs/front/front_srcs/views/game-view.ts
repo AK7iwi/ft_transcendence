@@ -95,19 +95,22 @@ export class GameView extends LitElement {
 
   @state()
   private isPaused = false;
-
+  
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private animationFrameId: number = 0;
   private gameLoop: boolean = false;
   private settingsService: SettingsService;
   private settings: GameSettings;
-
+  
+  private socket: WebSocket | null = null;
+  private playerRole: 'host' | 'guest' | null = null;
+  
   // Game objects
   private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
-
+  
   constructor() {
     super();
     this.settingsService = SettingsService.getInstance();
@@ -115,6 +118,62 @@ export class GameView extends LitElement {
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
   }
 
+  private initWebSocket() {
+    this.socket = new WebSocket('wss://localhost:3000/ws');
+    this.socket.onopen = () => {
+      this.sendMessage('join');
+    };
+    this.socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      this.handleMessage(message);
+    };
+    this.socket.onclose = () => {
+      setTimeout(() => this.initWebSocket(), 1000);
+    };
+    this.socket.onerror = () => {
+      this.socket?.close();
+    };
+  }
+
+  private sendMessage(action: string, payload: Record<string, any> = {}) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({
+        type: 'game',
+        payload: { action, ...payload },
+      }));
+    }
+  }
+
+  private handleMessage(message: any) {
+    console.log('📩 Received message:', message);
+    if (message.type === 'game') {
+      const data = message.data;
+      switch (data.action) {
+        case 'playerJoined':
+          this.playerRole = data.role;
+          console.log(`🎮 You are the ${this.playerRole}`);
+          break;
+        case 'waiting':
+          console.log(data.message);
+          break;
+        case 'startGame':
+          console.log("🚀 Starting game");
+          this.isInitialCountdown = true;
+          this.startInitialCountdown();
+          break;
+        case 'movePaddle':
+          if (this.playerRole === 'host')
+            this.paddle2.y = data.y;
+          else
+            this.paddle1.y = data.y;
+          break;
+        case 'ballUpdate':
+          if (this.playerRole === 'guest') this.ball = data;
+          break;
+      }
+    }
+  }
+  
   private updateGameSettings() {
     this.paddle1.speed = this.settings.paddleSpeed;
     this.paddle2.speed = this.settings.paddleSpeed;
@@ -189,13 +248,20 @@ export class GameView extends LitElement {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
+    console.log("🔑 Key pressed:", e.key, "Role:", this.playerRole);
+    // if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
+    if ((this.playerRole === 'host' && (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's')) ||
+        (this.playerRole === 'guest' && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))) {
+      const direction = (e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') ? -this.paddle1.speed : this.paddle1.speed;
+      this.sendMessage('movePaddle', { y: (this.playerRole === 'host' ? this.paddle1.y : this.paddle2.y) + direction });
+    }
     if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
       return;
     }
-    if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
-      this.isInitialCountdown = true;
-      this.startInitialCountdown();
+    if (e.key === ' ' && !this.isGameStarted && !this.isGameOver && this.playerRole === 'host') {
+      console.log('🟢 Host triggering startGame');
+      this.sendMessage('startGame'); // M: sends msg to the server to start the game
       return;
     }
     if (e.key === ' ' && this.isGameOver) {
@@ -250,6 +316,12 @@ export class GameView extends LitElement {
 
   private updateGame() {
     if (!this.canvas) return;
+    
+    if (this.playerRole === 'host' && this.isBallActive && !this.isGameOver) {
+      this.ball.x += this.ball.dx;
+      this.ball.y += this.ball.dy;
+      this.sendMessage('ballUpdate', this.ball);
+    }
 
     // Move paddles
     this.paddle1.y += this.paddle1.dy;
@@ -419,6 +491,7 @@ export class GameView extends LitElement {
       this.ctx = this.canvas.getContext('2d');
       this.initGame();
       this.setupEventListeners();
+      this.initWebSocket();
       this.draw();
       window.addEventListener('resize', this.handleResize);
     }

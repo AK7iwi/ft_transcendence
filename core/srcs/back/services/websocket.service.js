@@ -7,6 +7,9 @@ class WebSocketService {
       path: '/ws'
     });
 
+    this.waitingClient = null; // M: stores a client waiting for a match
+    this.clientRooms = new Map(); // M: clientId -> roomId
+    this.rooms = new Map(); // M: roomId -> [clientId1, clientId2]
     this.clients = new Map();
     this.setupWebSocket();
   }
@@ -71,6 +74,32 @@ class WebSocketService {
     return Math.random().toString(36).substring(2, 15);
   }
 
+  handlePlayerJoin(clientId) {
+    if (this.waitingClient === null) {
+      this.waitingClient = clientId;
+      this.sendToClient(clientId, {
+        type: 'game',
+        data: { action: 'waiting', message: 'Waiting for another player...' }
+      });
+    } else {
+      const roomId = `room-${this.waitingClient}-${clientId}`;
+      this.rooms.set(roomId, [this.waitingClient, clientId]);
+      this.clientRooms.set(this.waitingClient, roomId);
+      this.clientRooms.set(clientId, roomId);
+
+      this.sendToClient(this.waitingClient, {
+        type: 'game',
+        data: { action: 'playerJoined', role: 'host', opponent: clientId }
+      });
+      this.sendToClient(clientId, {
+        type: 'game',
+        data: { action: 'playerJoined', role: 'guest', opponent: this.waitingClient }
+      });
+
+      this.waitingClient = null;
+    }
+  }
+
   handleMessage(clientId, data) {
     switch (data.type) {
       case 'chat':
@@ -122,7 +151,24 @@ class WebSocketService {
         this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
         break;
       case 'join':
-        this.broadcast({ type: 'game', data: { action: 'playerJoined', clientId } });
+        // this.broadcast({ type: 'game', data: { action: 'playerJoined', clientId } });
+        this.handlePlayerJoin(clientId);
+        break;
+      case 'startGame':
+        this.broadcast({
+          type: 'game',
+          data: {action: 'startGame'}
+        });
+        break;
+      case 'movePaddle':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'movePaddle',
+            y: rest.y,
+            clientId
+          }
+        });
         break;
       default:
         console.warn(`[WS] Unknown game action:`, action);
