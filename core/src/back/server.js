@@ -1,7 +1,7 @@
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-
+const authRoutes = require('./src/auth/auth.routes');
 
 //Load environment variables
 require('dotenv').config();
@@ -9,16 +9,16 @@ require('dotenv').config();
 require('./src/database/db.schema'); 
 
 // Initialize Fastify
-const fastify = fastifyModule({
-  logger: true
-});
+const fastify = fastifyModule({ logger: true });
 
 // Register plugins
-fastify.register(cors, {
-  origin: true // Allow all origins in development
-});
+fastify.register(cors, { origin: true });
 
+// Register websocket
 fastify.register(websocket);
+
+// Register routes
+fastify.register(authRoutes, { prefix: '/auth' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
@@ -27,14 +27,10 @@ fastify.setErrorHandler((error, request, reply) => {
 });
 
 //Test route
-fastify.get('/', async (request, reply) => {
-  return { message: 'Server is running' };
-});
+fastify.get('/', async (request, reply) => { return { message: 'Server is running' }; });
 
 // Health check endpoint
-fastify.get('/health', async (request, reply) => {
-  return { status: 'Server is healthy' };
-});
+fastify.get('/health', async (request, reply) => { return { status: 'Server is healthy' }; });
 
 // Start server
 const start = async () => {
