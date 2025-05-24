@@ -82,6 +82,9 @@ export class ProfileView extends LitElement {
   @state() private code2FA = '';
   @state() private isAuthenticated = false;
   @state() private avatarUrl: string = '';
+  @state() private successMessage: string = '';
+  @state() private errorMessage: string = '';
+
 
   connectedCallback() {
     super.connectedCallback();
@@ -116,6 +119,22 @@ export class ProfileView extends LitElement {
       });
   }
 
+  private showMessage(type: 'success' | 'error', message: string) {
+  if (type === 'success') {
+    this.successMessage = message;
+    this.errorMessage = '';
+  } else {
+    this.errorMessage = message;
+    this.successMessage = '';
+  }
+
+  setTimeout(() => {
+    this.successMessage = '';
+    this.errorMessage = '';
+  }, 3000);
+}
+
+
   private async updateUsername() {
     try {
       const payload = {
@@ -128,26 +147,26 @@ export class ProfileView extends LitElement {
       this.user.username = updatedUser.username;
       localStorage.setItem('user', JSON.stringify(this.user));
       this.newUsername = '';
-      alert('Username updated successfully');
+      this.showMessage('success','Username updated successfully');
     } catch (err) {
       console.error('Update username failed:', err);
-      alert('Failed to update username');
+      this.showMessage('error','Failed to update username');
     }
   }
 
   private async changePassword() {
     if (this.newPassword !== this.confirmPassword) {
-      alert('Passwords do not match.');
+      this.showMessage('error','Passwords do not match.');
       return;
     }
 
     try {
       await ApiService.updatePassword(this.user.username, this.newPassword);
-      alert('Password updated successfully');
+      this.showMessage('success','Password updated successfully');
       this.newPassword = '';
       this.confirmPassword = '';
     } catch (err) {
-      alert('Failed to update password');
+      this.showMessage('error','Failed to update password');
     }
   }
 
@@ -156,7 +175,7 @@ export class ProfileView extends LitElement {
       const res = await ApiService.setup2FA();
       this.qrCode = res.qrCode;
     } catch (err) {
-      alert('Erreur lors de la génération du QR code');
+      this.showMessage('error','Erreur lors de la génération du QR code');
       console.error(err);
     }
   }
@@ -166,13 +185,13 @@ export class ProfileView extends LitElement {
     try {
       await ApiService.verify2FASetup(this.code2FA);
 
-      alert('2FA activée avec succès');
+      this.showMessage('success','2FA activée avec succès');
       this.user.twoFactorEnabled = true;
       localStorage.setItem('user', JSON.stringify(this.user));
       this.qrCode = '';
       this.code2FA = '';
     } catch (err) {
-      alert('Échec de l’activation 2FA');
+      this.showMessage('error','Échec de l’activation 2FA');
       console.error(err);
     }
   }
@@ -192,10 +211,9 @@ export class ProfileView extends LitElement {
       const avatar = await ApiService.uploadAvatar(file);
       this.avatarUrl = avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : avatar;
       this.user.avatar = avatar;
-      alert('✅ Avatar mis à jour !');
+      this.showMessage('success','Avatar mis à jour !');
     } catch (err) {
-      console.error('Avatar upload failed:', err);
-      alert('❌ Échec du téléchargement de l’avatar');
+      this.showMessage('error','Échec du téléchargement de l’avatar');
     }
   }
 
@@ -203,6 +221,12 @@ export class ProfileView extends LitElement {
     return html`
       <div class="profile-container">
         <h2>My Profile</h2>
+${this.successMessage ? html`
+  <div style="color: green; font-weight: bold; margin-bottom: 1rem;">${this.successMessage}</div>
+` : ''}
+${this.errorMessage ? html`
+  <div style="color: red; font-weight: bold; margin-bottom: 1rem;">${this.errorMessage}</div>
+` : ''}
 
         ${!this.isAuthenticated ? html`
           <p style="color: var(--color-error); font-weight: bold; margin-top: 2rem;">

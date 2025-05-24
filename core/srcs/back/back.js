@@ -70,35 +70,21 @@ fastify.register(require('@fastify/cors'), {
 });
 
 fastify.setErrorHandler((error, request, reply) => {
-  // Gestion des erreurs de validation Fastify (ex: schéma JSON)
+  // Laisse les erreurs de validation retourner le message défini dans le schéma
   if (error.validation) {
-    // Tu peux ici personnaliser selon le champ
-    const field = error.validation[0]?.instancePath || '';
-    const keyword = error.validation[0]?.keyword || '';
-    let message = 'Invalid input.';
-
-    if (field.includes('username') && keyword === 'minLength') {
-      message = 'Username must be at least 3 characters long.';
-    } else if (field.includes('password') && keyword === 'minLength') {
-      message = 'Password must be at least 8 characters long.';
-    } else if (error.message) {
-      message = error.message;
-    }
-
     return reply.code(400).send({
       success: false,
-      error: message
+      error: error.message
     });
   }
 
-  // Autres erreurs (ex: internes, serveur, etc.)
+  // Gestion des erreurs internes (ex : serveur)
   fastify.log.error(error);
   return reply.code(500).send({
     success: false,
     error: 'Internal Server Error'
   });
 });
-
 
 
 // Route healthcheck

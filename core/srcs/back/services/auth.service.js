@@ -90,13 +90,6 @@ const user = stmt.get(username);
         throw new Error('Invalid password');
         }
 
-        // Génère un JWT
-        const token = jwt.sign(
-        { id: user.id, username: user.username },
-        process.env.JWT_SECRET || 'your-secret',
-        { expiresIn: '1h' }
-        );
-
         //Renvoie le profil + token
         return {
   id: user.id,
