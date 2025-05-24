@@ -7,6 +7,7 @@ db.exec(`
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         avatar TEXT,
+        two_factor_enabled BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
