@@ -2,17 +2,13 @@ const authSchema = {
     register: {
         body: {
             type: 'object',
-            required: ['username', 'email', 'password'],
+            required: ['username', 'password'],
             properties: {
                 username: {
                     type: 'string',
                     minLength: 3,
                     maxLength: 30,
                     pattern: '^[a-zA-Z0-9_-]+$'
-                },
-                email: {
-                    type: 'string',
-                    format: 'email'
                 },
                 password: {
                     type: 'string',
