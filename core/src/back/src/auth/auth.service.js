@@ -1,26 +1,32 @@
 const bcrypt = require('bcrypt');
 const db = require('../database/db.index');
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('../security/jwt');
 
 class AuthService {
+    // Validation constants
+    static USERNAME_MIN_LENGTH = 3;
+    static USERNAME_MAX_LENGTH = 20;
+    static PASSWORD_MIN_LENGTH = 8;
+    static USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
+    static PASSWORD_PATTERN = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
 
     // Input validation
     static validateUserInput(username, password) {
         const errors = [];
         
         // Username validation
-        if (!username || username.length < 3 || username.length > 20) {
-            errors.push('Username must be between 3 and 20 characters');
+        if (!username || username.length < this.USERNAME_MIN_LENGTH || username.length > this.USERNAME_MAX_LENGTH) {
+            errors.push(`Username must be between ${this.USERNAME_MIN_LENGTH} and ${this.USERNAME_MAX_LENGTH} characters`);
         }
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        if (!this.USERNAME_PATTERN.test(username)) {
             errors.push('Username can only contain letters, numbers, and underscores');
         }
 
         // Password validation
-        if (!password || password.length < 8) {
-            errors.push('Password must be at least 8 characters long');
+        if (!password || password.length < this.PASSWORD_MIN_LENGTH) {
+            errors.push(`Password must be at least ${this.PASSWORD_MIN_LENGTH} characters long`);
         }
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        if (!this.PASSWORD_PATTERN.test(password)) {
             errors.push('Password must contain at least one uppercase letter, one lowercase letter, and one number');
         }
 
@@ -52,7 +58,7 @@ class AuthService {
             // Use parameterized queries to prevent SQL injection
             const stmt = db.prepare(`
                 INSERT INTO users (username, password)
-                VALUES (?, ?, ?)
+                VALUES (?, ?)
             `);
             
             const result = stmt.run(username, hashedPassword);
@@ -89,12 +95,11 @@ class AuthService {
                 throw new Error('Invalid password');
             }
 
-            // Generate JWT
-            const token = jwt.sign(
-                { id: user.id, username: user.username },
-                process.env.JWT_SECRET || 'your-secret',
-                { expiresIn: '1h' }
-            );
+            // Generate JWT using the imported function
+            const token = generateToken({
+                id: user.id,
+                username: user.username
+            });
 
             // Return profile + token
             return {
