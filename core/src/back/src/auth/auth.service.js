@@ -84,13 +84,11 @@ class AuthService {
             `);
 
             const user = stmt.get(username);
-
             if (!user) {
                 throw new Error('User not found');
             }
 
             const isValid = await this.verifyPassword(password, user.password);
-
             if (!isValid) {
                 throw new Error('Invalid password');
             }
