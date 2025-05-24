@@ -1,7 +1,7 @@
 const AuthService = require('./auth.service');
 const authSchema = require('./auth.schema');
-const jwt = require('../security/jwt');
-const securityMiddleware = require('../security/sanityze');
+const JWT = require('../security/jwt');
+const Security = require('../security/sanityze');
 const dbApi = require('../database/db.index');
 const UserDB = require('../database/db.user');
 const speakeasy = require('speakeasy');
@@ -11,7 +11,7 @@ async function authRoutes(fastify, options) {
   
   fastify.post('/register', {
     schema: authSchema.register,
-    preHandler: [sqlInjectionProtection, xssProtection],
+    preHandler: Security.securityMiddleware,
     handler: async (request, reply) => {
       try {
         const { username, password } = request.body;
@@ -32,3 +32,5 @@ async function authRoutes(fastify, options) {
     }
   });
 }
+
+module.exports = authRoutes;

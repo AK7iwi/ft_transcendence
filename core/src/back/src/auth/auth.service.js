@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const db = require('../database/db.index');
-const { generateToken } = require('../security/jwt');
+const JWT = require('../security/jwt');
 
 class AuthService {
     // Validation constants
@@ -35,12 +35,18 @@ class AuthService {
 
     // Hash password with bcrypt
     static async hashPassword(password) {
+        if (!password) {
+            throw new Error('Password is required for hashing');
+        }
         const saltRounds = 10;
         return await bcrypt.hash(password, saltRounds);
     }
 
     // Verify password against hash
     static async verifyPassword(password, hash) {
+        if (!password || !hash) {
+            throw new Error('Both password and hash are required for verification');
+        }
         return await bcrypt.compare(password, hash);
     }
 
@@ -93,8 +99,8 @@ class AuthService {
                 throw new Error('Invalid password');
             }
 
-            // Generate JWT using the imported function
-            const token = generateToken({
+            // Generate JWT using the JWT class
+            const token = JWT.generateToken({
                 id: user.id,
                 username: user.username
             });
