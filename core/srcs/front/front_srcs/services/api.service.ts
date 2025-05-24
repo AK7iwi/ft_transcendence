@@ -132,36 +132,30 @@ static async updatePassword(username: string, newPassword: string) {
     }
 
 static async login(username: string, password: string) {
-  try {
-    const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/login`, {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    });
+  const res = await fetch(`${this.baseUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
 
-    const json = await this.safeParseJSON(response);
+  if (!res.ok) throw new Error('Login failed');
+  const json = await res.json();
 
-    if (!response.ok) {
-      throw new Error(json?.error || 'Login failed');
-    }
-
-    // Store token + user
-    localStorage.setItem('token', json.token);
-    localStorage.setItem('user', JSON.stringify({
-  username: json.user.username,
-}));
-
-
+  if (json.twofa) {
+    // 2FA est requis → stocke temporairement en sessionStorage
+    sessionStorage.setItem('pendingUser', JSON.stringify({
+      id: json.userId,
+      username: json.username
+    }));
     return json;
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-    throw new Error('An unexpected error occurred');
   }
+
+  // Login classique
+  localStorage.setItem('token', json.token);
+  localStorage.setItem('user', JSON.stringify(json.user));
+  return json;
 }
+
 
 static async setup2FA() {
   const token = localStorage.getItem('token');
@@ -180,10 +174,7 @@ static async setup2FA() {
   return json;
 }
 
-
-
-
-static async verify2FA(token2FA: string) {
+static async verify2FASetup(code: string) {
   const token = localStorage.getItem('token');
   const res = await fetch(`${this.baseUrl}/auth/2fa/verify`, {
     method: 'POST',
@@ -191,11 +182,35 @@ static async verify2FA(token2FA: string) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ token: token2FA })
+    body: JSON.stringify({ token: code })
   });
+
   if (!res.ok) throw new Error('Échec vérification 2FA');
   return res.json();
 }
+
+
+static async verify2FA(code: string) {
+  const pending = JSON.parse(sessionStorage.getItem('pendingUser') || '{}');
+  if (!pending.id) throw new Error('Missing pending session');
+
+  const res = await fetch(`${this.baseUrl}/auth/2fa/verify-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: pending.id, token: code }),
+  });
+
+  if (!res.ok) throw new Error('Échec de la vérification 2FA');
+
+  const json = await res.json();
+
+  localStorage.setItem('token', json.token);
+  localStorage.setItem('user', JSON.stringify(json.user));
+  sessionStorage.removeItem('pendingUser');
+
+  return json;
+}
+
 
 
 

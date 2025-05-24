@@ -105,6 +105,10 @@ export class ProfileView extends LitElement {
           : `${API_BASE_URL}/avatars/default.png`;
 
         this.isAuthenticated = true;
+        if (this.user.twoFactorEnabled) {
+        this.qrCode = '';
+        this.code2FA = '';
+        }
       })
       .catch(err => {
         console.error('Failed to load profile:', err);
@@ -160,7 +164,8 @@ export class ProfileView extends LitElement {
   private async handleVerify2FA(e: Event) {
     e.preventDefault();
     try {
-      await ApiService.verify2FA(this.code2FA);
+      await ApiService.verify2FASetup(this.code2FA);
+
       alert('2FA activée avec succès');
       this.user.twoFactorEnabled = true;
       localStorage.setItem('user', JSON.stringify(this.user));
@@ -234,24 +239,25 @@ export class ProfileView extends LitElement {
           </div>
           <button class="button" @click=${this.changePassword}>Update Password</button>
 
-          ${!this.user.twoFactorEnabled ? html`
-            <div style="margin-top: 2rem;">
-              <h3>Two-Factor Authentication (2FA)</h3>
-              ${this.qrCode ? html`
-                <p>Scanne ce code QR avec Authy :</p>
-                <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
-                <form @submit=${this.handleVerify2FA}>
-                  <label>Code 2FA :</label>
-                  <input type="text" .value=${this.code2FA} @input=${(e: any) => this.code2FA = e.target.value} />
-                  <button type="submit">Vérifier</button>
-                </form>
-              ` : html`
-                <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
-              `}
-            </div>
-          ` : html`
-            <p>✅ 2FA activée</p>
-          `}
+          <h3 style="margin-top:2rem;">Two-Factor Authentication (2FA)</h3>
+${this.user.twoFactorEnabled ? html`
+  <p>✅ 2FA activée</p>
+` : this.qrCode ? html`
+  <div style="margin-top: 2rem;">
+    <p>Scanne ce code QR avec Authy :</p>
+    <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
+    <form @submit=${this.handleVerify2FA}>
+      <label>Code 2FA :</label>
+      <input type="text" .value=${this.code2FA} @input=${(e: any) => this.code2FA = e.target.value} />
+      <button type="submit">Vérifier</button>
+    </form>
+  </div>
+` : html`
+  <div style="margin-top: 2rem;">
+    <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
+  </div>
+`}
+
 
           <button class="button" @click=${this.logout} style="margin-top: 3rem; background: #e74c3c;">
             Log Out

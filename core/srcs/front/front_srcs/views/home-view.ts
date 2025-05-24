@@ -132,6 +132,8 @@ export class HomeView extends LitElement {
   @state() private signUpError = '';
   @state() private isLoading = false;
   @state() private isAuthenticated = false;
+  @state() private code2FA = '';
+  @state() private show2FAForm = false;
 
 connectedCallback() {
   super.connectedCallback();
@@ -155,7 +157,7 @@ connectedCallback() {
     });
 }
 
-  private async handleSignIn(e: Event) {
+private async handleSignIn(e: Event) {
     e.preventDefault();
     this.signInError = '';
     this.isLoading = true;
@@ -165,16 +167,34 @@ connectedCallback() {
       if (!username || !password) throw new Error('Please fill in all fields');
 
       const response = await ApiService.login(username, password);
-      console.log('Login successful:', response);
-     localStorage.setItem('user', JSON.stringify({ username: response.username }));
-      this.resetForms();
-      window.location.href = '/profile';
+      console.log('Login response:', response);
+
+      if (response.twofa) {
+        this.resetForms();
+        this.show2FAForm = true;
+      } else {
+        localStorage.setItem('user', JSON.stringify({ username: response.user.username }));
+        this.resetForms();
+        window.location.href = '/profile';
+      }
+
     } catch (error) {
       this.signInError = error instanceof Error ? error.message : 'Login failed';
     } finally {
       this.isLoading = false;
     }
   }
+
+  private async handle2FASubmit(e: Event) {
+    e.preventDefault();
+    try {
+      const result = await ApiService.verify2FA(this.code2FA);
+      window.location.href = '/profile';
+    } catch (err: any) {
+      this.signInError = err.message || '2FA failed';
+    }
+  }
+
 
   private async handleSignUp(e: Event) {
     e.preventDefault();
@@ -215,13 +235,23 @@ connectedCallback() {
     return errors;
   }
 
-  render() {
+render() {
     return html`
       <div class="main-container">
         <h1 class="welcome-title">Welcome to Pong</h1>
 
-        ${this.isAuthenticated ? html`
-          <p>You are already logged in. <a href="/profile">Go to your profile</a></p>
+        ${this.show2FAForm ? html`
+          <div class="auth-block">
+            <h2 class="auth-title">Two-Factor Verification</h2>
+            <form @submit=${this.handle2FASubmit}>
+              <div class="form-group">
+                <label class="form-label">Enter 2FA Code</label>
+                <input type="text" class="form-input" .value=${this.code2FA} @input=${(e: Event) => this.code2FA = (e.target as HTMLInputElement).value} required />
+              </div>
+              ${this.signInError ? html`<div class="error-message">${this.signInError}</div>` : ''}
+              <button type="submit" class="submit-button">Verify</button>
+            </form>
+          </div>
         ` : html`
           <div class="auth-container">
             <div class="auth-block">

@@ -73,13 +73,12 @@ class AuthService {
         }
 
         const stmt = db.prepare(`
-  SELECT id, username, password_hash
+  SELECT id, username, password_hash, two_factor_enabled
   FROM users
   WHERE username = ?
 `);
+const user = stmt.get(username);
 
-
-        const user = stmt.get(username);
 
         if (!user) {
         throw new Error('User not found');
@@ -102,7 +101,9 @@ class AuthService {
         return {
   id: user.id,
   username: user.username,
+  twoFactorEnabled: !!user.two_factor_enabled
 };
+
 
     } catch (error) {
         console.error('Login error:', error);

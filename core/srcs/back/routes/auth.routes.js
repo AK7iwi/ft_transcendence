@@ -5,19 +5,17 @@ const dbApi = require('../db');
 const authenticate = require('../middleware/authenticate');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
-
+const { sqlInjectionProtection, xssProtection } = require('../middleware/security.middleware');
 
 console.log('[INIT] auth.routes.js loaded');
 
-
 async function authRoutes(fastify, options) {
   fastify.get('/me', {
-    preHandler: authenticate,
+    preHandler: [authenticate],
     handler: async (req, reply) => {
       try {
         const id = req.user.id;
-
-        const user = dbApi.db.prepare('SELECT id, username, avatar FROM users WHERE id = ?').get(id);
+        const user = dbApi.db.prepare('SELECT id, username, avatar, two_factor_enabled FROM users WHERE id = ?').get(id);
 
         if (!user) {
           return reply.status(404).send({ error: 'Utilisateur non trouvé' });
@@ -26,7 +24,8 @@ async function authRoutes(fastify, options) {
         return {
           id: user.id,
           username: user.username,
-          avatar: user.avatar || '/avatars/default.png'
+          avatar: user.avatar || '/avatars/default.png',
+          twoFactorEnabled: !!user.two_factor_enabled
         };
       } catch (err) {
         console.error('[ERROR] /auth/me failed:', err);
@@ -35,22 +34,67 @@ async function authRoutes(fastify, options) {
     }
   });
 
-fastify.post('/register', {
-  schema: authSchema.register,
+  fastify.post('/register', {
+    schema: authSchema.register,
+    preHandler: [sqlInjectionProtection, xssProtection],
+    handler: async (request, reply) => {
+      try {
+        const { username, password } = request.body;
+        const userId = await AuthService.registerUser(username, password);
+
+        return reply.code(200).send({
+          success: true,
+          message: 'User registered successfully',
+          userId
+        });
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(400).send({
+          success: false,
+          error: error.message
+        });
+      }
+    }
+  });
+
+  fastify.post('/login', {
+  schema: authSchema.login,
   handler: async (request, reply) => {
     try {
       const { username, password } = request.body;
+      const user = await AuthService.loginUser(username, password);
 
-      const userId = await AuthService.registerUser(username, password);
+      // 🔒 Si 2FA activée, renvoie une réponse spéciale (sans token)
+      if (user.twoFactorEnabled) {
+        return reply.code(200).send({
+          success: true,
+          message: '2FA required',
+          twofa: true,
+          userId: user.id,
+          username: user.username
+        });
+      }
+
+      // 🔓 Sinon, login classique avec token JWT
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
 
       return reply.code(200).send({
         success: true,
-        message: 'User registered successfully',
-        userId
+        message: 'Login successful',
+        token,
+        user: {
+          id: user.id,
+          username: user.username
+        }
       });
+
     } catch (error) {
-      fastify.log.error(error);
-      return reply.code(400).send({
+      console.error('Login error:', error);
+      return reply.code(401).send({
         success: false,
         error: error.message
       });
@@ -59,78 +103,42 @@ fastify.post('/register', {
 });
 
 
-// Login user
-fastify.post('/login', {
-    schema: authSchema.login,
+  fastify.put('/update', {
+    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
     handler: async (request, reply) => {
-        try {
-            const { username, password } = request.body;
-            const user = await AuthService.loginUser(username, password);
+      try {
+        const { username, newUsername } = request.body;
 
-            // Générer token JWT
-            const token = jwt.sign(
-                { id: user.id, username: user.username },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
-            );
-
-            return reply.code(200).send({ 
-    success: true, 
-    message: 'Login successful',
-    token,
-    user: {
-        id: user.id,
-        username: user.username,
-    }
-});
-
-        } catch (error) {
-            console.error('Login error:', error);
-            return reply.code(401).send({ 
-                success: false,
-                error: error.message 
-            });
+        if (!username || !newUsername) {
+          return reply.code(400).send({ error: 'Username and new username required' });
         }
-    }
-});
 
-fastify.put('/update', {
-  preHandler: authenticate,
-  handler: async (request, reply) => {
-    try {
-      const { username, newUsername } = request.body;
-
-      if (!username || !newUsername) {
-        return reply.code(400).send({ error: 'Username and new username required' });
+        const updatedUser = await AuthService.updateUser(username, newUsername);
+        return reply.send({ success: true, user: updatedUser });
+      } catch (err) {
+        reply.code(400).send({ error: err.message });
       }
-
-      const updatedUser = await AuthService.updateUser(username, newUsername);
-
-      return reply.send({ success: true, user: updatedUser });
-    } catch (err) {
-      reply.code(400).send({ error: err.message });
     }
-  }
-});
+  });
 
-fastify.put('/password', {
-  preHandler: authenticate,
-  handler: async (request, reply) => {
-    try {
-      const { username, newPassword } = request.body;
+  fastify.put('/password', {
+    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
+    handler: async (request, reply) => {
+      try {
+        const { username, newPassword } = request.body;
 
-      if (!newPassword || newPassword.length < 8) {
-        return reply.code(400).send({ error: 'New password is too short' });
+        if (!newPassword || newPassword.length < 8) {
+          return reply.code(400).send({ error: 'New password is too short' });
+        }
+
+        await AuthService.updatePassword(username, newPassword);
+        return reply.code(200).send({ success: true, message: 'Password updated' });
+      } catch (err) {
+        console.error(err);
+        return reply.code(500).send({ success: false, error: 'Failed to update password' });
       }
-
-      await AuthService.updatePassword(username, newPassword);
-      return reply.code(200).send({ success: true, message: 'Password updated' });
-    } catch (err) {
-      console.error(err);
-      return reply.code(500).send({ success: false, error: 'Failed to update password' });
     }
-  }
-});
+  });
 
 fastify.post('/2fa/setup', {
   preHandler: authenticate,
@@ -138,6 +146,12 @@ fastify.post('/2fa/setup', {
     try {
       const user = request.user;
       if (!user?.id) return reply.code(401).send({ error: 'Unauthorized' });
+
+      // 🔒 Vérifie si 2FA est déjà activée
+      const row = dbApi.db.prepare('SELECT two_factor_enabled FROM users WHERE id = ?').get(user.id);
+      if (row?.two_factor_enabled) {
+        return reply.code(400).send({ error: '2FA déjà activée' });
+      }
 
       const secret = speakeasy.generateSecret({
         name: `Transcendence (${user.username})`,
@@ -160,47 +174,90 @@ fastify.post('/2fa/setup', {
 });
 
 
+  fastify.post('/2fa/verify', {
+    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
+    handler: async (request, reply) => {
+      try {
+        const { token } = request.body;
+        const userId = request.user.id;
 
-fastify.post('/2fa/verify', {
-  preHandler: authenticate,
+        if (!token) {
+          return reply.code(400).send({ error: 'Token is required' });
+        }
+
+        const row = dbApi.db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
+        if (!row || !row.two_factor_secret) {
+          return reply.code(400).send({ error: '2FA secret not found' });
+        }
+
+        const verified = speakeasy.totp.verify({
+          secret: row.two_factor_secret,
+          encoding: 'base32',
+          token,
+          window: 1
+        });
+
+        if (!verified) {
+          return reply.code(401).send({ error: 'Invalid 2FA token' });
+        }
+
+        dbApi.db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
+        return reply.send({ success: true });
+      } catch (err) {
+        console.error('2FA verify error:', err);
+        return reply.code(500).send({ error: 'Internal server error' });
+      }
+    }
+  });
+
+  fastify.post('/2fa/verify-login', {
   handler: async (request, reply) => {
     try {
-      const { token } = request.body;
-      console.log('Received 2FA token:', token);
-      const userId = request.user.id;
+      const { userId, token: code } = request.body;
 
-      if (!token) {
-        return reply.code(400).send({ error: 'Token is required' });
+      if (!userId || !code) {
+        return reply.code(400).send({ error: 'Missing userId or token' });
       }
 
-   const row = dbApi.db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
+      const row = dbApi.db.prepare('SELECT two_factor_secret FROM users WHERE id = ?').get(userId);
       if (!row || !row.two_factor_secret) {
-        return reply.code(400).send({ error: '2FA secret not found' });
+        return reply.code(400).send({ error: '2FA not configured for this user' });
       }
 
       const verified = speakeasy.totp.verify({
         secret: row.two_factor_secret,
         encoding: 'base32',
-        token,
+        token: code,
         window: 1
-        
       });
 
       if (!verified) {
         return reply.code(401).send({ error: 'Invalid 2FA token' });
       }
 
-     dbApi.db.prepare('UPDATE users SET two_factor_enabled = 1 WHERE id = ?').run(userId);
+      const token = jwt.sign(
+        { id: userId },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
 
+      const user = dbApi.db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
 
-      return reply.send({ success: true });
+      return reply.send({
+        success: true,
+        token,
+        user: {
+          id: userId,
+          username: user.username
+        }
+      });
+
     } catch (err) {
-      console.error('2FA verify error:', err);
+      console.error('2FA login verify error:', err);
       return reply.code(500).send({ error: 'Internal server error' });
     }
   }
 });
-
 
 }
 
