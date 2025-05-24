@@ -157,7 +157,11 @@ export class GameView extends LitElement {
           console.log(data.message);
           break;
         case 'startGame':
-          console.log("🚀 Starting game");
+          if (this.playerRole === 'guest' && data.settings)
+          {
+            this.settings = data.settings;
+            this.updateGameSettings();
+          }
           this.isInitialCountdown = true;
           this.startInitialCountdown();
           break;
@@ -261,7 +265,7 @@ export class GameView extends LitElement {
     }
     if (e.key === ' ' && !this.isGameStarted && !this.isGameOver && this.playerRole === 'host') {
       console.log('🟢 Host triggering startGame');
-      this.sendMessage('startGame'); // M: sends msg to the server to start the game
+      this.sendMessage('startGame', { settings: this.settings}); // M: sends msg to the server to start the game
       return;
     }
     if (e.key === ' ' && this.isGameOver) {

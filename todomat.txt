@@ -1,0 +1,7 @@
+for remote:
+    - sync (broadcast from client host)
+    - what about if screen is not same size ? does it change paddle and ball speed in consequence ?
+    - paddle smoother
+
+else:
+    - settings stay through make re/ make fclean

@@ -157,7 +157,11 @@ class WebSocketService {
       case 'startGame':
         this.broadcast({
           type: 'game',
-          data: {action: 'startGame'}
+          data: {
+            action: 'startGame',
+            settings : rest.settings,
+            by: clientId
+          }
         });
         break;
       case 'movePaddle':
