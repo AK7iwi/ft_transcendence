@@ -124,6 +124,104 @@ export class HomeView extends LitElement {
       opacity: 0.7;
       cursor: not-allowed;
     }
+
+	@keyframes lights {
+	0% {
+		color: #ffffff;
+		text-shadow:
+		0 0 1em rgba(255,255,255,0.7),
+		0 0 0.25em rgba(255,255,255,0.6);
+	}
+	30% {
+		color: #f8f9fa;
+		text-shadow:
+		0 0 1.5em hsla(320, 100%, 90%, 0.6),
+		0 0 0.25em hsla(320, 100%, 60%, 0.5),
+		-0.5em -0.125em 0.25em hsla(40, 100%, 70%, 0.3),
+		0.5em 0.125em 0.25em hsla(200, 100%, 70%, 0.4);
+	}
+	40% {
+		color: #ffffff;
+		text-shadow:
+		0 0 1.5em hsla(320, 100%, 100%, 0.6),
+		0 0 0.25em hsla(320, 100%, 90%, 0.5),
+		-0.25em -0.125em 0.125em hsla(40, 100%, 60%, 0.2),
+		0.25em 0.125em 0.125em hsla(200, 100%, 60%, 0.3);
+	}
+	50% {
+		color: #eeeeee;
+		text-shadow:
+		0 0 2em rgba(255,255,255,0.9),
+		0 0 0.25em rgba(255,255,255,0.6);
+	}
+	70% {
+		color: #f8f8f8;
+		text-shadow:
+		0 0 1.5em hsla(320, 100%, 95%, 0.5),
+		0 0 0.25em hsla(320, 100%, 80%, 0.4),
+		0.5em -0.125em 0.25em hsla(40, 100%, 65%, 0.3),
+		-0.5em 0.125em 0.25em hsla(200, 100%, 60%, 0.3);
+	}
+	100% {
+		color: #ffffff;
+		text-shadow:
+		0 0 1em hsla(320, 100%, 100%, 0.2),
+		0 0 0.25em hsla(320, 100%, 90%, 0.3),
+		1em -0.125em 0.5em hsla(40, 100%, 70%, 0.1),
+		-1em 0.125em 0.5em hsla(200, 100%, 60%, 0.1);
+	}
+	}
+	30% {
+		color: hsl(230, 80%, 90%);
+		text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 60%, 0.5),
+		-0.5em -0.125em 0.25em hsla(40, 100%, 60%, 0.2),
+		0.5em 0.125em 0.25em hsla(200, 100%, 60%, 0.4);
+	}
+	40% {
+		color: hsl(230, 100%, 95%);
+		text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 90%, 0.5),
+		-0.25em -0.125em 0.125em hsla(40, 100%, 60%, 0.2),
+		0.25em 0.125em 0.125em hsla(200, 100%, 60%, 0.4);
+	}
+	50% {
+		color: #e0e0e0;
+		text-shadow:
+		0 0 1em rgba(255,255,255,0.8),
+		0 0 0.25em rgba(255,255,255,0.6);
+	}
+	70% {
+		color: hsl(230, 80%, 90%);
+		text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.5),
+		0 0 0.125em hsla(320, 100%, 60%, 0.5),
+		0.5em -0.125em 0.25em hsla(40, 100%, 60%, 0.2),
+		-0.5em 0.125em 0.25em hsla(200, 100%, 60%, 0.4);
+	}
+	100% {
+		color: hsl(230, 40%, 80%);
+		text-shadow:
+		0 0 1em hsla(320, 100%, 50%, 0.2),
+		0 0 0.125em hsla(320, 100%, 60%, 0.3),
+		1em -0.125em 0.5em hsla(40, 100%, 60%, 0),
+		-1em 0.125em 0.5em hsla(200, 100%, 60%, 0);
+	}
+	
+	body {
+	margin: 0;
+	font: 100% / 1.5 Raleway, sans-serif;
+	color: hsl(230, 100%, 95%);
+	background: linear-gradient(135deg, hsl(230, 40%, 12%), hsl(230, 20%, 7%));
+	height: 100vh;
+	display: flex;
+	}
+
+	.light-title {
+	animation: lights 5s 750ms linear infinite;
+	}
   `;
 
   @state() private signInForm = { username: '', password: '' };
@@ -218,14 +316,14 @@ connectedCallback() {
   render() {
     return html`
       <div class="main-container">
-        <h1 class="welcome-title">Welcome to Pong</h1>
+        <h1 class="welcome-title light-title">Welcome to Pong</h1>
 
         ${this.isAuthenticated ? html`
           <p>You are already logged in. <a href="/profile">Go to your profile</a></p>
         ` : html`
           <div class="auth-container">
             <div class="auth-block">
-              <h2 class="auth-title">Sign In</h2>
+              <h2 class="auth-title light-title">Sign In</h2>
               <form @submit=${this.handleSignIn}>
                 <div class="form-group">
                   <label class="form-label">Username</label>
@@ -243,7 +341,7 @@ connectedCallback() {
             </div>
 
             <div class="auth-block">
-              <h2 class="auth-title">Sign Up</h2>
+              <h2 class="auth-title light-title">Sign Up</h2>
               <form @submit=${this.handleSignUp}>
                 <div class="form-group">
                   <label class="form-label">Username</label>
