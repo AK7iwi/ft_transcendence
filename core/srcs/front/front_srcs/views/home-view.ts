@@ -129,18 +129,6 @@ export class HomeView extends LitElement {
       cursor: not-allowed;
     }
 
-	.border1 {
-	border: 1px solid red;
-	}
-
-	.border2 {
-	border: 1px solid green;
-	}
-
-	.border3 {
-	border: 1px solid blue;
-	}
-
 	@keyframes lights {
 	0% {
 		color: #ffffff;
@@ -227,16 +215,16 @@ export class HomeView extends LitElement {
 	}
 	
 	body {
-	margin: 0;
-	font: 100% / 1.5 Raleway, sans-serif;
-	color: hsl(230, 100%, 95%);
-	background: linear-gradient(135deg, hsl(230, 40%, 12%), hsl(230, 20%, 7%));
-	height: 100vh;
-	display: flex;
+		margin: 0;
+		font: 100% / 1.5 Raleway, sans-serif;
+		color: hsl(230, 100%, 95%);
+		background: linear-gradient(135deg, hsl(230, 40%, 12%), hsl(230, 20%, 7%));
+		height: 100vh;
+		display: flex;
 	}
 
 	.light-title {
-	animation: lights 5s 750ms linear infinite;
+		animation: lights 5s 750ms linear infinite;
 	}
   `;
 
