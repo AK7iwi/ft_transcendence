@@ -75,6 +75,20 @@ export class ChatView extends LitElement {
     .invite-button:hover { opacity: 0.9; }
     .block-button { background: var(--color-error); color: white; }
     .block-button:hover { opacity: 0.9; }
+    .profile-button { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); }
+    .profile-button:hover { background: var(--color-hover); }
+    .chat-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .invite-button { background: var(--color-accent); color: white; }
+    .invite-button:hover { opacity: 0.9; }
+    .block-button { background: var(--color-error); color: white; }
+    .block-button:hover { opacity: 0.9; }
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -189,6 +203,7 @@ export class ChatView extends LitElement {
             </div>
             <div class="chat-actions">
               <button class="chat-button invite-button" @click=${() => console.log('Invite clicked')}>Invite to Play</button>
+              <button class="chat-button profile-button" @click=${() => console.log('View Profile clicked')}>View Profile</button>
               <button class="chat-button block-button" @click=${() => console.log('Block clicked')}>Block</button>
             </div>
           </div>
