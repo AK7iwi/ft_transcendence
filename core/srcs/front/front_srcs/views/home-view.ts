@@ -70,14 +70,18 @@ export class HomeView extends LitElement {
 
     .form-group {
       margin-bottom: 1.5rem;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
     }
 
     .form-label {
       display: block;
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 500;
       margin-bottom: 0.5rem;
       color: var(--color-text-secondary);
+	  align-self: flex-start;
     }
 
     .form-input {
@@ -124,6 +128,18 @@ export class HomeView extends LitElement {
       opacity: 0.7;
       cursor: not-allowed;
     }
+
+	.border1 {
+	border: 1px solid red;
+	}
+
+	.border2 {
+	border: 1px solid green;
+	}
+
+	.border3 {
+	border: 1px solid blue;
+	}
 
 	@keyframes lights {
 	0% {
