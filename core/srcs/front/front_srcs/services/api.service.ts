@@ -106,30 +106,35 @@ static async updatePassword(username: string, newPassword: string) {
         }
     }
 
-    static async register(username: string, password: string) {
-        try {
-            const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/register`, {
-                method: 'POST',
-                body: JSON.stringify({ username, password })
-            });
+static async register(username: string, password: string) {
+  try {
+    const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json' // ← C’est ça qui manque !
+      },
+      body: JSON.stringify({ username, password })
+    });
 
-            const json = await this.safeParseJSON(response);
+    const json = await this.safeParseJSON(response);
 
-            if (!response.ok) {
-                throw new Error(json?.error || 'Registration failed');
-            }
-
-            return json;
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.name === 'AbortError') {
-                    throw new Error('Request timed out. Please try again.');
-                }
-                throw error;
-            }
-            throw new Error('An unexpected error occurred');
-        }
+    if (!response.ok) {
+      throw new Error(json?.error || 'Registration failed');
     }
+
+    return json;
+
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out. Please try again.');
+      }
+      throw error;
+    }
+    throw new Error('An unexpected error occurred');
+  }
+}
+
 
 static async login(username: string, password: string) {
   const res = await fetch(`${this.baseUrl}/auth/login`, {

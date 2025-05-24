@@ -196,34 +196,48 @@ private async handleSignIn(e: Event) {
   }
 
 
-  private async handleSignUp(e: Event) {
-    e.preventDefault();
-    this.signUpError = '';
-    this.isLoading = true;
+private async handleSignUp(e: Event) {
+  e.preventDefault();
+  this.signUpError = '';
+  this.isLoading = true;
 
-    try {
-      const { username, password, confirmPassword } = this.signUpForm;
-      if (!username || !password || !confirmPassword) throw new Error('Please fill in all fields');
-      if (password !== confirmPassword) throw new Error('Passwords do not match');
+  try {
+    const { username, password, confirmPassword } = this.signUpForm;
 
-      const passwordErrors = this.validatePassword(password);
-      if (passwordErrors.length > 0) throw new Error(passwordErrors.join(', '));
+    if (!username || !password || !confirmPassword)
+      throw new Error('Please fill in all fields');
 
-      const response = await ApiService.register(username, password);
-      console.log('Registration successful:', response);
-      this.resetForms();
-    } catch (error) {
-      this.signUpError = error instanceof Error ? error.message : 'Registration failed';
-    } finally {
-      this.isLoading = false;
-    }
+    if (password !== confirmPassword)
+      throw new Error('Passwords do not match');
+
+    const passwordErrors = this.validatePassword(password);
+    if (passwordErrors.length > 0)
+      throw new Error(passwordErrors.join(', '));
+
+    const response = await ApiService.register(username, password);
+console.log('Registration successful:', response);
+
+// ✅ Réinitialisation seulement en cas de succès complet
+this.resetForms();
+this.signUpError = '';
+
+
+  } catch (error) {
+    // ✅ Garde l'erreur pour affichage
+    this.signUpError = error instanceof Error
+      ? error.message
+      : 'Registration failed';
+  } finally {
+    this.isLoading = false;
   }
+}
+
 
   private resetForms() {
     this.signInForm = { username: '', password: '' };
     this.signUpForm = { username: '', password: '', confirmPassword: '' };
-    this.signInError = '';
-    this.signUpError = '';
+    // this.signInError = '';
+    // this.signUpError = '';
   }
 
   private validatePassword(password: string): string[] {
