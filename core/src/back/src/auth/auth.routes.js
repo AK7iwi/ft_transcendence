@@ -1,7 +1,7 @@
 const AuthService = require('./auth.service');
 const authSchema = require('./auth.schema');
-const JWT = require('../security/jwt');
-const Security = require('../security/sanityze');
+const Security = require('../security/middleware/sanityze');
+const JWT = require('../security/middleware/jwt');
 
 async function authRoutes(fastify, options) {
 

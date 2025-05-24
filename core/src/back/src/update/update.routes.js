@@ -1,7 +1,7 @@
 const UpdateService = require('./update.service');
 const updateSchema = require('./update.schema');
-const Security = require('../security/sanityze');
-const JWT = require('../security/jwt');
+const Security = require('../security/middleware/sanityze');
+const JWT = require('../security/middleware/jwt');
 
 
 async function updateRoutes(fastify, options) {
