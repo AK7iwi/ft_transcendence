@@ -246,6 +246,51 @@ static async uploadAvatar(file: File): Promise<string> {
   return data.avatarUrl;
 }
 
+static async addFriend(username: string) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${this.baseUrl}/auth/friends/add`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ username })
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error || 'Failed to add friend');
+  return json;
+}
+
+static async getFriends() {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${this.baseUrl}/auth/friends/list`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error || 'Failed to fetch friends');
+  return json.friends;
+}
+
+static async removeFriend(friendId: number) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${this.baseUrl}/auth/friends/remove`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ friendId })
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error || 'Failed to remove friend');
+  return json;
+}
+
 
 
 

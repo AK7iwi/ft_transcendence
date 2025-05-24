@@ -159,7 +159,7 @@ private saveSettings() {
 
   render() {
     return html`
-      <base-view>
+
         <div class="settings-container">
           <h1 class="section-title">Game Settings</h1>
 
@@ -243,7 +243,7 @@ private saveSettings() {
             </button>
           </div>
         </div>
-      </base-view>
+
     `;
   }
 } 

@@ -1,16 +1,17 @@
 import { LitElement, html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './styles.css';
+import './views/login-view.ts';
+import './views/register-view.ts';
 import './views/chat-view.ts';
+import './views/friend-view.ts';
 
 import { WebSocketService } from './services/websocket-service';
 
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
-
 export default wsService;
-
 
 @customElement('pong-app')
 export class PongApp extends LitElement {
@@ -118,17 +119,24 @@ export class PongApp extends LitElement {
     }
   `;
 
+  @state() private isAuthenticated = false;
+
   firstUpdated() {
     const router = new Router(this.shadowRoot?.querySelector('main'));
     router.setRoutes([
-      { path: '/', component: 'home-view' },
+      { path: '/', component: 'login-view' },
+      { path: '/register', component: 'register-view' },
       { path: '/game', component: 'game-view' },
       { path: '/tournament', component: 'tournament-view' },
       { path: '/chat', component: 'chat-view' },
       { path: '/settings', component: 'settings-view' },
       { path: '/profile', component: 'profile-view' },
+      { path: '/friends', component: 'friend-view' },
       { path: '(.*)', redirect: '/' }
     ]);
+
+    const token = localStorage.getItem('token');
+    this.isAuthenticated = !!token;
   }
 
   render() {
@@ -136,11 +144,13 @@ export class PongApp extends LitElement {
       <div class="min-h-screen flex flex-col">
         <nav class="nav-container">
           <div class="nav-content">
-            <a href="/" class="logo">Connexion</a>
+            <a href="/" class="logo">Login</a>
             <div class="nav-links">
+              ${!this.isAuthenticated ? html`<a href="/register" class="nav-link">Register</a>` : ''}
               <a href="/game" class="nav-link">Game</a>
               <a href="/tournament" class="nav-link">Tournament</a>
               <a href="/chat" class="nav-link">Chat</a>
+              <a href="/friends" class="nav-link">Friends</a>
               <a href="/settings" class="nav-link">Settings</a>
               <a href="/profile" class="nav-link">Profile</a>
             </div>
@@ -150,4 +160,4 @@ export class PongApp extends LitElement {
       </div>
     `;
   }
-} 
+}

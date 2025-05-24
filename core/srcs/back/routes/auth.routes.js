@@ -252,6 +252,85 @@ async function authRoutes(fastify, options) {
       }
     }
   });
+
+  // === FRIENDSHIP ROUTES ===
+
+fastify.post('/friends/add', {
+  preHandler: [authenticate],
+  handler: async (req, reply) => {
+    const { username } = req.body;
+    const userId = req.user.id;
+
+    if (!username) {
+      return reply.code(400).send({ error: 'Username is required' });
+    }
+
+    const friend = dbApi.db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+    if (!friend) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+
+    if (friend.id === userId) {
+      return reply.code(400).send({ error: 'Cannot add yourself as a friend' });
+    }
+
+    const exists = dbApi.db.prepare(`
+      SELECT 1 FROM friends
+      WHERE user_id = ? AND friend_id = ?
+    `).get(userId, friend.id);
+
+    if (exists) {
+      return reply.code(400).send({ error: 'Friend already added' });
+    }
+
+    dbApi.db.prepare(`
+      INSERT INTO friends (user_id, friend_id, status)
+      VALUES (?, ?, 'accepted')
+    `).run(userId, friend.id);
+
+    return reply.send({ success: true, message: 'Friend added successfully' });
+  }
+});
+
+fastify.get('/friends', {
+  preHandler: [authenticate],
+  handler: async (request, reply) => {
+    const userId = request.user.id;
+    const rows = db.prepare(`
+      SELECT u.username, u.id, f.created_at
+      FROM friends f
+      JOIN users u ON u.id = f.friend_id
+      WHERE f.user_id = ?
+    `).all(userId);
+
+    const friends = rows.map(row => ({
+      username: row.username,
+      online: true // ou faux selon ton système
+    }));
+
+    return { friends };
+  }
+});
+
+
+fastify.delete('/friends/remove', {
+  preHandler: [authenticate],
+  handler: async (req, reply) => {
+    const { friendId } = req.body;
+    const userId = req.user.id;
+
+    if (!friendId) {
+      return reply.code(400).send({ error: 'friendId is required' });
+    }
+
+    const result = dbApi.db.prepare(`
+      DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+    `).run(userId, friendId);
+
+    return reply.send({ success: true, removed: result.changes > 0 });
+  }
+});
+
 }
 
 module.exports = authRoutes;

@@ -151,8 +151,7 @@ export class TournamentView extends LitElement {
 
   render() {
     return html`
-      <base-view>
-        <div class="header">
+<div class="header">
           <h1 class="page-title">Tournaments</h1>
           <button 
             @click=${() => this.isCreatingTournament = true}
@@ -212,7 +211,6 @@ export class TournamentView extends LitElement {
             </div>
           `)}
         </div>
-      </base-view>
     `;
   }
 
