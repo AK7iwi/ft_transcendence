@@ -1,36 +1,38 @@
 const AuthService = require('./auth.service');
+const authSchema = require('./auth.schema');
 const JWT = require('../security/jwt');
 const Security = require('../security/sanityze');
-const dbApi = require('../database/db.index');
-const UserDB = require('../database/db.user');
-const speakeasy = require('speakeasy');
-const qrcode = require('qrcode');
 
 async function authRoutes(fastify, options) {
 
   fastify.post('/register', {
+    schema: authSchema.register,
     preHandler: Security.securityMiddleware,
     handler: async (request, reply) => {
       try {
         const { username, password } = request.body;
-        const result = await AuthService.registerUser(username, password);
+        const userId = await AuthService.registerUser(username, password);
 
         return reply.code(200).send({
           success: true,
           message: 'User registered successfully',
-          data: result
+          data: {
+            id: userId,
+            username
+          }
         });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(400).send({
           success: false,
-          error: error.message
+          message: error.message
         });
       }
     }
   });
 
   fastify.post('/login', {
+    schema: authSchema.login,
     preHandler: Security.securityMiddleware,
     handler: async (request, reply) => {
       try {
@@ -42,9 +44,11 @@ async function authRoutes(fastify, options) {
           return reply.code(200).send({
             success: true,
             message: '2FA required',
-            twofa: true,
-            userId: user.id,
-            username: user.username
+            data: {
+              twofa: true,
+              userId: user.id,
+              username: user.username
+            }
           });
         }
   
@@ -57,10 +61,12 @@ async function authRoutes(fastify, options) {
         return reply.code(200).send({
           success: true,
           message: 'Login successful',
-          token,
-          user: {
-            id: user.id,
-            username: user.username
+          data: {
+            user: {
+              id: user.id,
+              username: user.username
+            },
+            token
           }
         });
   
@@ -68,7 +74,7 @@ async function authRoutes(fastify, options) {
         console.error('Login error:', error);
         return reply.code(401).send({
           success: false,
-          error: error.message
+          message: error.message
         });
       }
     }
