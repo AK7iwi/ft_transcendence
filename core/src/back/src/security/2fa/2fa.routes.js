@@ -1,4 +1,3 @@
-const twofaService = require('./2fa.service');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const dbApi = require('../../database/db.index');

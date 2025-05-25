@@ -16,7 +16,9 @@ class AuthService {
             const result = stmt.run(username, hashedPassword);
             return result.lastInsertRowid;
         } catch (error) {
-            if (error.code === 'SQLITE_CONSTRAINT') {
+            if (error.code === 'SQLITE_CONSTRAINT' 
+                || error.message.includes('UNIQUE constraint failed: users.username')
+            ) {
                 throw new Error('Username already exists');
             }
             throw error;
