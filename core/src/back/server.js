@@ -3,6 +3,7 @@ const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
 const authRoutes = require('./src/auth/auth.routes');
 const updateRoutes = require('./src/update/update.routes');
+const twofaRoutes = require('./src/security/2fa/2fa.routes');
 
 //Load environment variables
 require('dotenv').config();
@@ -21,6 +22,7 @@ fastify.register(websocket);
 // Register routes
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(updateRoutes, { prefix: '/update' });
+fastify.register(twofaRoutes, { prefix: '/2fa' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
