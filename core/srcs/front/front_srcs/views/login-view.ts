@@ -2,9 +2,18 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
 
+
+function clearSessionStorage() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('gameSettings');
+}
+
 @customElement('login-view')
+
 export class LoginView extends LitElement {
   static styles = css`
+
     .message {
       font-size: 1.2rem;
       text-align: center;
@@ -42,13 +51,39 @@ export class LoginView extends LitElement {
   @state() private code2FA = '';
   @state() private isAuthenticated = false;
 
-  connectedCallback() {
-    super.connectedCallback();
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.isAuthenticated = true;
-    }
+connectedCallback() {
+  super.connectedCallback();
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    clearSessionStorage();
+    this.isAuthenticated = false;
+    return;
   }
+
+  ApiService.getProfile()
+    .then(() => {
+      this.isAuthenticated = true;
+    })
+    .catch(() => {
+      clearSessionStorage();
+      this.isAuthenticated = false;
+    });
+}
+
+private async checkAuth() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    await ApiService.getProfile();
+    this.isAuthenticated = true;
+  } catch {
+    clearSessionStorage();
+    this.isAuthenticated = false;
+  }
+}
+
 
   private async handleSignIn(e: Event) {
     e.preventDefault();

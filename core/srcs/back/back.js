@@ -47,13 +47,13 @@ fastify.get('/avatars/:filename', async (req, reply) => {
   const filePath = path.join(__dirname, 'public', 'avatars', file);
 
   if (fs.existsSync(filePath)) {
-    return reply
-      .type('image/png')
-      .send(fs.createReadStream(filePath));
+    reply.header('Access-Control-Allow-Origin', '*'); // ← ajoute ça
+    return reply.type('image/png').send(fs.createReadStream(filePath));
   } else {
     return reply.status(404).send({ error: 'Fichier non trouvé' });
   }
 });
+
 
 
 //avatar de merde

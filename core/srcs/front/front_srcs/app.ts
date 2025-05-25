@@ -139,6 +139,8 @@ export class PongApp extends LitElement {
     this.isAuthenticated = !!token;
   }
 
+
+
   render() {
     return html`
       <div class="min-h-screen flex flex-col">

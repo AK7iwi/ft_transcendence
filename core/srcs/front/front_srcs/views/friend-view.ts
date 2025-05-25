@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
+import { API_BASE_URL } from '../config';
 
 @customElement('friend-view')
 export class FriendView extends LitElement {
@@ -60,16 +61,27 @@ export class FriendView extends LitElement {
     this.loadFriends();
   }
 
-  async loadFriends() {
-    try {
-      const result = await ApiService.getFriends();
-      this.friends = result.friends || result;
-    } catch (err) {
-      console.error('Failed to load friends:', err);
-      this.message = 'Error loading friends';
-      this.messageType = 'error';
-    }
+async loadFriends() {
+  try {
+    console.log('⏳ Loading friends...');
+    const result = await ApiService.getFriends();
+    console.log('✅ Friends loaded:', result);
+
+    // Nettoyage des avatars : on retire les slashes et les doublons de path
+    this.friends = (result.friends || result).map(friend => ({
+      ...friend,
+      avatar: friend.avatar
+        ? friend.avatar.replace(/^\/?avatars\/?/, '') // on garde juste "avatar_1.png"
+        : ''
+    }));
+  } catch (err) {
+    console.error('❌ Failed to load friends:', err);
+    this.message = 'Error loading friends';
+    this.messageType = 'error';
   }
+}
+
+
 
   async handleAddFriend(e: Event) {
     e.preventDefault();
@@ -132,7 +144,15 @@ export class FriendView extends LitElement {
         <ul>
           ${this.friends.map(friend => html`
             <li>
-              <img src="${friend.avatar || '/avatars/default.png'}" width="30" height="30" />
+          <img
+  src="${friend.avatar?.startsWith('/avatars/')
+    ? `${API_BASE_URL}${friend.avatar}`
+    : `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`}"
+  width="30"
+  height="30"
+  style="border-radius: 50%;"
+/>
+
               ${friend.username}
               <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
             </li>

@@ -24,13 +24,20 @@ export default defineConfig({
       usePolling: true
     },
     proxy: {
-      '/api': {
-        target: 'https://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
+  '/api': {
+    target: 'https://localhost:3000',
+    changeOrigin: true,
+    secure: false,
+    rewrite: path => path.replace(/^\/api/, '')
+  },
+  '/avatars': {
+    target: 'https://localhost:3000',
+    changeOrigin: true,
+    secure: false
+  }
+}
+
+
   },
   build: {
     target: 'esnext',

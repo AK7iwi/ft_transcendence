@@ -9,9 +9,11 @@ services:
     ports:
       - "3000:3000"
     env_file: ../.env
-    volumes: 
-      - sqlite_data:/data
-      - ./back/certs:/usr/src/app/certs
+    volumes:
+    - sqlite_data:/data
+    - ./back/public/avatars:/usr/src/app/public/avatars
+    - ./back/certs:/usr/src/app/certs
+
     networks:
       - transcendence
     restart: unless-stopped

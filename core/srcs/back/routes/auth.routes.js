@@ -297,21 +297,31 @@ fastify.get('/friends', {
   handler: async (request, reply) => {
     try {
       const userId = request.user.id;
+      console.log('Fetching friends for user ID:', userId);
 
       const rows = dbApi.db.prepare(`
-        SELECT u.id, u.username, u.avatar
-        FROM friends f
-        JOIN users u ON u.id = f.friend_id
-        WHERE f.user_id = ?
-      `).all(userId);
+  SELECT u.id, u.username,
+         CASE
+           WHEN u.avatar IS NOT NULL AND u.avatar != ''
+           THEN '/avatars/' || u.avatar
+           ELSE '/avatars/default.png'
+         END AS avatar
+  FROM friends f
+  JOIN users u ON u.id = f.friend_id
+  WHERE f.user_id = ?
+`).all(userId);
 
-      reply.send(rows);
+
+      console.log('Friends found:', rows);
+      return reply.send(rows);
     } catch (err) {
-      console.error('Error fetching friends:', err);
-      reply.code(500).send({ error: 'Failed to fetch friends' });
+      console.error('❌ Error fetching friends:', err);  // 👈 LOG PRÉCIS
+      return reply.code(500).send({ error: 'Failed to fetch friends' });
     }
   }
 });
+
+
 
 
 
