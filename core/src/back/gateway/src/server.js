@@ -1,40 +1,30 @@
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-const authRoutes = require('./src/auth/auth.routes');
-const updateRoutes = require('./src/update/update.routes');
-const twofaRoutes = require('./src/security/2fa/2fa.routes');
-
-//Load environment variables
-require('dotenv').config();
-//Initialize database schema
-require('./src/database/db.schema'); 
 
 // Initialize Fastify
 const fastify = fastifyModule({ logger: true });
-
 // Register plugins
 fastify.register(cors, { origin: true });
-
 // Register websocket
 fastify.register(websocket);
 
+//Basic route
+fastify.get('/', async (request, reply) => { return { message: 'Server is running' }; });
+// Health check endpoint
+fastify.get('/health', async (request, reply) => { return { status: 'Server is healthy' }; });
 // Register routes
-fastify.register(authRoutes, { prefix: '/auth' });
-fastify.register(updateRoutes, { prefix: '/update' });
-fastify.register(twofaRoutes, { prefix: '/2fa' });
+fastify.register(require('./routes/auth'), { prefix: '/auth' });
+fastify.register(require('./routes/game'), { prefix: '/game' });
+fastify.register(require('./routes/tournament'), { prefix: '/tournament' });
+fastify.register(require('./routes/chat'), { prefix: '/chat' });
+fastify.register(require('./routes/user'), { prefix: '/user' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);
   reply.status(500).send({ error: 'Internal Server Error' });
 });
-
-//Test route
-fastify.get('/', async (request, reply) => { return { message: 'Server is running' }; });
-
-// Health check endpoint
-fastify.get('/health', async (request, reply) => { return { status: 'Server is healthy' }; });
 
 // Start server
 const start = async () => {
