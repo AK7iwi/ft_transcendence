@@ -29,12 +29,10 @@ export class GameView extends LitElement {
       margin-top: 2rem;
     }
     .responsive-canvas {
-      width: 80%;
-      height: 60vh;
-      max-width: 1000px;
-      max-height: 60vh;
-      min-width: 300px;
-      min-height: 200px;
+      width: 768px;
+      height: 432px;
+      min-width: 768px;
+      min-height: 432px;
       background: white;
       border: 2px solid var(--color-accent);
       display: block;
@@ -102,7 +100,8 @@ export class GameView extends LitElement {
   private gameLoop: boolean = false;
   private settingsService: SettingsService;
   private settings: GameSettings;
-  
+  private playerId: string = '';
+
   private socket: WebSocket | null = null;
   private playerRole: 'host' | 'guest' | null = null;
   
@@ -111,6 +110,9 @@ export class GameView extends LitElement {
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
   
+  private targetPaddle1Y = 0;
+  private targetPaddle2Y = 0;
+
   constructor() {
     super();
     this.settingsService = SettingsService.getInstance();
@@ -145,7 +147,8 @@ export class GameView extends LitElement {
   }
 
   private handleMessage(message: any) {
-    console.log('📩 Received message:', message);
+    if (message.type === 'connection')
+      this.playerId = message.clientId;
     if (message.type === 'game') {
       const data = message.data;
       switch (data.action) {
@@ -157,19 +160,46 @@ export class GameView extends LitElement {
           console.log(data.message);
           break;
         case 'startGame':
-          if (this.playerRole === 'guest' && data.settings)
-          {
+          if (this.playerRole === 'guest' && data.settings) {
             this.settings = data.settings;
             this.updateGameSettings();
           }
           this.isInitialCountdown = true;
-          this.startInitialCountdown();
+          const targetStartTime = data.startAt;
+          const countdownInterval = setInterval(() => {
+            const now = Date.now();
+            const timeRemaining = Math.ceil((targetStartTime - now) / 1000);
+            this.countdown = Math.max(timeRemaining, 0);
+
+            if (this.countdown <= 0) {
+              clearInterval(countdownInterval);
+              this.gameLoop = true;
+              this.isGameStarted = true;
+              this.isBallActive = true;
+              this.isInitialCountdown = false;
+              this.startGameLoop();
+            }
+          }, 100);
+          break;
+        case 'ballUpdate':
+          if (this.playerRole === 'guest') {
+            this.ball = {
+              x: data.x,
+              y: data.y,
+              dx: data.dx,
+              dy: data.dy,
+              size: data.size,
+              speed: data.speed
+            };
+          }
           break;
         case 'movePaddle':
+          console.log('move paddle');
+          if (data.clientId === this.playerId) return;
           if (this.playerRole === 'host')
-            this.paddle2.y = data.y;
+            this.targetPaddle2Y = data.y;
           else
-            this.paddle1.y = data.y;
+            this.targetPaddle1Y = data.y;
           break;
         case 'ballUpdate':
           if (this.playerRole === 'guest') this.ball = data;
@@ -188,27 +218,28 @@ export class GameView extends LitElement {
 
   private initGame() {
     if (!this.canvas || !this.ctx) return;
-
-    // Set canvas size based on container size
-    const container = this.canvas.parentElement;
-    if (container) {
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
+    this.canvas.width = 768;
+    this.canvas.height = 432;
+    // // Set canvas size based on container size
+    // const container = this.canvas.parentElement;
+    // if (container) {
+    //   const containerWidth = container.clientWidth;
+    //   const containerHeight = container.clientHeight;
       
-      // Calculate aspect ratio (16:9)
-      const aspectRatio = 16 / 9;
-      let width = containerWidth;
-      let height = width / aspectRatio;
+    //   // Calculate aspect ratio (16:9)
+    //   const aspectRatio = 16 / 9;
+    //   let width = containerWidth;
+    //   let height = width / aspectRatio;
 
-      // If height is too large, scale based on height instead
-      if (height > containerHeight) {
-        height = containerHeight;
-        width = height * aspectRatio;
-      }
+    //   // If height is too large, scale based on height instead
+    //   if (height > containerHeight) {
+    //     height = containerHeight;
+    //     width = height * aspectRatio;
+    //   }
 
-      this.canvas.width = width;
-      this.canvas.height = height;
-    }
+    //   this.canvas.width = width;
+    //   this.canvas.height = height;
+    // }
 
     // Initialize paddle positions
     this.paddle1.x = this.canvas.width * 0.02; // 2% from left
@@ -254,51 +285,65 @@ export class GameView extends LitElement {
   private handleKeyDown(e: KeyboardEvent) {
     console.log("🔑 Key pressed:", e.key, "Role:", this.playerRole);
     // if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
-    if ((this.playerRole === 'host' && (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's')) ||
-        (this.playerRole === 'guest' && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))) {
-      const direction = (e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') ? -this.paddle1.speed : this.paddle1.speed;
-      this.sendMessage('movePaddle', { y: (this.playerRole === 'host' ? this.paddle1.y : this.paddle2.y) + direction });
-    }
+    // pause
     if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
       return;
     }
+    // start
     if (e.key === ' ' && !this.isGameStarted && !this.isGameOver && this.playerRole === 'host') {
-      console.log('🟢 Host triggering startGame');
-      this.sendMessage('startGame', { settings: this.settings}); // M: sends msg to the server to start the game
+      const startAt = Date.now() + 3000;
+      this.sendMessage('startGame', {
+        settings: this.settings,
+        startAt,
+      });
       return;
     }
+    // reset
     if (e.key === ' ' && this.isGameOver) {
       this.resetGame();
       return;
     }
-    if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
-    
-    if (e.key.toLowerCase() === 'w') this.paddle1.dy = -this.paddle1.speed;
-    if (e.key.toLowerCase() === 's') this.paddle1.dy = this.paddle1.speed;
-    if (e.key === 'ArrowUp') this.paddle2.dy = -this.paddle2.speed;
-    if (e.key === 'ArrowDown') this.paddle2.dy = this.paddle2.speed;
+    // HOST CONTROLS PADDLE 1
+    if (this.playerRole === 'host') {
+      if (e.key.toLowerCase() === 'w') {
+        this.paddle1.dy = -this.paddle1.speed;
+      } else if (e.key.toLowerCase() === 's') {
+        this.paddle1.dy = this.paddle1.speed;
+      }
+    }
+
+    // GUEST CONTROLS PADDLE 2
+    if (this.playerRole === 'guest') {
+      if (e.key === 'ArrowUp') {
+        this.paddle2.dy = -this.paddle2.speed;
+      } else if (e.key === 'ArrowDown') {
+        this.paddle2.dy = this.paddle2.speed;
+      }
+    }
   }
 
   private handleKeyUp(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's') this.paddle1.dy = 0;
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') this.paddle2.dy = 0;
+    if (this.playerRole === 'host' && (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's'))
+      this.paddle1.dy = 0;
+    if (this.playerRole === 'guest' && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))
+      this.paddle2.dy = 0;
   }
 
-  private startInitialCountdown() {
-    this.countdown = 3;
-    const countdownInterval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(countdownInterval);
-        this.isGameStarted = true;
-        this.gameLoop = true;
-        this.isBallActive = true;
-        this.isInitialCountdown = false;
-        this.startGameLoop();
-      }
-    }, 1000);
-  }
+  // private startInitialCountdown() {
+  //   this.countdown = 3;
+  //   const countdownInterval = setInterval(() => {
+  //     this.countdown--;
+  //     if (this.countdown <= 0) {
+  //       clearInterval(countdownInterval);
+  //       this.isGameStarted = true;
+  //       this.gameLoop = true;
+  //       this.isBallActive = true;
+  //       this.isInitialCountdown = false;
+  //       this.startGameLoop();
+  //     }
+  //   }, 1000);
+  // }
 
   private startBallCountdown() {
     this.countdown = 3;
@@ -312,7 +357,10 @@ export class GameView extends LitElement {
   }
 
   private startGameLoop() {
-    if (!this.gameLoop || this.isPaused) return;
+    if (!this.gameLoop || this.isPaused) {
+      console.log('🚫 Game loop blocked. gameLoop:', this.gameLoop, 'isPaused:', this.isPaused);
+      return;
+    }
     this.updateGame();
     this.draw();
     this.animationFrameId = requestAnimationFrame(() => this.startGameLoop());
@@ -320,40 +368,45 @@ export class GameView extends LitElement {
 
   private updateGame() {
     if (!this.canvas) return;
-    
-    if (this.playerRole === 'host' && this.isBallActive && !this.isGameOver) {
-      this.ball.x += this.ball.dx;
-      this.ball.y += this.ball.dy;
-      this.sendMessage('ballUpdate', this.ball);
+    if (this.playerRole === 'host') {
+      const prevY = this.paddle1.y;
+      this.paddle1.y += this.paddle1.dy;
+      if (prevY !== this.paddle1.y) {
+        this.sendMessage('movePaddle', { y: this.paddle1.y });
+      }
+
+      this.paddle2.y += (this.targetPaddle2Y - this.paddle2.y) * 0.2;
     }
 
-    // Move paddles
-    this.paddle1.y += this.paddle1.dy;
-    this.paddle2.y += this.paddle2.dy;
+    if (this.playerRole === 'guest') {
+      const prevY = this.paddle2.y;
+      this.paddle2.y += this.paddle2.dy;
+      if (prevY !== this.paddle2.y) {
+        this.sendMessage('movePaddle', { y: this.paddle2.y });
+      }
 
-    // Keep paddles in bounds
-    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
-    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
-
-    // Move ball only if active and game is not over
+      this.paddle1.y += (this.targetPaddle1Y - this.paddle1.y) * 0.2;
+    }
+    // Ball logic
     if (this.isBallActive && !this.isGameOver) {
       this.ball.x += this.ball.dx;
       this.ball.y += this.ball.dy;
+      this.sendMessage('ballUpdate', this.ball);
 
-      // Ball collision with top and bottom
+      // Ball collision with top/bottom
       if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
         this.ball.dy *= -1;
       }
 
       // Ball collision with paddles
-      if (this.ball.dx < 0) { // Moving left
-        if (this.ball.x <= this.paddle1.x + this.paddle1.width && 
+      if (this.ball.dx < 0) {
+        if (this.ball.x <= this.paddle1.x + this.paddle1.width &&
             this.ball.x >= this.paddle1.x &&
             this.ball.y + this.ball.size/2 >= this.paddle1.y &&
             this.ball.y - this.ball.size/2 <= this.paddle1.y + this.paddle1.height) {
           this.ball.dx *= -1;
         }
-      } else { // Moving right
+      } else {
         if (this.ball.x + this.ball.size >= this.paddle2.x &&
             this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
             this.ball.y + this.ball.size/2 >= this.paddle2.y &&
@@ -362,7 +415,7 @@ export class GameView extends LitElement {
         }
       }
 
-      // Score points
+      // Score check
       if (this.ball.x <= 0) {
         this.score.player2++;
         if (this.score.player2 >= this.settings.endScore) {
@@ -379,6 +432,8 @@ export class GameView extends LitElement {
         }
       }
     }
+    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
+    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
   }
 
   private endGame(winner: string) {

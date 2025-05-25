@@ -160,7 +160,18 @@ class WebSocketService {
           data: {
             action: 'startGame',
             settings : rest.settings,
+            startAt : rest.startAt,
             by: clientId
+          }
+        });
+        break;
+      case 'ballUpdate':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'ballUpdate',
+            ...rest,
+            clientId
           }
         });
         break;
