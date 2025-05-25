@@ -55,11 +55,47 @@ export class FriendView extends LitElement {
   @state() private message = '';
   @state() private messageType: 'success' | 'error' | '' = '';
   @state() private friends: { id: number; username: string; avatar: string }[] = [];
+@state() private onlineUserIds: number[] = [];
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.loadFriends();
+
+connectedCallback() {
+  super.connectedCallback();
+  this.loadFriends();
+  this.setupWebSocket(); // 👈 ajoute ceci
+}
+
+setupWebSocket() {
+  const socket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
+
+  socket.onopen = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      socket.send(JSON.stringify({ type: 'auth', token }));
+    }
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'user-status') {
+        this.handleUserStatus(data);
+      }
+    } catch (err) {
+      console.error('Invalid WebSocket message', err);
+    }
+  };
+}
+
+handleUserStatus(data: { userId: number; status: 'online' | 'offline' }) {
+  if (data.status === 'online') {
+    if (!this.onlineUserIds.includes(data.userId)) {
+      this.onlineUserIds = [...this.onlineUserIds, data.userId];
+    }
+  } else {
+    this.onlineUserIds = this.onlineUserIds.filter(id => id !== data.userId);
   }
+}
+
 
 async loadFriends() {
   try {
@@ -152,12 +188,25 @@ async loadFriends() {
   height="30"
   style="border-radius: 50%;"
 />
+<span>${friend.username}</span>
 
-              ${friend.username}
-              <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
-            </li>
-          `)}
-        </ul>
+      <span 
+        style="
+          display:inline-block;
+          width:10px;
+          height:10px;
+          border-radius:50%;
+          background-color: ${this.onlineUserIds.includes(friend.id) ? 'green' : 'gray'};
+        "
+        title="${this.onlineUserIds.includes(friend.id) ? 'Online' : 'Offline'}"
+      ></span>
+
+      <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
+    </li>
+  `)}
+</ul>
+
+
       </div>
     `;
   }

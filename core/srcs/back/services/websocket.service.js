@@ -1,4 +1,5 @@
 const WebSocket = require('ws');
+const jwt = require('jsonwebtoken');
 
 class WebSocketService {
   constructor(server) {
@@ -7,12 +8,14 @@ class WebSocketService {
       path: '/ws'
     });
 
-    this.clients = new Map();
+    this.clients = new Map();        // clientId → ws
+    this.onlineUsers = new Map();    // userId → ws
+
     this.setupWebSocket();
   }
 
   setupWebSocket() {
-    this.wss.on('connection', (ws, req) => {
+    this.wss.on('connection', (ws) => {
       const clientId = this.generateClientId();
       this.clients.set(clientId, ws);
 
@@ -27,7 +30,7 @@ class WebSocketService {
       ws.on('message', (rawMessage) => {
         try {
           const data = JSON.parse(rawMessage);
-          this.handleMessage(clientId, data);
+          this.handleMessage(clientId, ws, data);
         } catch (err) {
           console.error('❌ Invalid JSON message:', err);
           ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
@@ -35,13 +38,7 @@ class WebSocketService {
       });
 
       ws.on('close', () => {
-        console.log(`❌ Client disconnected: ${clientId}`);
-        this.clients.delete(clientId);
-        this.broadcast({
-          type: 'disconnection',
-          clientId,
-          message: 'User disconnected'
-        });
+        this.handleDisconnect(clientId, ws);
       });
 
       ws.on('pong', () => {
@@ -51,28 +48,30 @@ class WebSocketService {
       ws.isAlive = true;
     });
 
-    // Heartbeat to prevent stale clients
+    // Heartbeat
     setInterval(() => {
       for (const [clientId, ws] of this.clients.entries()) {
         if (!ws.isAlive) {
           console.log(`⚠️ Terminating stale client: ${clientId}`);
           ws.terminate();
-          this.clients.delete(clientId);
-          this.broadcastUserDisconnected(clientId);
+          this.handleDisconnect(clientId, ws);
         } else {
           ws.isAlive = false;
           ws.ping();
         }
       }
-    }, 30000); // every 30 sec
+    }, 30000);
   }
 
   generateClientId() {
     return Math.random().toString(36).substring(2, 15);
   }
 
-  handleMessage(clientId, data) {
+  handleMessage(clientId, ws, data) {
     switch (data.type) {
+      case 'auth':
+        this.handleAuth(clientId, ws, data.token);
+        break;
       case 'chat':
         this.handleChatMessage(clientId, data.payload);
         break;
@@ -88,6 +87,47 @@ class WebSocketService {
           type: 'error',
           message: `Unknown message type: ${data.type}`
         });
+    }
+  }
+
+  handleAuth(clientId, ws, token) {
+    if (!token) {
+      return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      ws.userId = decoded.id;
+      this.onlineUsers.set(decoded.id, ws);
+      console.log(`🔓 Authenticated user ${decoded.id}`);
+
+      this.sendToClient(clientId, {
+        type: 'auth-success',
+        userId: decoded.id
+      });
+      this.broadcast({
+  type: 'user-status',
+  userId: decoded.id,
+  status: 'online'
+});
+    } catch (err) {
+      console.error('❌ Invalid token:', err.message);
+      this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
+      ws.close();
+    }
+  }
+
+  handleDisconnect(clientId, ws) {
+    console.log(`❌ Client disconnected: ${clientId}`);
+    this.clients.delete(clientId);
+
+    if (ws.userId && this.onlineUsers.has(ws.userId)) {
+      this.onlineUsers.delete(ws.userId);
+      this.broadcast({
+        type: 'user-status',
+        userId: ws.userId,
+        status: 'offline'
+      });
     }
   }
 
@@ -153,12 +193,8 @@ class WebSocketService {
     }
   }
 
-  broadcastUserDisconnected(clientId) {
-    this.broadcast({
-      type: 'disconnection',
-      clientId,
-      message: 'User disconnected'
-    });
+  getOnlineUserIds() {
+    return Array.from(this.onlineUsers.keys());
   }
 }
 

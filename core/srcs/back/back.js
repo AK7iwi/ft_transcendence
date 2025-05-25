@@ -3,20 +3,17 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const fastifyModule = require('fastify');
-const WebSocket = require('ws');
+const WebSocketService = require('./services/websocket.service');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const Database = require('better-sqlite3');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
-const xss = require('xss');
-const validator = require('validator');
 const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
+const fastifyCors = require('@fastify/cors');
 const authRoutes = require('./routes/auth.routes');
-const WebSocketService = require('./services/websocket.service');
 const avatarRoutes = require('./routes/avatar.routes');
-
+const authenticate = require('./middleware/authenticate');
 
 // Créer Fastify
 const fastify = fastifyModule({
@@ -27,104 +24,62 @@ const fastify = fastifyModule({
   },
 });
 
+// DB
+const db = new Database('/data/database.sqlite');
+
+// Plugins
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, 'public'),
   prefix: '/',
-  decorateReply: false // important pour compatibilité Fastify v4
+  decorateReply: false
 });
 
 fastify.register(fastifyMultipart);
+fastify.register(fastifyCors, {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+});
 
+// Middleware
+fastify.decorate('authenticate', authenticate);
 
-// Auth Routes
-fastify.register(require('./routes/auth.routes'), { prefix: '/auth' });
+// Routes
+fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
 
-
-// Route manuelle pour servir les avatars (fallback sans sendFile)
 fastify.get('/avatars/:filename', async (req, reply) => {
   const file = req.params.filename;
   const filePath = path.join(__dirname, 'public', 'avatars', file);
-
   if (fs.existsSync(filePath)) {
-    reply.header('Access-Control-Allow-Origin', '*'); // ← ajoute ça
+    reply.header('Access-Control-Allow-Origin', '*');
     return reply.type('image/png').send(fs.createReadStream(filePath));
   } else {
     return reply.status(404).send({ error: 'Fichier non trouvé' });
   }
 });
 
-
-
-//avatar de merde
-fastify.decorate('authenticate', require('./middleware/authenticate'));
-
-
-// Base de données SQLite
-const db = new Database('/data/database.sqlite');
-
-// CORS
-fastify.register(require('@fastify/cors'), {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-});
-
-fastify.setErrorHandler((error, request, reply) => {
-  // Laisse les erreurs de validation retourner le message défini dans le schéma
-  if (error.validation) {
-    return reply.code(400).send({
-      success: false,
-      error: error.message
-    });
-  }
-
-  // Gestion des erreurs internes (ex : serveur)
-  fastify.log.error(error);
-  return reply.code(500).send({
-    success: false,
-    error: 'Internal Server Error'
-  });
-});
-
-
-// Route healthcheck
-fastify.get('/health', async () => {
-  return { status: 'ok' };
-});
-
-// Route sécurisée avec JWT
 fastify.get('/profile', async (request, reply) => {
   try {
-    const authHeader = request.headers.authorization;
-    if (!authHeader) throw new Error('Authorization header missing');
-    const token = authHeader.split(' ')[1];
+    const token = request.headers.authorization?.split(' ')[1];
+    if (!token) throw new Error('Authorization header missing');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
     if (!user) throw new Error('Utilisateur non trouvé');
-    return { user: { id: user.id, username: user.username } };
+    return { id: user.id, username: user.username, avatar: user.avatar, twoFactorEnabled: user.two_factor_enabled };
   } catch (err) {
     return reply.status(401).send({ error: 'Accès refusé' });
   }
 });
 
-// 2FA Setup
-fastify.get('/2fa/setup', async (request, reply) => {
+fastify.get('/2fa/setup', async (_, reply) => {
   try {
     const secret = speakeasy.generateSecret({ length: 20 });
-    console.log('Generated secret:', secret); // 🪵 log ici
-    const qrCodeDataURL = await qrcode.toDataURL(secret.otpauth_url);
+    const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
     return { qrCodeDataURL, secret: secret.base32 };
   } catch (err) {
-    console.error('QR Code generation error:', err); // 🛠 debug ici
     reply.code(500).send({ error: 'Failed to generate QR code' });
   }
 });
-
-
-fastify.get('/', async (request, reply) => {
-  return { message: 'Welcome to the backend API 🚀' };
-});
-
 
 fastify.get('/debug-static', (req, reply) => {
   const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');
@@ -134,15 +89,29 @@ fastify.get('/debug-static', (req, reply) => {
   };
 });
 
+// Online users route
+fastify.get('/auth/online-users', {
+  preHandler: [fastify.authenticate],
+  handler: async (req, reply) => {
+    return { online: fastify.websocketService.getOnlineUserIds() };
+  }
+});
 
-// Démarrer le serveur Fastify et attacher WebSocket
+// Launch server
+// WebSocket setup AVANT .listen()
+const wsService = new WebSocketService(fastify.server);
+fastify.decorate('websocketService', wsService);
+
+fastify.get('/health', async (request, reply) => {
+  reply.code(200).send({ status: 'ok' });
+});
+
+
+// Démarrage du serveur
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
   }
-
-  new WebSocketService(fastify.server); // C'est suffisant
-
   console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
 });

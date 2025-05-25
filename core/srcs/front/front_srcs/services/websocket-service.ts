@@ -6,6 +6,8 @@ export class WebSocketService {
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
   private messageQueue: { type: string; data: any }[] = [];
 
+
+  
   constructor(private url: string) {
     const isSecure = window.location.protocol === 'https:';
     if (isSecure && this.url.startsWith('ws://')) {
