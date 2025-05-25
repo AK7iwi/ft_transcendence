@@ -16,6 +16,12 @@ export class RegisterView extends LitElement {
       padding: 0.75rem;
       font-size: 1rem;
     }
+      .success {
+  color: green;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
 
     .error {
       color: red;
@@ -25,6 +31,7 @@ export class RegisterView extends LitElement {
   @state() private signUpForm = { username: '', password: '', confirmPassword: '' };
   @state() private signUpError = '';
   @state() private isLoading = false;
+@state() private signUpSuccess = '';
 
 
   private validatePassword(password: string): string[] {
@@ -36,32 +43,38 @@ export class RegisterView extends LitElement {
     return errors;
   }
 
-  private async handleSignUp(e: Event) {
-    e.preventDefault();
-    this.signUpError = '';
-    this.isLoading = true;
+private async handleSignUp(e: Event) {
+  e.preventDefault();
+  this.signUpError = '';
+  this.signUpSuccess = '';
+  this.isLoading = true;
 
-    try {
-      const { username, password, confirmPassword } = this.signUpForm;
+  try {
+    const { username, password, confirmPassword } = this.signUpForm;
 
-      if (!username || !password || !confirmPassword)
-        throw new Error('Please fill in all fields');
+    if (!username || !password || !confirmPassword)
+      throw new Error('Please fill in all fields');
 
-      if (password !== confirmPassword)
-        throw new Error('Passwords do not match');
+    if (password !== confirmPassword)
+      throw new Error('Passwords do not match');
 
-      const passwordErrors = this.validatePassword(password);
-      if (passwordErrors.length > 0)
-        throw new Error(passwordErrors.join(', '));
+    const passwordErrors = this.validatePassword(password);
+    if (passwordErrors.length > 0)
+      throw new Error(passwordErrors.join(', '));
 
-      const response = await ApiService.register(username, password);
-      console.log('Registration successful:', response);
-    } catch (error: any) {
-      this.signUpError = error.message || 'Registration failed';
-    } finally {
-      this.isLoading = false;
-    }
+    await ApiService.register(username, password);
+
+    // ✅ Succès
+    this.signUpSuccess = 'Account successfully created! You can now log in.';
+    this.signUpError = ''; // Efface toute erreur précédente
+  } catch (error: any) {
+    this.signUpError = error.message || 'Registration failed';
+    this.signUpSuccess = ''; // Efface un éventuel message de succès
+  } finally {
+    this.isLoading = false;
   }
+}
+
 
   render() {
     return html`
@@ -70,6 +83,7 @@ export class RegisterView extends LitElement {
         <input type="password" placeholder="Password" .value=${this.signUpForm.password} @input=${e => this.signUpForm.password = (e.target as HTMLInputElement).value} required />
         <input type="password" placeholder="Confirm Password" .value=${this.signUpForm.confirmPassword} @input=${e => this.signUpForm.confirmPassword = (e.target as HTMLInputElement).value} required />
         <button type="submit" ?disabled=${this.isLoading}>${this.isLoading ? 'Signing up...' : 'Sign Up'}</button>
+        ${this.signUpSuccess ? html`<div class="success">${this.signUpSuccess}</div>` : ''}
         ${this.signUpError ? html`<div class="error">${this.signUpError}</div>` : ''}
       </form>
     `;

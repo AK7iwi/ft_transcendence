@@ -64,15 +64,25 @@ function initializeDatabase() {
             FOREIGN KEY (tournament_id) REFERENCES tournaments(id),
             FOREIGN KEY (game_id) REFERENCES games(id)
         )`);
-        db.exec(`CREATE TABLE IF NOT EXISTS friends (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    friend_id INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id)
-)`);
+                db.exec(`CREATE TABLE IF NOT EXISTS friends (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            friend_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, friend_id),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (friend_id) REFERENCES users(id)
+        )`);
+
+        // Ajout sécurisé de la colonne "status"
+        try {
+            db.prepare(`ALTER TABLE friends ADD COLUMN status TEXT DEFAULT 'accepted'`).run();
+        } catch (err) {
+            if (!err.message.includes('duplicate column name')) {
+                console.error('Erreur en ajoutant la colonne status :', err.message);
+            }
+        }
+
 
 
         console.log('Database tables initialized successfully');

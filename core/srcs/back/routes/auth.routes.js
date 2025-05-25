@@ -295,22 +295,24 @@ fastify.post('/friends/add', {
 fastify.get('/friends', {
   preHandler: [authenticate],
   handler: async (request, reply) => {
-    const userId = request.user.id;
-    const rows = db.prepare(`
-      SELECT u.username, u.id, f.created_at
-      FROM friends f
-      JOIN users u ON u.id = f.friend_id
-      WHERE f.user_id = ?
-    `).all(userId);
+    try {
+      const userId = request.user.id;
 
-    const friends = rows.map(row => ({
-      username: row.username,
-      online: true // ou faux selon ton système
-    }));
+      const rows = dbApi.db.prepare(`
+        SELECT u.id, u.username, u.avatar
+        FROM friends f
+        JOIN users u ON u.id = f.friend_id
+        WHERE f.user_id = ?
+      `).all(userId);
 
-    return { friends };
+      reply.send(rows);
+    } catch (err) {
+      console.error('Error fetching friends:', err);
+      reply.code(500).send({ error: 'Failed to fetch friends' });
+    }
   }
 });
+
 
 
 fastify.delete('/friends/remove', {

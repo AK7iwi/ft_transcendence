@@ -34,6 +34,19 @@ export class FriendView extends LitElement {
 
     ul {
       margin-top: 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    img {
+      border-radius: 50%;
     }
   `;
 
@@ -47,34 +60,27 @@ export class FriendView extends LitElement {
     this.loadFriends();
   }
 
-static async getFriends() {
-  const response = await fetch('/auth/friends', {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
+  async loadFriends() {
+    try {
+      const result = await ApiService.getFriends();
+      this.friends = result.friends || result;
+    } catch (err) {
+      console.error('Failed to load friends:', err);
+      this.message = 'Error loading friends';
+      this.messageType = 'error';
     }
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch friends');
   }
-  return await response.json();
-}
-
-
-async loadFriends() {
-  try {
-    const result = await ApiService.getFriends();
-    this.friends = result.friends || result; // selon backend
-  } catch (err) {
-    console.error('Failed to load friends:', err); // ← ajoute ça
-    this.message = 'Error loading friends';
-    this.messageColor = 'red';
-  }
-}
 
   async handleAddFriend(e: Event) {
     e.preventDefault();
     this.message = '';
     this.messageType = '';
+
+    if (!this.username.trim()) {
+      this.message = 'Please enter a username';
+      this.messageType = 'error';
+      return;
+    }
 
     try {
       const result = await ApiService.addFriend(this.username);
@@ -87,21 +93,21 @@ async loadFriends() {
       this.messageType = 'error';
     }
   }
+
   async handleRemoveFriend(friendId: number) {
-  this.message = '';
-  this.messageType = '';
+    this.message = '';
+    this.messageType = '';
 
-  try {
-    const result = await ApiService.removeFriend(friendId);
-    this.message = result.message || 'Friend removed';
-    this.messageType = 'success';
-    this.loadFriends(); // Rafraîchit la liste
-  } catch (err: any) {
-    this.message = err.message || 'Error';
-    this.messageType = 'error';
+    try {
+      const result = await ApiService.removeFriend(friendId);
+      this.message = result.message || 'Friend removed';
+      this.messageType = 'success';
+      this.loadFriends();
+    } catch (err: any) {
+      this.message = err.message || 'Error';
+      this.messageType = 'error';
+    }
   }
-}
-
 
   render() {
     return html`
@@ -124,15 +130,14 @@ async loadFriends() {
           : null}
 
         <ul>
-  ${this.friends.map(friend => html`
-    <li>
-      <img src="${friend.avatar || '/avatars/default.png'}" width="30" height="30" />
-      ${friend.username}
-      <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
-    </li>
-  `)}
-</ul>
-
+          ${this.friends.map(friend => html`
+            <li>
+              <img src="${friend.avatar || '/avatars/default.png'}" width="30" height="30" />
+              ${friend.username}
+              <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
+            </li>
+          `)}
+        </ul>
       </div>
     `;
   }

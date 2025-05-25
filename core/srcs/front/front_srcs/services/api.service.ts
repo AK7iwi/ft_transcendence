@@ -263,17 +263,21 @@ static async addFriend(username: string) {
 }
 
 static async getFriends() {
-  const token = localStorage.getItem('token');
-  const res = await fetch(`${this.baseUrl}/auth/friends/list`, {
+  const response = await fetch('/auth/friends', {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+      'Content-Type': 'application/json'
     }
   });
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.error || 'Failed to fetch friends');
-  return json.friends;
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to fetch friends');
+  }
+
+  return await response.json();
 }
+
 
 static async removeFriend(friendId: number) {
   const token = localStorage.getItem('token');
