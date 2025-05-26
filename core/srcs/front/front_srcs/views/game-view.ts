@@ -121,7 +121,7 @@ export class GameView extends LitElement {
   }
 
   private initWebSocket() {
-    this.socket = new WebSocket('wss://localhost:3000/ws');
+    this.socket = new WebSocket('wss://localhost:3000/ws'); // CHANGE THIS TO PC IP TO PLAY REMOTELY
     this.socket.onopen = () => {
       this.sendMessage('join');
     };
@@ -181,6 +181,9 @@ export class GameView extends LitElement {
             }
           }, 100);
           break;
+        case 'pause':
+          this.togglePause();
+          break;
         case 'ballUpdate':
           if (this.playerRole === 'guest') {
             this.ball = {
@@ -204,8 +207,30 @@ export class GameView extends LitElement {
         case 'ballUpdate':
           if (this.playerRole === 'guest') this.ball = data;
           break;
+        case 'ballReset':
+          if (this.playerRole === 'guest') {
+            this.ball = data;
+            this.isBallActive = false;
+            this.startBallCountdown();
+          }
+          break;
+        case 'scoreUpdate':
+          if (this.playerRole === 'guest') {
+            this.score = data;
+          }
       }
     }
+    // if (message.type === 'disconnection') {
+    //   console.warn("🚫 Opponent disconnected:", message.clientId);
+    //   this.isPaused = true;
+    //   this.gameLoop = false;
+      
+    //   if (this.animationFrameId)
+    //     cancelAnimationFrame(this.animationFrameId);
+
+    //   this.winner = this.playerRole === 'host' ? 'Host' : 'Guest';
+    //   this.isGameOver = true;
+    // }
   }
   
   private updateGameSettings() {
@@ -220,26 +245,6 @@ export class GameView extends LitElement {
     if (!this.canvas || !this.ctx) return;
     this.canvas.width = 768;
     this.canvas.height = 432;
-    // // Set canvas size based on container size
-    // const container = this.canvas.parentElement;
-    // if (container) {
-    //   const containerWidth = container.clientWidth;
-    //   const containerHeight = container.clientHeight;
-      
-    //   // Calculate aspect ratio (16:9)
-    //   const aspectRatio = 16 / 9;
-    //   let width = containerWidth;
-    //   let height = width / aspectRatio;
-
-    //   // If height is too large, scale based on height instead
-    //   if (height > containerHeight) {
-    //     height = containerHeight;
-    //     width = height * aspectRatio;
-    //   }
-
-    //   this.canvas.width = width;
-    //   this.canvas.height = height;
-    // }
 
     // Initialize paddle positions
     this.paddle1.x = this.canvas.width * 0.02; // 2% from left
@@ -247,6 +252,8 @@ export class GameView extends LitElement {
     this.paddle2.x = this.canvas.width * 0.98 - this.paddle2.width; // 2% from right
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
+    this.targetPaddle1Y = this.paddle1.y;
+    this.targetPaddle2Y = this.paddle2.y;
     // Initialize ball position
     this.resetBall();
 
@@ -259,21 +266,23 @@ export class GameView extends LitElement {
 
   private resetBall() {
     if (!this.canvas) return;
+
+    // ✅ Only host should generate ball direction
+    if (this.playerRole !== 'host') return;
+
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
-    
-    // Random angle between -60 and 60 degrees (in radians)
+
     const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    
-    // Random direction (left or right)
     const direction = Math.random() > 0.5 ? 1 : -1;
-    
-    // Calculate dx and dy based on angle and constant speed
+
     this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
     this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    
+
     this.isBallActive = false;
-    this.startBallCountdown();
+
+    this.sendMessage('ballReset', this.ball); // 🔄 Sync ball to guest
+    this.startBallCountdown(); // ⏱ Start countdown locally
   }
 
   private setupEventListeners() {
@@ -287,7 +296,7 @@ export class GameView extends LitElement {
     // if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
     // pause
     if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
-      this.togglePause();
+      this.sendMessage('pause');
       return;
     }
     // start
@@ -311,6 +320,7 @@ export class GameView extends LitElement {
       } else if (e.key.toLowerCase() === 's') {
         this.paddle1.dy = this.paddle1.speed;
       }
+      return;
     }
 
     // GUEST CONTROLS PADDLE 2
@@ -366,75 +376,89 @@ export class GameView extends LitElement {
     this.animationFrameId = requestAnimationFrame(() => this.startGameLoop());
   }
 
-  private updateGame() {
-    if (!this.canvas) return;
-    if (this.playerRole === 'host') {
-      const prevY = this.paddle1.y;
-      this.paddle1.y += this.paddle1.dy;
-      if (prevY !== this.paddle1.y) {
-        this.sendMessage('movePaddle', { y: this.paddle1.y });
-      }
+private updateGame() {
+  if (!this.canvas) return;
 
-      this.paddle2.y += (this.targetPaddle2Y - this.paddle2.y) * 0.2;
+  // Paddle movement
+  if (this.playerRole === 'host') {
+    const prevY = this.paddle1.y;
+    this.paddle1.y += this.paddle1.dy;
+    if (prevY !== this.paddle1.y) {
+      this.sendMessage('movePaddle', { y: this.paddle1.y });
     }
-
-    if (this.playerRole === 'guest') {
-      const prevY = this.paddle2.y;
-      this.paddle2.y += this.paddle2.dy;
-      if (prevY !== this.paddle2.y) {
-        this.sendMessage('movePaddle', { y: this.paddle2.y });
-      }
-
-      this.paddle1.y += (this.targetPaddle1Y - this.paddle1.y) * 0.2;
-    }
-    // Ball logic
-    if (this.isBallActive && !this.isGameOver) {
-      this.ball.x += this.ball.dx;
-      this.ball.y += this.ball.dy;
-      this.sendMessage('ballUpdate', this.ball);
-
-      // Ball collision with top/bottom
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
-        this.ball.dy *= -1;
-      }
-
-      // Ball collision with paddles
-      if (this.ball.dx < 0) {
-        if (this.ball.x <= this.paddle1.x + this.paddle1.width &&
-            this.ball.x >= this.paddle1.x &&
-            this.ball.y + this.ball.size/2 >= this.paddle1.y &&
-            this.ball.y - this.ball.size/2 <= this.paddle1.y + this.paddle1.height) {
-          this.ball.dx *= -1;
-        }
-      } else {
-        if (this.ball.x + this.ball.size >= this.paddle2.x &&
-            this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-            this.ball.y + this.ball.size/2 >= this.paddle2.y &&
-            this.ball.y - this.ball.size/2 <= this.paddle2.y + this.paddle2.height) {
-          this.ball.dx *= -1;
-        }
-      }
-
-      // Score check
-      if (this.ball.x <= 0) {
-        this.score.player2++;
-        if (this.score.player2 >= this.settings.endScore) {
-          this.endGame('Player 2');
-        } else {
-          this.resetBall();
-        }
-      } else if (this.ball.x >= this.canvas.width) {
-        this.score.player1++;
-        if (this.score.player1 >= this.settings.endScore) {
-          this.endGame('Player 1');
-        } else {
-          this.resetBall();
-        }
-      }
-    }
-    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
-    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
+    this.paddle2.y += (this.targetPaddle2Y - this.paddle2.y) * 0.2;
   }
+  if (this.playerRole === 'guest') {
+    const prevY = this.paddle2.y;
+    this.paddle2.y += this.paddle2.dy;
+    if (prevY !== this.paddle2.y) {
+      this.sendMessage('movePaddle', { y: this.paddle2.y });
+    }
+    this.paddle1.y += (this.targetPaddle1Y - this.paddle1.y) * 0.2;
+  }
+
+  // Clamp paddle positions
+  this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
+  this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
+
+  // 🚫 Skip ball and scoring logic if inactive or game over
+  if (!this.isBallActive || this.isGameOver) return;
+
+  // Ball movement
+  this.ball.x += this.ball.dx;
+  this.ball.y += this.ball.dy;
+
+  if (this.playerRole === 'host') {
+    this.sendMessage('ballUpdate', this.ball);
+  }
+
+  // Ball collision with top/bottom
+  if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
+    this.ball.dy *= -1;
+  }
+
+  // Ball collision with paddles
+  if (this.ball.dx < 0) {
+    if (
+      this.ball.x <= this.paddle1.x + this.paddle1.width &&
+      this.ball.x >= this.paddle1.x &&
+      this.ball.y + this.ball.size / 2 >= this.paddle1.y &&
+      this.ball.y - this.ball.size / 2 <= this.paddle1.y + this.paddle1.height
+    ) {
+      this.ball.dx *= -1;
+    }
+  } else {
+    if (
+      this.ball.x + this.ball.size >= this.paddle2.x &&
+      this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+      this.ball.y + this.ball.size / 2 >= this.paddle2.y &&
+      this.ball.y - this.ball.size / 2 <= this.paddle2.y + this.paddle2.height
+    ) {
+      this.ball.dx *= -1;
+    }
+  }
+
+  // Score check (host only)
+  if (this.playerRole === 'host') {
+    if (this.ball.x <= 0) {
+      this.score.player2++;
+      if (this.score.player2 >= this.settings.endScore) {
+        this.endGame('Player 2');
+      } else {
+        this.resetBall();
+      }
+    } else if (this.ball.x >= this.canvas.width) {
+      this.score.player1++;
+      if (this.score.player1 >= this.settings.endScore) {
+        this.endGame('Player 1');
+      } else {
+        this.resetBall();
+      }
+    }
+    this.sendMessage('scoreUpdate', this.score);
+  }
+}
+
 
   private endGame(winner: string) {
     this.isGameOver = true;
@@ -468,6 +492,7 @@ export class GameView extends LitElement {
       if (this.animationFrameId) {
         cancelAnimationFrame(this.animationFrameId);
       }
+      this.draw();
     } else {
       this.startGameLoop();
     }
@@ -551,6 +576,8 @@ export class GameView extends LitElement {
       this.initGame();
       this.setupEventListeners();
       this.initWebSocket();
+      this.ball.x = this.canvas.width / 2;
+      this.ball.y = this.canvas.height / 2;
       this.draw();
       window.addEventListener('resize', this.handleResize);
     }

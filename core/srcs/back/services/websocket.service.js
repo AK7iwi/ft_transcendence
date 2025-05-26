@@ -175,6 +175,16 @@ class WebSocketService {
           }
         });
         break;
+      case 'ballReset':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'ballReset',
+            ...rest,
+            clientId
+          }
+        });
+        break;
       case 'movePaddle':
         this.broadcast({
           type: 'game',
