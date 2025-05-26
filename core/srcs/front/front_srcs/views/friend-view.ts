@@ -56,6 +56,7 @@ export class FriendView extends LitElement {
   @state() private messageType: 'success' | 'error' | '' = '';
   @state() private friends: { id: number; username: string; avatar: string }[] = [];
 @state() private onlineUserIds: number[] = [];
+@state() private currentUserId = Number(localStorage.getItem('userId')); // ou une méthode propre
 
 
 connectedCallback() {
@@ -70,7 +71,7 @@ setupWebSocket() {
   socket.onopen = () => {
     const token = localStorage.getItem('token');
     if (token) {
-      socket.send(JSON.stringify({ type: 'auth', token }));
+      socket.send(JSON.stringify({type: 'auth',payload : { token }}));
     }
   };
 

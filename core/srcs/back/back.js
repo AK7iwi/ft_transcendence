@@ -69,15 +69,24 @@ fastify.get('/chat/messages/:userId', {
     const receiverId = parseInt(request.params.userId, 10);
 
     const messages = db.prepare(`
-      SELECT * FROM messages
-      WHERE (sender_id = ? AND receiver_id = ?)
-         OR (sender_id = ? AND receiver_id = ?)
-      ORDER BY timestamp ASC
+      SELECT
+        m.id,
+        m.sender_id,
+        m.receiver_id,
+        m.content,
+        m.timestamp,
+        u.username AS sender_username
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE (m.sender_id = ? AND m.receiver_id = ?)
+         OR (m.sender_id = ? AND m.receiver_id = ?)
+      ORDER BY m.timestamp ASC
     `).all(senderId, receiverId, receiverId, senderId);
 
     return reply.send(messages);
   }
 });
+
 
 
 fastify.post('/chat/message', {
@@ -89,9 +98,6 @@ fastify.post('/chat/message', {
     if (!receiverId || !content) {
       return reply.code(400).send({ error: 'receiverId and content are required' });
     }
-
-    db.prepare('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)')
-      .run(senderId, receiverId, content);
 
     return reply.send({ success: true });
   }

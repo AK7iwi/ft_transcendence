@@ -1,227 +1,215 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { wsInstance } from '../services/websocket-instance';
 import ApiService from '../services/api.service';
+import { API_BASE_URL } from '../config';
+
+interface Conversation {
+  id: string;
+  name: string;
+  lastMessage: string;
+  avatar: string;
+}
 
 @customElement('chat-view')
 export class ChatView extends LitElement {
   static styles = css`
-    :host {
-      display: block;
-      height: 100vh;
-      font-family: sans-serif;
-      background: transparent;
-    }
-
-    .layout {
-      display: flex;
-      height: 100%;
-    }
-
-    .sidebar {
-      width: 250px;
-      background: #1e1e2f;
-      color: white;
-      padding: 1rem;
-      box-sizing: border-box;
-      border-right: 1px solid #333;
-    }
-
-    .friend {
-      padding: 0.5rem;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .friend:hover {
-      background: #2c2c44;
-    }
-
-    .friend.selected {
-      background: #3f3f6b;
-    }
-
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-      box-sizing: border-box;
-    }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      background: #f5f5f5;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      color: black;
-    }
-
-    .message {
-      margin-bottom: 0.75rem;
-      word-wrap: break-word;
-    }
-
-    .input {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    input {
-      flex: 1;
-      padding: 0.75rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: white;
-    }
-
-    button {
-      padding: 0.75rem 1.25rem;
-      font-size: 1rem;
-      background-color: #6366f1;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #4f46e5;
-    }
+    :host { display: block; }
+    .chat-wrapper { display: flex; max-width: 1200px; height: 700px; margin: 0 auto; padding: 2rem; gap: 2rem; overflow-x: hidden; }
+    .conversations { width: 300px; height: 100%; border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface); overflow-y: auto; }
+    .conversation-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border); cursor: pointer; transition: background 0.2s; }
+    .conversation-item:last-child { border-bottom: none; }
+    .conversation-item:hover, .conversation-item.selected { background: var(--color-hover); }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 1rem; }
+    .conversation-info { display: flex; flex-direction: column; }
+    .conversation-name { font-weight: bold; color: var(--color-text); margin-bottom: 0.25rem; }
+    .conversation-last { font-size: 0.9rem; color: var(--color-muted); }
+    .chat-area { flex: 1; display: flex; flex-direction: column; height: 100%; }
+    .chat-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem; }
+    .header-info { display: flex; align-items: center; }
+    .avatar-large { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 1rem; }
+    .chat-with-name { font-size: 1.5rem; font-weight: bold; color: var(--color-text); }
+    .chat-actions { display: flex; gap: 0.5rem; }
+    .chat-button { padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: background 0.2s; }
+    .invite-button { background: var(--color-accent); color: white; }
+    .invite-button:hover { opacity: 0.9; }
+    .block-button { background: var(--color-error); color: white; }
+    .block-button:hover { opacity: 0.9; }
+    .profile-button { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); }
+    .profile-button:hover { background: var(--color-hover); }
+    .messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1rem; background: var(--color-surface); }
+    .message-container { display: flex; width: 100%; margin-bottom: 1rem; }
+    .message-container.left { justify-content: flex-start; }
+    .message-container.right { justify-content: flex-end; }
+    .bubble { max-width: 60%; padding: 0.75rem 1rem; border-radius: 1rem; line-height: 1.4; overflow-wrap: break-word; word-break: break-word; white-space: normal; }
+    .bubble.left { background: var(--color-surface); border: 1px solid var(--color-border); border-top-left-radius: 0; }
+    .bubble.right { background: var(--color-accent); color: white; border-top-right-radius: 0; }
+    .input-container { display: flex; margin-top: 1rem; }
+    .input-container input { flex: 1; padding: 0.8rem; font-size: 1rem; border: 1px solid var(--color-border); border-radius: 0.5rem 0 0 0.5rem; }
+    .send-button { padding: 0 1rem; background: var(--color-accent); color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; cursor: pointer; }
+    .send-button:disabled { opacity: 0.5; cursor: default; }
   `;
 
-  @state() private friends: any[] = [];
-  @state() private selectedFriend: any = null;
-  @state() private messages: { clientId: string; text: string }[] = [];
-  @state() private inputMessage: string = '';
-  @state() private currentUserId: number | null = null;
+  @state() private websocket: WebSocket | null = null;
+  @state() private inputText = '';
+  @state() private selectedConversationId: string = '';
+  @state() private currentUserId = Number(localStorage.getItem('userId'));
+  @state() private messages: { author: string; text: string; me: boolean }[] = [];
+  @state() private conversations: Conversation[] = [];
 
-connectedCallback() {
-  super.connectedCallback();
-  wsInstance.on('dm', this.handleIncomingMessage); // tout de suite !
-  this.fetchInitialData();
-}
-
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    wsInstance.off('dm', this.handleIncomingMessage);
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadFriendsAsConversations();
+    this.setupWebSocket();
   }
 
-  async fetchInitialData() {
+  async loadFriendsAsConversations() {
+    const result = await ApiService.getFriends();
+    this.conversations = result.map((friend: any) => ({
+      id: String(friend.id),
+      name: friend.username,
+      lastMessage: '',
+      avatar: `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`
+    }));
+  }
+
+  setupWebSocket() {
+    this.websocket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
+
+    this.websocket.onopen = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        this.websocket!.send(JSON.stringify({
+          type: 'auth',
+          payload: { token }
+        }));
+      }
+    };
+
+    this.websocket.onmessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'dm') {
+          const { senderId, text } = data;
+
+          if (String(senderId) === this.selectedConversationId) {
+            this.messages = [
+              ...this.messages,
+              {
+                author: this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown',
+                text,
+                me: false
+              }
+            ];
+          }
+        }
+      } catch (err) {
+        console.error('WebSocket message error:', err);
+      }
+    };
+  }
+
+  async loadMessages(friendId: string) {
+    this.selectedConversationId = friendId;
+
     try {
-      const [userRes, friends] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_BASE}/auth/me`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }).then(res => res.json()),
-        ApiService.getFriends()
-      ]);
+      const result = await ApiService.getMessages(friendId);
+      this.messages = result.map((msg: any) => ({
+        author: msg.sender?.username || '???',
+        text: msg.content,
+        me: msg.sender?.id === this.currentUserId
+      }));
 
-      this.currentUserId = userRes.id;
-      this.friends = friends.friends || friends;
-
-      if (!this.selectedFriend && this.friends.length > 0) {
-        this.selectedFriend = this.friends[0];
-      }
-
-      console.log('⚙️ [Init OK] currentUserId =', this.currentUserId);
-      console.log('⚙️ [Init OK] selectedFriend =', this.selectedFriend);
-
-      wsInstance.on('dm', this.handleIncomingMessage);
-    } catch (err) {
-      console.error('❌ Erreur de chargement initial :', err);
-    }
-  }
-
-handleIncomingMessage = (message: any) => {
-  if (this.currentUserId === null || this.selectedFriend === null) {
-    setTimeout(() => this.handleIncomingMessage(message), 100); // attendre que l'init finisse
-    return;
-  }
-
-  const isOwnMessage = message.senderId === this.currentUserId;
-  const isFromSelectedFriend = message.senderId === this.selectedFriend.id;
-
-  if (isOwnMessage || isFromSelectedFriend) {
-    this.messages = [
-      ...this.messages,
-      {
-        clientId: isOwnMessage ? 'Vous' : this.selectedFriend.username,
-        text: message.text
-      }
-    ];
-    console.log('[ChatView] ✅ Message affiché');
-  } else {
-    console.warn('[ChatView] ❌ Ignoré : senderId ne correspond pas');
-  }
-};
-
-
-  sendMessage() {
-    if (this.inputMessage.trim() && this.selectedFriend) {
-      wsInstance.send('dm', {
-        toUserId: this.selectedFriend.id,
-        text: this.inputMessage
+      this.updateComplete.then(() => {
+        const container = this.renderRoot.querySelector('.messages')!;
+        container.scrollTop = container.scrollHeight;
       });
 
-      this.messages = [
-        ...this.messages,
-        {
-          clientId: 'Vous',
-          text: this.inputMessage
-        }
-      ];
-      this.inputMessage = '';
+    } catch (err) {
+      console.error('Failed to load messages:', err);
     }
   }
 
-  selectFriend(friend: any) {
-    this.selectedFriend = friend;
-    this.messages = []; // TODO: charger historique si besoin
+  private handleInput(e: Event) {
+    this.inputText = (e.target as HTMLInputElement).value;
+  }
+
+  async sendMessage() {
+    if (!this.inputText.trim()) return;
+
+    const toUserId = Number(this.selectedConversationId);
+    const text = this.inputText.trim();
+
+    try {
+      await ApiService.sendMessage({ receiverId: toUserId, content: text });
+
+      this.websocket?.send(JSON.stringify({
+        type: 'dm',
+        payload: { toUserId, text }
+      }));
+
+      this.messages = [...this.messages, {
+        author: 'You',
+        text,
+        me: true
+      }];
+      this.inputText = '';
+
+      this.updateComplete.then(() => {
+        const container = this.renderRoot.querySelector('.messages')!;
+        container.scrollTop = container.scrollHeight;
+      });
+
+    } catch (err) {
+      console.error('❌ Échec envoi message:', err);
+    }
   }
 
   render() {
+    const current = this.conversations.find(c => c.id === this.selectedConversationId);
     return html`
-      <div class="layout">
-        <div class="sidebar">
-          <h3>Mes amis</h3>
-          ${this.friends.map(friend => html`
-            <div
-              class="friend ${this.selectedFriend?.id === friend.id ? 'selected' : ''}"
-              @click=${() => this.selectFriend(friend)}
-            >
-              ${friend.username}
+      <div class="chat-wrapper">
+        <div class="conversations">
+          ${this.conversations.map(c => html`
+            <div class="conversation-item ${this.selectedConversationId === c.id ? 'selected' : ''}" @click=${() => this.loadMessages(c.id)}>
+              <img src="${c.avatar}" alt="${c.name} avatar" class="avatar" />
+              <div class="conversation-info">
+                <div class="conversation-name">${c.name}</div>
+                <div class="conversation-last">${c.lastMessage}</div>
+              </div>
             </div>
           `)}
         </div>
-
         <div class="chat-area">
-          ${this.selectedFriend
-            ? html`
-              <h2>Chat avec ${this.selectedFriend.username}</h2>
-              <div class="messages">
-                ${this.messages.map(msg => html`
-                  <div class="message">
-                    <strong>${msg.clientId}</strong>: ${msg.text}
-                  </div>
-                `)}
+          ${current ? html`
+            <div class="chat-header">
+              <div class="header-info">
+                <img src="${current.avatar}" alt="${current.name} avatar" class="avatar-large" />
+                <div class="chat-with-name">${current.name}</div>
               </div>
-              <div class="input">
-                <input
-                  type="text"
-                  .value=${this.inputMessage}
-                  @input=${(e: Event) => (this.inputMessage = (e.target as HTMLInputElement).value)}
-                  @keydown=${(e: KeyboardEvent) => {
-                    if (e.key === 'Enter') this.sendMessage();
-                  }}
-                />
-                <button @click=${this.sendMessage}>Envoyer</button>
+              <div class="chat-actions">
+                <button class="chat-button invite-button" @click=${() => console.log('Invite clicked')}>Invite to Play</button>
+                <button class="chat-button profile-button" @click=${() => console.log('View Profile clicked')}>View Profile</button>
+                <button class="chat-button block-button" @click=${() => console.log('Block clicked')}>Block</button>
               </div>
-            `
-            : html`<p>Sélectionnez un ami pour commencer à discuter.</p>`}
+            </div>
+            <div class="messages">
+              ${this.messages.map(msg => html`
+                <div class="message-container ${msg.me ? 'right' : 'left'}">
+                  <div class="bubble ${msg.me ? 'right' : 'left'}">${msg.text}</div>
+                </div>
+              `)}
+            </div>
+            <div class="input-container">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                .value=${this.inputText}
+                @input=${this.handleInput}
+                @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && this.sendMessage()}
+              />
+              <button class="send-button" ?disabled=${!this.inputText.trim()} @click=${this.sendMessage}>Send</button>
+            </div>
+          ` : html`<p style="padding: 2rem;">Select a conversation to begin</p>`}
         </div>
       </div>
     `;

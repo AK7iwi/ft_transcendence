@@ -281,7 +281,34 @@ static async getFriends() {
 
 
 
+static async getMessages(friendId: string) {
+  const res = await fetch(`${API_BASE_URL}/chat/messages/${friendId}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
 
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.messages || [];
+}
+
+static async sendMessage({ receiverId, content }: { receiverId: number; content: string }) {
+  const res = await fetch(`${API_BASE_URL}/chat/message`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ receiverId, content })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || 'Failed to send message');
+  }
+
+  return res.json();
+}
 
 static async removeFriend(friendId: number) {
   const token = localStorage.getItem('token');
