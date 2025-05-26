@@ -36,9 +36,13 @@ fastify.register(fastifyStatic, {
 
 fastify.register(fastifyMultipart);
 fastify.register(fastifyCors, {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: true, // autorise tous les domaines OU précise le tien : 'http://localhost:5173'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 });
+
+
 
 // Middleware
 fastify.decorate('authenticate', authenticate);
@@ -57,6 +61,42 @@ fastify.get('/avatars/:filename', async (req, reply) => {
     return reply.status(404).send({ error: 'Fichier non trouvé' });
   }
 });
+
+fastify.get('/chat/messages/:userId', {
+  preHandler: authenticate,
+  handler: async (request, reply) => {
+    const senderId = request.user.id;
+    const receiverId = parseInt(request.params.userId, 10);
+
+    const messages = db.prepare(`
+      SELECT * FROM messages
+      WHERE (sender_id = ? AND receiver_id = ?)
+         OR (sender_id = ? AND receiver_id = ?)
+      ORDER BY timestamp ASC
+    `).all(senderId, receiverId, receiverId, senderId);
+
+    return reply.send(messages);
+  }
+});
+
+
+fastify.post('/chat/message', {
+  preHandler: authenticate,
+  handler: async (request, reply) => {
+    const { receiverId, content } = request.body;
+    const senderId = request.user.id;
+
+    if (!receiverId || !content) {
+      return reply.code(400).send({ error: 'receiverId and content are required' });
+    }
+
+    db.prepare('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)')
+      .run(senderId, receiverId, content);
+
+    return reply.send({ success: true });
+  }
+});
+
 
 fastify.get('/profile', async (request, reply) => {
   try {
@@ -97,17 +137,18 @@ fastify.get('/auth/online-users', {
   }
 });
 
-// Launch server
-// WebSocket setup AVANT .listen()
-const wsService = new WebSocketService(fastify.server);
-fastify.decorate('websocketService', wsService);
-
 fastify.get('/health', async (request, reply) => {
   reply.code(200).send({ status: 'ok' });
 });
 
+fastify.get('/', async (request, reply) => {
+  return { message: 'API is working' };
+});
 
-// Démarrage du serveur
+// Launch server
+const wsService = new WebSocketService(fastify.server);
+fastify.decorate('websocketService', wsService);
+
 fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   if (err) {
     fastify.log.error(err);
@@ -115,3 +156,4 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   }
   console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
 });
+

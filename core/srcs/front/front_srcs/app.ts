@@ -1,8 +1,10 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
+import { wsInstance } from '../services/websocket-instance';
 import './styles.css';
 import './views/login-view.ts';
+
 import './views/register-view.ts';
 import './views/chat-view.ts';
 import './views/friend-view.ts';

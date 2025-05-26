@@ -68,10 +68,12 @@ class WebSocketService {
   }
 
   handleMessage(clientId, ws, data) {
+     console.log('[WS SERVER] Message brut reçu :', data);
     switch (data.type) {
       case 'auth':
-        this.handleAuth(clientId, ws, data.token);
-        break;
+  this.handleAuth(clientId, ws, data.payload.token);
+  break;
+
       case 'chat':
         this.handleChatMessage(clientId, data.payload);
         break;
@@ -81,6 +83,13 @@ class WebSocketService {
       case 'tournament':
         this.handleTournamentMessage(clientId, data.payload);
         break;
+        case 'dm':
+  this.handleDirectMessage(clientId, data.payload);
+  break;
+  case 'invite-pong':
+  this.handlePongInvite(clientId, data.payload);
+  break;
+
       default:
         console.warn(`⚠️ Unknown message type: ${data.type}`);
         this.sendToClient(clientId, {
@@ -90,32 +99,79 @@ class WebSocketService {
     }
   }
 
-  handleAuth(clientId, ws, token) {
-    if (!token) {
-      return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
-    }
+  handlePongInvite(clientId, { toUserId }) {
+  const toWs = this.onlineUsers.get(toUserId);
+  if (!toWs) return;
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      ws.userId = decoded.id;
-      this.onlineUsers.set(decoded.id, ws);
-      console.log(`🔓 Authenticated user ${decoded.id}`);
+  toWs.send(JSON.stringify({
+    type: 'pong-invite',
+    from: this.clients.get(clientId).userId
+  }));
+}
 
-      this.sendToClient(clientId, {
-        type: 'auth-success',
-        userId: decoded.id
-      });
-      this.broadcast({
-  type: 'user-status',
-  userId: decoded.id,
-  status: 'online'
-});
-    } catch (err) {
-      console.error('❌ Invalid token:', err.message);
-      this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
-      ws.close();
-    }
+
+handleDirectMessage(clientId, payload) {
+  console.log('[WS SERVER] handleDirectMessage payload:', payload);
+
+  const { toUserId, text } = payload || {};
+  const fromWs = this.clients.get(clientId);
+  const fromUserId = fromWs?.userId;
+
+  if (!fromUserId || !toUserId || !text?.trim()) {
+    console.warn('[DM] Invalid message:', { fromUserId, toUserId, text });
+    return;
   }
+
+  const toWs = this.onlineUsers.get(toUserId);
+  const payloadToSend = {
+    type: 'dm',
+    senderId: fromUserId,
+    text: text.trim(),
+    timestamp: Date.now()
+  };
+
+  if (toWs?.readyState === WebSocket.OPEN) {
+    toWs.send(JSON.stringify(payloadToSend));
+  }
+
+  if (fromWs?.readyState === WebSocket.OPEN) {
+    fromWs.send(JSON.stringify(payloadToSend));
+
+  }
+
+  console.log(`[DM] ${fromUserId} → ${toUserId}: ${text}`);
+}
+
+handleAuth(clientId, ws, token) {
+  if (!token) {
+    return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    ws.userId = decoded.id;
+    this.clients.set(clientId, ws); // ✅ FIX CRUCIAL
+    this.onlineUsers.set(decoded.id, ws);
+
+    console.log(`🔓 Authenticated user ${decoded.id}`);
+
+    this.sendToClient(clientId, {
+      type: 'auth-success',
+      userId: decoded.id
+    });
+
+    this.broadcast({
+      type: 'user-status',
+      userId: decoded.id,
+      status: 'online'
+    });
+  } catch (err) {
+    console.error('❌ Invalid token:', err.message);
+    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
+    ws.close();
+  }
+}
+
 
   handleDisconnect(clientId, ws) {
     console.log(`❌ Client disconnected: ${clientId}`);

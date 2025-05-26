@@ -72,7 +72,24 @@ function initializeDatabase() {
             UNIQUE(user_id, friend_id),
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (friend_id) REFERENCES users(id)
+            
         )`);
+        db.exec(`CREATE TABLE IF NOT EXISTS blocked_users (
+  user_id INTEGER,
+  blocked_id INTEGER,
+  PRIMARY KEY (user_id, blocked_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (blocked_id) REFERENCES users(id)
+        )`);
+db.exec(`CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  receiver_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(sender_id) REFERENCES users(id),
+  FOREIGN KEY(receiver_id) REFERENCES users(id)
+);`);
 
         // Ajout sécurisé de la colonne "status"
         try {

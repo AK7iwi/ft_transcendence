@@ -6,8 +6,6 @@ export class WebSocketService {
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
   private messageQueue: { type: string; data: any }[] = [];
 
-
-  
   constructor(private url: string) {
     const isSecure = window.location.protocol === 'https:';
     if (isSecure && this.url.startsWith('ws://')) {
@@ -29,7 +27,16 @@ export class WebSocketService {
         console.log('[WS] Connected');
         this.reconnectAttempts = 0;
 
-        // vider la file d’attente
+        // ✅ Envoyer auth automatiquement
+        const token = localStorage.getItem('token');
+        if (token) {
+          this.send('auth', { token });
+          console.log('[WS] ✅ Auth envoyé automatiquement');
+        } else {
+          console.warn('[WS] ⚠️ Aucun token trouvé pour WebSocket');
+        }
+
+        // ✅ vider la file d’attente
         while (this.messageQueue.length > 0) {
           const msg = this.messageQueue.shift();
           if (msg) this.send(msg.type, msg.data);
@@ -39,6 +46,7 @@ export class WebSocketService {
       this.ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log('[WS RAW]', message);
           this.handleMessage(message);
         } catch (error) {
           console.error('Error processing message:', error);
@@ -72,11 +80,14 @@ export class WebSocketService {
   }
 
   private handleMessage(message: any) {
+    
     const handlers = this.messageHandlers.get(message.type) || [];
-    handlers.forEach(handler => handler(message.data));
+   handlers.forEach(handler => handler(message)); // envoie le message complet
+
   }
 
   public on(type: string, handler: (data: any) => void) {
+     console.log(`[WSService] Enregistrement handler pour type: ${type}`);
     if (!this.messageHandlers.has(type)) {
       this.messageHandlers.set(type, []);
     }
@@ -92,13 +103,10 @@ export class WebSocketService {
   }
 
   public send(type: string, data: any) {
-    const message = JSON.stringify({ type, data });
+    const message = JSON.stringify({ type, payload: data });
 
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(message);
-    } else {
-      console.warn('[WS] Not open, queuing message...');
-      this.messageQueue.push({ type, data });
     }
   }
 
