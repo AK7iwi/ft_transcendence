@@ -49,92 +49,92 @@ services:
       retries: 3
 
   # Game Service
-  game-service:
-    container_name: game-service
-    image: game-service
-    build:
-      context: ./src/back/service/game-service
-      dockerfile: Dockerfile
-    working_dir: /usr/src/app
-    ports:
-      - "3002:3002"
-    env_file: .env
-    volumes:
-      - game_data:/data
-    networks:
-      - transcendence
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+  # game-service:
+  #   container_name: game-service
+  #   image: game-service
+  #   build:
+  #     context: ./src/back/service/game-service
+  #     dockerfile: Dockerfile
+  #   working_dir: /usr/src/app
+  #   ports:
+  #     - "3002:3002"
+  #   env_file: .env
+  #   volumes:
+  #     - game_data:/data
+  #   networks:
+  #     - transcendence
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3002/health", "--insecure"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
 
-  # Tournament Service
-  tournament-service:
-    container_name: tournament-service
-    image: tournament-service
-    build:
-      context: ./src/back/service/tournament-service
-      dockerfile: Dockerfile
-    working_dir: /usr/src/app
-    ports:
-      - "3003:3003"
-    env_file: .env
-    volumes:
-      - tournament_data:/data
-    networks:
-      - transcendence
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+  # # Tournament Service
+  # tournament-service:
+  #   container_name: tournament-service
+  #   image: tournament-service
+  #   build:
+  #     context: ./src/back/service/tournament-service
+  #     dockerfile: Dockerfile
+  #   working_dir: /usr/src/app
+  #   ports:
+  #     - "3003:3003"
+  #   env_file: .env
+  #   volumes:
+  #     - tournament_data:/data
+  #   networks:
+  #     - transcendence
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3003/health", "--insecure"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
 
-  # Chat Service
-  chat-service:
-    container_name: chat-service
-    image: chat-service
-    build:
-      context: ./src/back/service/chat-service
-      dockerfile: Dockerfile
-    working_dir: /usr/src/app
-    ports:
-      - "3004:3004"
-    env_file: .env
-    volumes:
-      - chat_data:/data
-    networks:
-      - transcendence
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+  # # Chat Service
+  # chat-service:
+  #   container_name: chat-service
+  #   image: chat-service
+  #   build:
+  #     context: ./src/back/service/chat-service
+  #     dockerfile: Dockerfile
+  #   working_dir: /usr/src/app
+  #   ports:
+  #     - "3004:3004"
+  #   env_file: .env
+  #   volumes:
+  #     - chat_data:/data
+  #   networks:
+  #     - transcendence
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3004/health", "--insecure"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
 
-  # User Service
-  user-service:
-    container_name: user-service
-    image: user-service
-    build:
-      context: ./src/back/service/user-service
-      dockerfile: Dockerfile
-    working_dir: /usr/src/app
-    ports:
-      - "3005:3005"
-    env_file: .env
-    volumes:
-      - user_data:/data
-    networks:
-      - transcendence
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3005/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+  # # User Service
+  # user-service:
+  #   container_name: user-service
+  #   image: user-service
+  #   build:
+  #     context: ./src/back/service/user-service
+  #     dockerfile: Dockerfile
+  #   working_dir: /usr/src/app
+  #   ports:
+  #     - "3005:3005"
+  #   env_file: .env
+  #   volumes:
+  #     - user_data:/data
+  #   networks:
+  #     - transcendence
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3005/health", "--insecure"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
 
   # Frontend Service
   front:
@@ -160,7 +160,7 @@ networks:
 
 volumes:
   auth_data:
-  game_data:
-  tournament_data:
-  chat_data:
-  user_data:
+  # game_data:
+  # tournament_data:
+  # chat_data:
+  # user_data:
