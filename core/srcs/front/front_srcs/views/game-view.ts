@@ -101,6 +101,7 @@ export class GameView extends LitElement {
   private settingsService: SettingsService;
   private settings: GameSettings;
   private playerId: string = '';
+  private gameOverReason: 'win' | 'disconnect' = 'win';
 
   private socket: WebSocket | null = null;
   private playerRole: 'host' | 'guest' | null = null;
@@ -121,7 +122,7 @@ export class GameView extends LitElement {
   }
 
   private initWebSocket() {
-    this.socket = new WebSocket('wss://localhost:3000/ws'); // CHANGE THIS TO PC IP TO PLAY REMOTELY
+    this.socket = new WebSocket('wss://10.14.7.3:3000/ws'); // CHANGE THIS TO PC IP TO PLAY REMOTELY
     this.socket.onopen = () => {
       this.sendMessage('join');
     };
@@ -220,17 +221,18 @@ export class GameView extends LitElement {
           }
       }
     }
-    // if (message.type === 'disconnection') {
-    //   console.warn("🚫 Opponent disconnected:", message.clientId);
-    //   this.isPaused = true;
-    //   this.gameLoop = false;
+    if (message.type === 'disconnection') {
+      console.warn("🚫 Opponent disconnected:", message.clientId);
+      this.isPaused = true;
+      this.gameLoop = false;
+      this.isGameOver = true;
+      this.gameOverReason = 'disconnect';
+      this.winner = 'Opponent Disconnected';
       
-    //   if (this.animationFrameId)
-    //     cancelAnimationFrame(this.animationFrameId);
-
-    //   this.winner = this.playerRole === 'host' ? 'Host' : 'Guest';
-    //   this.isGameOver = true;
-    // }
+      if (this.animationFrameId)
+        cancelAnimationFrame(this.animationFrameId);
+      this.draw();
+    }
   }
   
   private updateGameSettings() {
@@ -463,6 +465,7 @@ private updateGame() {
   private endGame(winner: string) {
     this.isGameOver = true;
     this.winner = winner;
+    this.gameOverReason = 'win';
     this.gameLoop = false;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -535,7 +538,8 @@ private updateGame() {
 
     if (this.isGameOver) {
       this.ctx.font = 'bold 48px Arial';
-      this.ctx.fillText(`${this.winner} Wins!`, this.canvas.width / 2, this.canvas.height / 2 - 30);
+      const message = this.gameOverReason === 'disconnect' ? 'Oponnent Disconnected' : `${this.winner} Wins!`;
+      this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 - 30);
       this.ctx.font = 'bold 24px Arial';
       this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
