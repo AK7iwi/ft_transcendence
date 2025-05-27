@@ -1,5 +1,5 @@
 const xss = require('xss');
-const { sanitize } = require('validator');
+const sanitize  = require('validator');
 
 class SanitizeService {
     static xssProtection(request, reply) {
