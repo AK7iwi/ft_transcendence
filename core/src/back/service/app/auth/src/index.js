@@ -1,6 +1,7 @@
 // auth-service/src/index.js
 const fastify = require('fastify');
 const initializeDatabase = require('./database/schema');
+const SecurityMiddleware = require('../../security/middleware/sanityze.service');
 const authRoutes = require('./routes/auth.routes');
 
 // Create Fastify instance
@@ -11,6 +12,7 @@ initializeDatabase();
 
 // Global security middleware
 app.addHook('preHandler', SecurityMiddleware.securityMiddleware);
+
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });
 
@@ -38,6 +40,5 @@ const start = async () => {
         process.exit(1);
     }
 };
-
 
 start();

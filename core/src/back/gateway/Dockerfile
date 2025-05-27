@@ -14,14 +14,17 @@ RUN mkdir -p /usr/src/app/certs && chmod 755 /usr/src/app/certs
 
 # Copy package files and install dependencies
 COPY package*.json ./
-
 RUN npm install
 
-# Copy the rest of the backend files
-COPY . .
+# Copy source files
+COPY src/ ./src/
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV GATEWAY_PORT=3000
 
 # Expose Fastify port
 EXPOSE 3000
 
-# Use the entrypoint script
-CMD ["npm", "run", "dev"]
+# Start the application
+CMD ["npm", "start"]
