@@ -62,14 +62,12 @@ private async handleBlockUser() {
     .conversation-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border); cursor: pointer; transition: background 0.2s; }
     .conversation-item:last-child { border-bottom: none; }
     .conversation-item:hover, .conversation-item.selected { background: var(--color-hover); }
-    .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 1rem; }
     .conversation-info { display: flex; flex-direction: column; }
     .conversation-name { font-weight: bold; color: var(--color-text); margin-bottom: 0.25rem; }
     .conversation-last { font-size: 0.9rem; color: var(--color-muted); }
     .chat-area { flex: 1; display: flex; flex-direction: column; height: 100%; }
     .chat-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem; }
     .header-info { display: flex; align-items: center; }
-    .avatar-large { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 1rem; }
     .chat-with-name { font-size: 1.5rem; font-weight: bold; color: var(--color-text); }
     .chat-actions { display: flex; gap: 0.5rem; }
     .chat-button { padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: background 0.2s; }
@@ -216,7 +214,6 @@ private async handleBlockUser() {
         <div class="conversations">
           ${this.conversations.map(c => html`
             <div class="conversation-item ${this.selectedConversationId === c.id ? 'selected' : ''}" @click=${() => this.loadMessages(c.id)}>
-              <img src="${c.avatar}" alt="${c.name} avatar" class="avatar" />
               <div class="conversation-info">
                 <div class="conversation-name">${c.name}</div>
                 <div class="conversation-last">${c.lastMessage}</div>
@@ -232,7 +229,6 @@ private async handleBlockUser() {
 
             <div class="chat-header">
               <div class="header-info">
-                <img src="${current.avatar}" alt="${current.name} avatar" class="avatar-large" />
                 <div class="chat-with-name">${current.name}</div>
               </div>
               <div class="chat-actions">
