@@ -1,4 +1,4 @@
-const PasswordService = require('../../../security/service/password.service');
+const PasswordService = require('../../security/password/password.service');
 const UserModel = require('../database/user.model');
 
 class AuthService {

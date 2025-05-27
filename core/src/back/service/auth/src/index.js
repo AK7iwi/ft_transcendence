@@ -1,7 +1,7 @@
-// auth-service/src/index.js
 const fastify = require('fastify');
+require('dotenv').config();
 const initializeDatabase = require('./database/schema');
-const SecurityMiddleware = require('../../security/middleware/sanityze.service');
+const SecurityMiddleware = require('../security/middleware/sanitize.service');
 const authRoutes = require('./routes/auth.routes');
 
 // Create Fastify instance

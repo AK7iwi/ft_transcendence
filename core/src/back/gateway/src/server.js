@@ -1,12 +1,14 @@
+require('dotenv').config();
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-const axiosPlugin = require('./plugins/axios');
+const axios = require('axios');
+const SecurityMiddleware = require('../security/middleware/sanitize.service');
 const authRoutes = require('./routes/auth.routes');
-const gameRoutes = require('./routes/game.routes');
-const tournamentRoutes = require('./routes/tournament.routes');
-const chatRoutes = require('./routes/chat.routes');
-const userRoutes = require('./routes/user.routes');
+// const gameRoutes = require('./routes/game.routes');
+// const tournamentRoutes = require('./routes/tournament.routes');
+// const chatRoutes = require('./routes/chat.routes');
+// const userRoutes = require('./routes/user.routes');
 
 // Initialize Fastify
 const fastify = fastifyModule({ logger: true });
@@ -16,7 +18,19 @@ fastify.register(cors, { origin: true });
 
 // Register websocket
 fastify.register(websocket);
-fastify.register(axiosPlugin);
+
+// Configure axios
+const axiosInstance = axios.create({
+    timeout: 5000, // 5 seconds timeout
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+// Register axios instance
+fastify.decorate('axios', axiosInstance);
+
+// fastify.addHook('preHandler', SecurityMiddleware.securityMiddleware);
 
 // Basic route
 fastify.get('/', async (request, reply) => {

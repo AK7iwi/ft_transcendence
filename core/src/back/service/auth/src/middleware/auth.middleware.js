@@ -1,4 +1,4 @@
-const JWTService = require('../../../security/jwt.service');
+const JWTService = require('../../security/middleware/jwt.service');
 
 class AuthMiddleware {
     static async verifyToken(request, reply) {

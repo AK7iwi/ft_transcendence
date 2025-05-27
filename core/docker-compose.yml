@@ -10,17 +10,13 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
-    environment:
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - GAME_SERVICE_URL=http://game-service:3002
-      - TOURNAMENT_SERVICE_URL=http://tournament-service:3003
-      - CHAT_SERVICE_URL=http://chat-service:3004
-      - USER_SERVICE_URL=http://user-service:3005
+    volumes:
+      - ./src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health", "--insecure"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,7 +27,7 @@ services:
     container_name: auth-service
     image: auth-service
     build:
-      context: ./src/back/service/app/auth
+      context: ./src/back/service/auth
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -39,11 +35,12 @@ services:
     env_file: .env
     volumes:
       - auth_data:/data
+      - ./src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health", "--insecure"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -53,7 +50,7 @@ services:
   #   container_name: game-service
   #   image: game-service
   #   build:
-  #     context: ./src/back/service/app/game
+  #     context: ./src/back/service/game
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:
@@ -75,7 +72,7 @@ services:
   #   container_name: tournament-service
   #   image: tournament-service
   #   build:
-  #     context: ./src/back/service/app/tournament
+  #     context: ./src/back/service/tournament
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:
@@ -97,7 +94,7 @@ services:
   #   container_name: chat-service
   #   image: chat-service
   #   build:
-  #     context: ./src/back/service/app/chat
+  #     context: ./src/back/service/chat
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:
@@ -119,7 +116,7 @@ services:
   #   container_name: user-service
   #   image: user-service
   #   build:
-  #     context: ./src/back/service/app/user 
+  #     context: ./src/back/service/user 
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:

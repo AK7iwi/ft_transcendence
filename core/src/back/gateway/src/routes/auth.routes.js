@@ -1,4 +1,4 @@
-const { authSchema } = require('../schemas/auth.schema');
+const authSchema  = require('../schemas/auth.schema');
 
 module.exports = async function (fastify, opts) {
     // Register route

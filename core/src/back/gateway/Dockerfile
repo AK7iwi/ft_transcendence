@@ -17,14 +17,10 @@ COPY package*.json ./
 RUN npm install
 
 # Copy source files
-COPY src/ ./src/
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV GATEWAY_PORT=3000
+COPY . .
 
 # Expose Fastify port
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

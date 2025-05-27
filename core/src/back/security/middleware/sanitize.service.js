@@ -1,7 +1,7 @@
 const xss = require('xss');
 const { sanitize } = require('validator');
 
-class SanityzeService {
+class SanitizeService {
     static xssProtection(request, reply) {
         const processObject = (obj) => {
             for (let key in obj) {
@@ -53,9 +53,9 @@ class SanityzeService {
     }
 
     static securityMiddleware(request, reply) {
-        this.xssProtection(request, reply);
-        this.sqlInjectionProtection(request, reply);
+        SanitizeService.xssProtection(request, reply);
+        SanitizeService.sqlInjectionProtection(request, reply);
     }
 }
 
-module.exports = SanityzeService;
+module.exports = SanitizeService;
