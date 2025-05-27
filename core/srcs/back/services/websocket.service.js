@@ -7,7 +7,7 @@ class WebSocketService {
       path: '/ws'
     });
 
-    this.waitingClient = null; // M: stores a client waiting for a match
+    this.clientQueue = [];
     this.clientRooms = new Map(); // M: clientId -> roomId
     this.rooms = new Map(); // M: roomId -> [clientId1, clientId2]
     this.clients = new Map();
@@ -15,6 +15,8 @@ class WebSocketService {
   }
 
   setupWebSocket() {
+    console.log('✅ Setting up WebSocket server');
+
     this.wss.on('connection', (ws, req) => {
       const clientId = this.generateClientId();
       this.clients.set(clientId, ws);
@@ -40,11 +42,16 @@ class WebSocketService {
       ws.on('close', () => {
         console.log(`❌ Client disconnected: ${clientId}`);
         this.clients.delete(clientId);
-        this.broadcast({
-          type: 'disconnection',
-          clientId,
-          message: 'User disconnected'
-        });
+        this.clientQueue = this.clientQueue.filter(id => id !== clientId);
+        console.log('Updated clientQueue:', this.clientQueue);
+
+        this.clientRooms.delete(clientId);
+        for (const [roomId, clients] of this.rooms.entries()) {
+          this.rooms.set(roomId, clients.filter(id => id !== clientId));
+        }
+
+        this.reassignRolesAfterDisconnect();
+        this.broadcastUserDisconnected(clientId);
       });
 
       ws.on('pong', () => {
@@ -61,6 +68,14 @@ class WebSocketService {
           console.log(`⚠️ Terminating stale client: ${clientId}`);
           ws.terminate();
           this.clients.delete(clientId);
+
+          this.clientQueue = this.clientQueue.filter(id => id !== clientId);
+          this.clientRooms.delete(clientId);
+          for (const [roomId, clients] of this.rooms.entries()) {
+            this.rooms.set(roomId, clients.filter(id => id !== clientId));
+          }
+
+          this.reassignRolesAfterDisconnect();
           this.broadcastUserDisconnected(clientId);
         } else {
           ws.isAlive = false;
@@ -75,29 +90,74 @@ class WebSocketService {
   }
 
   handlePlayerJoin(clientId) {
-    if (this.waitingClient === null) {
-      this.waitingClient = clientId;
-      this.sendToClient(clientId, {
-        type: 'game',
-        data: { action: 'waiting', message: 'Waiting for another player...' }
-      });
-    } else {
-      const roomId = `room-${this.waitingClient}-${clientId}`;
-      this.rooms.set(roomId, [this.waitingClient, clientId]);
-      this.clientRooms.set(this.waitingClient, roomId);
-      this.clientRooms.set(clientId, roomId);
+    this.clientQueue.push(clientId);
+    const role = this.assignRole(this.clientQueue.indexOf(clientId));
 
-      this.sendToClient(this.waitingClient, {
-        type: 'game',
-        data: { action: 'playerJoined', role: 'host', opponent: clientId }
-      });
-      this.sendToClient(clientId, {
-        type: 'game',
-        data: { action: 'playerJoined', role: 'guest', opponent: this.waitingClient }
-      });
+    const opponent = role === 'guest' ? this.clientQueue[0] : null;
 
-      this.waitingClient = null;
+    this.sendToClient(clientId, {
+      type: 'game',
+      data: {
+        action: 'playerJoined',
+        role,
+        opponent
+      }
+    });
+
+    // Map client to a "virtual" room id (e.g., based on host)
+    const hostId = this.clientQueue[0];
+    const roomId = `room-${hostId}`;
+    this.clientRooms.set(clientId, roomId);
+
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, []);
     }
+    this.rooms.get(roomId).push(clientId);
+  }
+
+  assignRole(index) {
+    if (index === 0) return 'host';
+    if (index === 1) return 'guest';
+    return `waiter${index - 1}`;
+  }
+
+  reassignRolesAfterDisconnect() {
+    if (this.clientQueue.length === 0) {
+      console.log('ℹ️ No clients to reassign.');
+      return;
+    }
+
+    console.log('🔁 Reassigning roles after disconnect...');
+    const newHostId = this.clientQueue[0];
+    const newRoomId = `room-${newHostId}`;
+
+    if (!this.rooms.has(newRoomId)) {
+      this.rooms.set(newRoomId, []);
+    }
+
+    this.clientQueue.forEach((id, index) => {
+      const role = this.assignRole(index);
+      const opponent = role === 'guest' ? newHostId : null;
+
+      console.log(`🌀 ${id} → ${role}`);
+
+      this.sendToClient(id, {
+        type: 'game',
+        data: {
+          action: 'roleUpdate',
+          role,
+          opponent
+        }
+      });
+
+      // Update room mapping
+      this.clientRooms.set(id, newRoomId);
+
+      const room = this.rooms.get(newRoomId);
+      if (!room.includes(id)) {
+        room.push(id);
+      }
+    });
   }
 
   handleMessage(clientId, data) {
@@ -163,6 +223,22 @@ class WebSocketService {
             startAt : rest.startAt,
             by: clientId
           }
+        });
+        break;
+      case 'endGame':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'endGame',
+            winner: rest.winner,
+            by: clientId
+          }
+        });
+        break;
+      case 'resetGame':
+        this.broadcast({
+          type: 'game',
+          data: { action: 'resetGame', by: clientId }
         });
         break;
       case 'ballUpdate':

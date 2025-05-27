@@ -165,6 +165,15 @@ private initWebSocket() {
         case 'waiting':
           console.log(data.message);
           break;
+        case 'roleUpdate':
+          this.playerRole = data.role;
+          console.log(`♻️ Role updated → ${this.playerRole}`);
+          
+          // Optional: reset game-over state if returning from disconnect
+          if (this.isGameOver && this.gameOverReason === 'disconnect') {
+            this.resetGame(); // Ready to play again
+          }
+          break;
         case 'startGame':
           if (this.playerRole === 'guest' && data.settings) {
             this.settings = data.settings;
@@ -189,6 +198,21 @@ private initWebSocket() {
           break;
         case 'pause':
           this.togglePause();
+          break;
+        case 'resetGame':
+          console.log("🔄 Received resetGame from server");
+          this.resetGame(); // Clean up guest state
+          break;
+        case 'endGame':
+          this.isGameOver = true;
+          this.winner = data.winner;
+          this.gameOverReason = 'win';
+          this.gameLoop = false;
+
+          if (this.animationFrameId)
+            cancelAnimationFrame(this.animationFrameId);
+
+          this.draw();
           break;
         case 'ballUpdate':
           if (this.playerRole === 'guest') {
@@ -227,13 +251,15 @@ private initWebSocket() {
       }
     }
     if (message.type === 'disconnection') {
+      if (message.clientId === this.playerId) return; // Ignore if it's about self
+
       console.warn("🚫 Opponent disconnected:", message.clientId);
       this.isPaused = true;
       this.gameLoop = false;
       this.isGameOver = true;
       this.gameOverReason = 'disconnect';
       this.winner = 'Opponent Disconnected';
-      
+
       if (this.animationFrameId)
         cancelAnimationFrame(this.animationFrameId);
       this.draw();
@@ -315,9 +341,20 @@ private initWebSocket() {
       });
       return;
     }
-    // reset
-    if (e.key === ' ' && this.isGameOver) {
-      this.resetGame();
+    if (e.key === ' ' && this.isGameOver && this.playerRole === 'host') {
+      this.sendMessage('resetGame');
+
+      // 👇 Host re-broadcasts startGame trigger
+      const startAt = Date.now() + 3000;
+      this.sendMessage('startGame', {
+        settings: this.settings,
+        startAt,
+      });
+
+      return;
+    }
+    if (e.key === ' ' && this.isGameOver && this.playerRole !== 'host') {
+      // ❌ Guest should not start anything on space
       return;
     }
     // HOST CONTROLS PADDLE 1
@@ -470,6 +507,7 @@ private updateGame() {
   private endGame(winner: string) {
     this.isGameOver = true;
     this.winner = winner;
+    this.sendMessage('endGame', { winner });
     this.gameOverReason = 'win';
     this.gameLoop = false;
     if (this.animationFrameId) {
@@ -479,6 +517,7 @@ private updateGame() {
 
   private resetGame() {
     // Reset all game states
+    console.log("trying to reset game ...");
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
     this.winner = '';
@@ -566,9 +605,9 @@ private updateGame() {
     }
 
     // Request next frame if game is not started
-    if (!this.isGameStarted) {
+    // if (!this.isGameStarted) {
       requestAnimationFrame(() => this.draw());
-    }
+    // }
   }
 
   // Add resize handler
