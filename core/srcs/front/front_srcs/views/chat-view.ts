@@ -21,15 +21,42 @@ private async handleBlockUser() {
     console.log('[BLOCK] Attempting to block ID:', blockedId);
 
     await ApiService.blockUser(blockedId);
-    alert('Utilisateur bloqué avec succès.');
+    this.flashMessage = 'Utilisateur bloqué avec succès.';
+    this.flashType = 'success';
+
+    // Efface le message après 3 secondes
+    setTimeout(() => {
+      this.flashMessage = '';
+      this.flashType = '';
+    }, 3000);
   } catch (err) {
     console.error('Erreur lors du blocage de l’utilisateur :', err);
-    alert('Erreur lors du blocage.');
+    this.flashMessage = 'Erreur lors du blocage.';
+    this.flashType = 'error';
   }
 }
 
+
   static styles = css`
     :host { display: block; }
+    .flash-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+.flash-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.flash-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
     .chat-wrapper { display: flex; max-width: 1200px; height: 700px; margin: 0 auto; padding: 2rem; gap: 2rem; overflow-x: hidden; }
     .conversations { width: 300px; height: 100%; border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface); overflow-y: auto; }
     .conversation-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid var(--color-border); cursor: pointer; transition: background 0.2s; }
@@ -71,6 +98,8 @@ private async handleBlockUser() {
   @state() private currentUserId = Number(localStorage.getItem('userId'));
   @state() private messages: { author: string; text: string; me: boolean }[] = [];
   @state() private conversations: Conversation[] = [];
+@state() private flashMessage: string = '';
+@state() private flashType: 'success' | 'error' | '' = '';
 
   connectedCallback() {
     super.connectedCallback();
@@ -197,6 +226,10 @@ private async handleBlockUser() {
         </div>
         <div class="chat-area">
           ${current ? html`
+            ${this.flashMessage ? html`
+  <div class="flash-message ${this.flashType}">${this.flashMessage}</div>
+` : ''}
+
             <div class="chat-header">
               <div class="header-info">
                 <img src="${current.avatar}" alt="${current.name} avatar" class="avatar-large" />
