@@ -8,6 +8,8 @@ import './views/login-view.ts';
 import './views/register-view.ts';
 import './views/chat-view.ts';
 import './views/friend-view.ts';
+import './views/friend-profile-view.ts';
+
 
 import { WebSocketService } from './services/websocket-service';
 
@@ -134,6 +136,7 @@ export class PongApp extends LitElement {
       { path: '/settings', component: 'settings-view' },
       { path: '/profile', component: 'profile-view' },
       { path: '/friends', component: 'friend-view' },
+      { path: '/friend-profile', component: 'friend-profile-view' },
       { path: '(.*)', redirect: '/' }
     ]);
 

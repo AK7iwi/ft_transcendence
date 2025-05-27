@@ -163,3 +163,26 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
   console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
 });
 
+fastify.get('/users/:id', {
+  preHandler: [authenticate], // 🔐 protège la route
+  handler: async (request, reply) => {
+    const friendId = parseInt(request.params.id, 10);
+
+    const user = db.prepare(`
+      SELECT id, username, avatar
+      FROM users
+      WHERE id = ?
+    `).get(friendId);
+
+    if (!user) {
+      return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar || 'default.png'
+    };
+  }
+});
+

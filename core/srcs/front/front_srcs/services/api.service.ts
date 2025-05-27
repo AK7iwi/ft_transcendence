@@ -345,6 +345,22 @@ static async removeFriend(friendId: number) {
   return json;
 }
 
+static async getUserById(id: string) {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${this.baseUrl}/users/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const json = await this.safeParseJSON(response);
+
+  if (!response.ok) {
+    throw new Error(json?.error || 'Failed to fetch user');
+  }
+
+  return json;
+}
 
 
 

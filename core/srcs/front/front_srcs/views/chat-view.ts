@@ -206,6 +206,11 @@ private async handleBlockUser() {
       console.error('❌ Échec envoi message:', err);
     }
   }
+  private viewFriendProfile(friendId?: string) {
+  if (!friendId) return;
+  window.location.href = `/friend-profile?id=${friendId}`;
+}
+
 
   render() {
     const current = this.conversations.find(c => c.id === this.selectedConversationId);
@@ -233,7 +238,7 @@ private async handleBlockUser() {
               </div>
               <div class="chat-actions">
                 <button class="chat-button invite-button" @click=${() => console.log('Invite clicked')}>Invite to Play</button>
-                <button class="chat-button profile-button" @click=${() => console.log('View Profile clicked')}>View Profile</button>
+<button class="chat-button profile-button" @click=${() => this.viewFriendProfile(current?.id)}>View Profile</button>
                 <button class="chat-button block-button" @click=${this.handleBlockUser}>Block</button>
               </div>
             </div>
