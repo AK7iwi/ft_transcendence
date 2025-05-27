@@ -1,7 +1,6 @@
 const fastify = require('fastify');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
-const SecurityMiddleware = require('../security/middleware/sanitize.service');
 const authRoutes = require('./routes/auth.routes');
 
 // Create Fastify instance
@@ -9,9 +8,6 @@ const app = fastify({ logger: true });
 
 // Initialize database
 initializeDatabase();
-
-// Global security middleware
-app.addHook('preHandler', SecurityMiddleware.securityMiddleware);
 
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });

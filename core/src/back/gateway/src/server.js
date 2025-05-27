@@ -3,7 +3,6 @@ const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
 const axios = require('axios');
-const SecurityMiddleware = require('../security/middleware/sanitize.service');
 const authRoutes = require('./routes/auth.routes');
 // const gameRoutes = require('./routes/game.routes');
 // const tournamentRoutes = require('./routes/tournament.routes');
@@ -29,8 +28,6 @@ const axiosInstance = axios.create({
 
 // Register axios instance
 fastify.decorate('axios', axiosInstance);
-
-// fastify.addHook('preHandler', SecurityMiddleware.securityMiddleware);
 
 // Basic route
 fastify.get('/', async (request, reply) => {
