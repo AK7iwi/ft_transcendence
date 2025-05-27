@@ -170,8 +170,15 @@ private initWebSocket() {
           console.log(`♻️ Role updated → ${this.playerRole}`);
           
           // Optional: reset game-over state if returning from disconnect
-          if (this.isGameOver && this.gameOverReason === 'disconnect') {
-            this.resetGame(); // Ready to play again
+          if (this.playerRole === 'host') {
+            console.log('♻️ Now the host — clearing any paused or disconnected state');
+            if (this.isGameOver || this.isPaused) {
+              this.isGameOver = false;
+              this.winner = '';
+              this.gameOverReason = 'win';
+              this.isPaused = false;
+              this.draw();
+            }
           }
           break;
         case 'startGame':
@@ -252,7 +259,10 @@ private initWebSocket() {
     }
     if (message.type === 'disconnection') {
       if (message.clientId === this.playerId) return; // Ignore if it's about self
-
+      if (this.playerRole === 'host') {
+        console.log("⚠️ Ignoring disconnection because I'm now host.");
+        return;
+      }
       console.warn("🚫 Opponent disconnected:", message.clientId);
       this.isPaused = true;
       this.gameLoop = false;
