@@ -1,91 +1,117 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
 
-@customElement('register-view')
-export class RegisterView extends LitElement {
-  static styles = css`
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 400px;
-    }
+class RegisterView extends HTMLElement {
+  private signUpForm = { username: '', password: '', confirmPassword: '' };
+  private signUpError = '';
+  private signUpSuccess = '';
+  private isLoading = false;
 
-    input, button {
-      padding: 0.75rem;
-      font-size: 1rem;
-    }
-      .success {
-  color: green;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-}
+  constructor() {
+    super();
+  }
 
+  connectedCallback() {
+    this.render();
+  }
 
-    .error {
-      color: red;
-    }
-  `;
-
-  @state() private signUpForm = { username: '', password: '', confirmPassword: '' };
-  @state() private signUpError = '';
-  @state() private isLoading = false;
-@state() private signUpSuccess = '';
-
-
-  private validatePassword(password: string): string[] {
+  validatePassword(password: string): string[] {
     const errors = [];
     if (password.length < 8) errors.push('Password must be at least 8 characters long');
-    if (!/(?=.*[a-z])/.test(password)) errors.push('Password must contain at least one lowercase letter');
-    if (!/(?=.*[A-Z])/.test(password)) errors.push('Password must contain at least one uppercase letter');
-    if (!/(?=.*\d)/.test(password)) errors.push('Password must contain at least one number');
+    if (!/[a-z]/.test(password)) errors.push('Password must contain at least one lowercase letter');
+    if (!/[A-Z]/.test(password)) errors.push('Password must contain at least one uppercase letter');
+    if (!/\d/.test(password)) errors.push('Password must contain at least one number');
     return errors;
   }
 
-private async handleSignUp(e: Event) {
-  e.preventDefault();
-  this.signUpError = '';
-  this.signUpSuccess = '';
-  this.isLoading = true;
-
-  try {
-    const { username, password, confirmPassword } = this.signUpForm;
-
-    if (!username || !password || !confirmPassword)
-      throw new Error('Please fill in all fields');
-
-    if (password !== confirmPassword)
-      throw new Error('Passwords do not match');
-
-    const passwordErrors = this.validatePassword(password);
-    if (passwordErrors.length > 0)
-      throw new Error(passwordErrors.join(', '));
-
-    await ApiService.register(username, password);
-
-    // ✅ Succès
-    this.signUpSuccess = 'Account successfully created! You can now log in.';
-    this.signUpError = ''; // Efface toute erreur précédente
-  } catch (error: any) {
-    this.signUpError = error.message || 'Registration failed';
-    this.signUpSuccess = ''; // Efface un éventuel message de succès
-  } finally {
-    this.isLoading = false;
+  handleInput(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (target.name === 'username') this.signUpForm.username = target.value;
+    if (target.name === 'password') this.signUpForm.password = target.value;
+    if (target.name === 'confirmPassword') this.signUpForm.confirmPassword = target.value;
   }
-}
 
+  async handleSignUp(e: Event) {
+    e.preventDefault();
+    this.signUpError = '';
+    this.signUpSuccess = '';
+    this.isLoading = true;
+    this.render();
+
+    try {
+      const { username, password, confirmPassword } = this.signUpForm;
+
+      if (!username || !password || !confirmPassword)
+        throw new Error('Please fill in all fields');
+
+      if (password !== confirmPassword)
+        throw new Error('Passwords do not match');
+
+      const passwordErrors = this.validatePassword(password);
+      if (passwordErrors.length > 0)
+        throw new Error(passwordErrors.join(', '));
+
+      await ApiService.register(username, password);
+      this.signUpSuccess = 'Account successfully created! You can now log in.';
+    } catch (error: any) {
+      this.signUpError = error.message || 'Registration failed';
+    } finally {
+      this.isLoading = false;
+      this.render();
+    }
+  }
 
   render() {
-    return html`
-      <form @submit=${this.handleSignUp}>
-        <input type="text" placeholder="Username" .value=${this.signUpForm.username} @input=${e => this.signUpForm.username = (e.target as HTMLInputElement).value} required />
-        <input type="password" placeholder="Password" .value=${this.signUpForm.password} @input=${e => this.signUpForm.password = (e.target as HTMLInputElement).value} required />
-        <input type="password" placeholder="Confirm Password" .value=${this.signUpForm.confirmPassword} @input=${e => this.signUpForm.confirmPassword = (e.target as HTMLInputElement).value} required />
-        <button type="submit" ?disabled=${this.isLoading}>${this.isLoading ? 'Signing up...' : 'Sign Up'}</button>
-        ${this.signUpSuccess ? html`<div class="success">${this.signUpSuccess}</div>` : ''}
-        ${this.signUpError ? html`<div class="error">${this.signUpError}</div>` : ''}
-      </form>
+    this.innerHTML = '';
+
+    const main = document.createElement('main');
+    main.className = 'flex justify-center items-center min-h-[60vh] p-6';
+
+    const form = document.createElement('form');
+    form.className = 'bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md';
+    form.onsubmit = this.handleSignUp.bind(this);
+
+    form.innerHTML = `
+      <h2 class="text-4xl font-semibold mb-6 text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Sign Up</h2>
+
+      <!-- Username -->
+		<div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+		<input type="text" name="username" placeholder="Username"
+			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+			required value="${this.signUpForm.username}" />
+		</div>
+
+		<!-- Password -->
+		<div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+		<input type="password" name="password" placeholder="Password"
+			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+			required value="${this.signUpForm.password}" />
+		</div>
+
+		<!-- Confirm Password -->
+		<div class="p-[2px] mb-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+		<input type="password" name="confirmPassword" placeholder="Confirm Password"
+			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+			required value="${this.signUpForm.confirmPassword}" />
+		</div>
+
+
+      <button type="submit"
+        class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white font-semibold py-2 px-4 rounded-full transition"
+        ${this.isLoading ? 'disabled' : ''}>
+        ${this.isLoading ? 'Registering...' : 'Register'}
+      </button>
+
+      ${this.signUpSuccess ? `<div class="text-green-400 text-sm mt-4 text-center">${this.signUpSuccess}</div>` : ''}
+      ${this.signUpError ? `<div class="text-red-500 text-sm mt-4 text-center">${this.signUpError}</div>` : ''}
     `;
+
+    form.querySelectorAll('input').forEach(input =>
+      input.addEventListener('input', this.handleInput.bind(this))
+    );
+
+    main.appendChild(form);
+    this.appendChild(main);
   }
 }
+
+customElements.define('register-view', RegisterView);

@@ -1,7 +1,4 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
-
 
 function clearSessionStorage() {
   localStorage.removeItem('token');
@@ -9,86 +6,55 @@ function clearSessionStorage() {
   localStorage.removeItem('gameSettings');
 }
 
-@customElement('login-view')
+class LoginView extends HTMLElement {
+  private signInForm = { username: '', password: '' };
+  private signInError = '';
+  private isLoading = false;
+  private show2FAForm = false;
+  private code2FA = '';
+  private isAuthenticated = false;
 
-export class LoginView extends LitElement {
-  static styles = css`
-
-    .message {
-      font-size: 1.2rem;
-      text-align: center;
-      color: var(--color-text);
-      background: var(--color-surface);
-      padding: 2rem;
-      border-radius: 1rem;
-      max-width: 400px;
-      margin: 4rem auto;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 400px;
-      margin: 4rem auto;
-    }
-
-    input, button {
-      padding: 0.75rem;
-      font-size: 1rem;
-    }
-
-    .error {
-      color: red;
-    }
-  `;
-
-  @state() private signInForm = { username: '', password: '' };
-  @state() private signInError = '';
-  @state() private isLoading = false;
-  @state() private show2FAForm = false;
-  @state() private code2FA = '';
-  @state() private isAuthenticated = false;
-
-connectedCallback() {
-  super.connectedCallback();
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    clearSessionStorage();
-    this.isAuthenticated = false;
-    return;
+  constructor() {
+    super();
   }
 
-  ApiService.getProfile()
-    .then(() => {
-      this.isAuthenticated = true;
-    })
-    .catch(() => {
+  connectedCallback() {
+    this.checkAuth();
+  }
+
+  async checkAuth() {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
       clearSessionStorage();
       this.isAuthenticated = false;
-    });
-}
+      this.render();
+      return;
+    }
 
-private async checkAuth() {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    try {
+      await ApiService.getProfile();
+      this.isAuthenticated = true;
+    } catch {
+      clearSessionStorage();
+      this.isAuthenticated = false;
+    }
 
-    await ApiService.getProfile();
-    this.isAuthenticated = true;
-  } catch {
-    clearSessionStorage();
-    this.isAuthenticated = false;
+    this.render();
   }
-}
 
+  handleInput(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (target.name === 'username') this.signInForm.username = target.value;
+    if (target.name === 'password') this.signInForm.password = target.value;
+    if (target.name === 'code2FA') this.code2FA = target.value;
+  }
 
-  private async handleSignIn(e: Event) {
+  async handleSignIn(e: Event) {
     e.preventDefault();
     this.signInError = '';
     this.isLoading = true;
+    this.render();
 
     try {
       const { username, password } = this.signInForm;
@@ -98,48 +64,84 @@ private async checkAuth() {
 
       if (response.twofa) {
         this.show2FAForm = true;
+        this.render();
         return;
       }
 
       localStorage.setItem('user', JSON.stringify({ username: response.user.username }));
-      localStorage.setItem('token', response.token); // Enregistre le token
+      localStorage.setItem('token', response.token);
       window.location.href = '/profile';
     } catch (error: any) {
       this.signInError = error.message || 'Login failed';
+      this.render();
     } finally {
       this.isLoading = false;
     }
   }
 
-  private async handle2FASubmit(e: Event) {
+  async handle2FASubmit(e: Event) {
     e.preventDefault();
     try {
-      const result = await ApiService.verify2FA(this.code2FA);
+      await ApiService.verify2FA(this.code2FA);
       window.location.href = '/profile';
     } catch (err: any) {
       this.signInError = err.message || '2FA failed';
+      this.render();
     }
   }
 
   render() {
+    this.innerHTML = '';
+
     if (this.isAuthenticated) {
-      return html`<div class="message">Tu es déjà connecté !</div>`;
+      this.innerHTML = `
+        <div class="text-center text-xl text-white mt-20">Tu es déjà connecté !</div>
+      `;
+      return;
     }
 
-    return html`
-      ${this.show2FAForm ? html`
-        <form @submit=${this.handle2FASubmit}>
-          <input type="text" placeholder="2FA Code" .value=${this.code2FA} @input=${e => this.code2FA = (e.target as HTMLInputElement).value} required />
-          <button type="submit">Verify</button>
-        </form>
-      ` : html`
-        <form @submit=${this.handleSignIn}>
-          <input type="text" placeholder="Username" .value=${this.signInForm.username} @input=${e => this.signInForm.username = (e.target as HTMLInputElement).value} required />
-          <input type="password" placeholder="Password" .value=${this.signInForm.password} @input=${e => this.signInForm.password = (e.target as HTMLInputElement).value} required />
-          <button type="submit" ?disabled=${this.isLoading}>${this.isLoading ? 'Signing in...' : 'Sign In'}</button>
-          ${this.signInError ? html`<div class="error">${this.signInError}</div>` : ''}
-        </form>
-      `}
-    `;
+    const main = document.createElement('main');
+    main.className = 'flex justify-center items-center min-h-[60vh] p-6';
+
+    const form = document.createElement('form');
+    form.className = 'bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md';
+    form.onsubmit = this.show2FAForm ? this.handle2FASubmit.bind(this) : this.handleSignIn.bind(this);
+
+    if (this.show2FAForm) {
+      form.innerHTML = `
+        <h2 class="text-2xl font-semibold mb-6 text-center">Enter 2FA Code</h2>
+        <input type="text" name="code2FA" class="w-full px-4 py-2 mb-6 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="2FA Code" required />
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full transition">Verify</button>
+        ${this.signInError ? `<div class="text-red-500 mt-4 text-center">${this.signInError}</div>` : ''}
+      `;
+    } else {
+      form.innerHTML = `
+        <h2 class="text-4xl font-semibold mb-6 text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Sign In</h2>
+        <div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+			<input type="text" name="username"
+				class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+				placeholder="Username" required value="${this.signInForm.username}" />
+		</div>
+        <div class="p-[2px] mb-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+			<input type="password" name="password"
+				class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+				placeholder="Password" required value="${this.signInForm.password}" />
+		</div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white font-semibold py-2 px-4 rounded-full transition" ${this.isLoading ? 'disabled' : ''}>
+          ${this.isLoading ? 'Signing in...' : 'Log In'}
+        </button>
+        ${this.signInError ? `<div class="text-red-500 mt-4 text-center">${this.signInError}</div>` : ''}
+      `;
+    }
+
+    form.querySelectorAll('input').forEach(input =>
+      input.addEventListener('input', this.handleInput.bind(this))
+    );
+
+    main.appendChild(form);
+    this.appendChild(main);
   }
 }
+
+customElements.define('login-view', LoginView);
