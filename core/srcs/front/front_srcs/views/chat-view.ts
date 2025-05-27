@@ -12,6 +12,22 @@ interface Conversation {
 
 @customElement('chat-view')
 export class ChatView extends LitElement {
+
+
+private async handleBlockUser() {
+  if (!this.selectedConversationId) return;
+  try {
+    const blockedId = Number(this.selectedConversationId);
+    console.log('[BLOCK] Attempting to block ID:', blockedId);
+
+    await ApiService.blockUser(blockedId);
+    alert('Utilisateur bloqué avec succès.');
+  } catch (err) {
+    console.error('Erreur lors du blocage de l’utilisateur :', err);
+    alert('Erreur lors du blocage.');
+  }
+}
+
   static styles = css`
     :host { display: block; }
     .chat-wrapper { display: flex; max-width: 1200px; height: 700px; margin: 0 auto; padding: 2rem; gap: 2rem; overflow-x: hidden; }
@@ -189,7 +205,7 @@ export class ChatView extends LitElement {
               <div class="chat-actions">
                 <button class="chat-button invite-button" @click=${() => console.log('Invite clicked')}>Invite to Play</button>
                 <button class="chat-button profile-button" @click=${() => console.log('View Profile clicked')}>View Profile</button>
-                <button class="chat-button block-button" @click=${() => console.log('Block clicked')}>Block</button>
+                <button class="chat-button block-button" @click=${this.handleBlockUser}>Block</button>
               </div>
             </div>
             <div class="messages">

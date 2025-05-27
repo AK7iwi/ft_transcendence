@@ -122,6 +122,16 @@ handleDirectMessage(clientId, payload) {
     return;
   }
 
+  // ✅ Vérification du blocage
+  if (isBlocked(fromUserId, toUserId)) {
+    console.log(`🚫 Message bloqué : ${fromUserId} est bloqué par ou bloque ${toUserId}`);
+    fromWs?.send(JSON.stringify({
+      type: 'error',
+      message: 'You are blocked or have blocked this user.'
+    }));
+    return;
+  }
+
   const toWs = this.onlineUsers.get(toUserId);
   const payloadToSend = {
     type: 'dm',
@@ -136,7 +146,6 @@ handleDirectMessage(clientId, payload) {
 
   if (fromWs?.readyState === WebSocket.OPEN) {
     fromWs.send(JSON.stringify(payloadToSend));
-
   }
 
   console.log(`[DM] ${fromUserId} → ${toUserId}: ${text}`);
@@ -255,3 +264,20 @@ handleAuth(clientId, ws, token) {
 }
 
 module.exports = WebSocketService;
+
+
+
+// Ajout : charger la base de données
+const Database = require('better-sqlite3');
+const db = new Database('/data/database.sqlite');
+
+// Fonction de vérification de blocage
+function isBlocked(senderId, receiverId) {
+  const stmt = db.prepare(`
+    SELECT 1 FROM blocks 
+    WHERE (blocker_id = ? AND blocked_id = ?) 
+       OR (blocker_id = ? AND blocked_id = ?)
+  `);
+  const result = stmt.get(senderId, receiverId, receiverId, senderId);
+  return !!result;
+}

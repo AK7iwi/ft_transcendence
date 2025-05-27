@@ -90,6 +90,15 @@ db.exec(`CREATE TABLE IF NOT EXISTS messages (
   FOREIGN KEY(sender_id) REFERENCES users(id),
   FOREIGN KEY(receiver_id) REFERENCES users(id)
 );`);
+db.exec(`CREATE TABLE IF NOT EXISTS blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blocker_id INTEGER NOT NULL,
+    blocked_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+);`);
+
 
         // Ajout sécurisé de la colonne "status"
         try {
