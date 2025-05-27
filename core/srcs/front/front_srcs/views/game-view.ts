@@ -2,6 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
+import { API_BASE_URL } from '../config';
+
 
 @customElement('game-view')
 export class GameView extends LitElement {
@@ -121,8 +123,11 @@ export class GameView extends LitElement {
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
   }
 
-  private initWebSocket() {
-    this.socket = new WebSocket('wss://10.14.7.3:3000/ws'); // CHANGE THIS TO PC IP TO PLAY REMOTELY
+private initWebSocket() {
+    const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = API_BASE_URL.replace(/^https?/, wsProtocol) + '/ws';
+    this.socket = new WebSocket(wsUrl);
+
     this.socket.onopen = () => {
       this.sendMessage('join');
     };
