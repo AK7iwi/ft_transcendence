@@ -40,7 +40,21 @@ class HomeView extends HTMLElement {
 											</div>
 										</div>
 										<div class="px-6 pt-6 pb-14">
-											<!-- Your code example -->
+											<p class="text-sm font-mono leading-relaxed"><code>
+												<span class="text-[#569CD6]">services</span>:<br>
+												&nbsp;&nbsp;<span class="text-[#DCDCAA]">back</span>:<br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">container_name</span>: <span class="text-[#CE9178]">back</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">image</span>: <span class="text-[#CE9178]">back</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">build</span>:<br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">context</span>: <span class="text-[#CE9178]">./back</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">dockerfile</span>: <span class="text-[#CE9178]">Dockerfile</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">working_dir</span>: <span class="text-[#CE9178]">/usr/src/app</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">ports</span>:<br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="text-[#CE9178]">&quot;3000:3000&quot;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">env_file</span>: <span class="text-[#CE9178]">../.env</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#9CDCFE]">volumes</span>:<br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="text-[#CE9178]">sqlite_data:/data</span><br>
+											</code></p>
 										</div>
 									</div>
 								</div>
@@ -94,9 +108,20 @@ class HomeView extends HTMLElement {
 											</div>
 										</div>
 										<div class="px-6 pt-6 pb-14">
-											<p class="text-sm"><code>
-												<span class="text-gray-500">&lt;</span><span class="text-blue-600">nav</span><span class="text-sky-300"> class</span><span class="text-white">=</span><span class="text-orange-300">&quot;bg-gray-800 py-6 px-4 text-lg&quot;</span><span class="text-gray-500">&gt;</span><br>
-												<!-- a completer -->
+											<p class="text-sm font-mono leading-relaxed"><code>
+												<span class="text-[#6A9955]">&lt;!-- NAVBAR --&gt;</span><br>
+												<span class="text-[#569CD6]">&lt;nav</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;bg-gray-800 py-6 px-4 text-lg&quot;</span><span class="text-[#569CD6]">&gt;</span><br>
+												&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;div</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;max-w-7xl mx-auto flex flex-wrap items-center justify-between&quot;</span><span class="text-[#569CD6]">&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;div</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 w-full sm:w-auto text-center sm:text-left mb-4 sm:mb-0&quot;</span><span class="text-[#569CD6]">&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P<span class="text-white">&lt;<span class="text-[#569CD6]">i</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;fa-regular fa-circle-dot&quot;</span>&gt;&lt;/<span class="text-[#569CD6]">i</span>&gt;</span>NG GAME<br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;/div&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;div</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;w-full sm:flex-1 flex flex-wrap justify-center gap-4 mb-4 sm:mb-0&quot;</span><span class="text-[#569CD6]">&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;a</span> <span class="text-[#9CDCFE]">href</span>=<span class="text-[#CE9178]">&quot;/&quot;</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-indigo-500 after:transition-all after:duration-300&quot;</span><span class="text-[#569CD6]">&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-white">&lt;<span class="text-[#569CD6]">i</span> <span class="text-[#9CDCFE]">class</span>=<span class="text-[#CE9178]">&quot;fa-solid fa-house&quot;</span>&gt;&lt;/<span class="text-[#569CD6]">i</span>&gt; Home</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;/a&gt;</span><br>
+												&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;/div&gt;</span><br>
+												&nbsp;&nbsp;<span class="text-[#569CD6]">&lt;/div&gt;</span><br>
+												<span class="text-[#569CD6]">&lt;/nav&gt;</span><br>
 											</code></p>
 										</div>
 									</div>
@@ -109,52 +134,102 @@ class HomeView extends HTMLElement {
 			</div>
 
 			<!-- TEAM -->
-			<div class="bg-slate-900 py-24 sm:py-32">
-				<div class="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
-					<div class="max-w-xl">
-						<h2 class="text-3xl font-semibold tracking-tight text-pretty sm:text-4xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"><i class="fa-solid fa-people-group"></i> Our Team</h2>
-						<p class="mt-6 text-lg/8">We are students from 42, a computer programming school, collaborating on a group project as part of our academic journey.</p>
-					</div>
-					<ul role="list" class="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
-						<li>
-							<div class="flex items-center gap-x-6">
-								<img class="size-16 rounded-full" src="#" alt="">
-								<div>
-								<h3 class="text-base/7 font-semibold tracking-tight"></h3><a href="https://github.com/AK7iwi" target="_blank" class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">mfeldman <i class="fa-brands fa-github"></i></a></h3>
-								<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"><i class="fa-solid fa-server"></i> Server Development</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="flex items-center gap-x-6">
-								<img class="size-16 rounded-full" src="#" alt="">
-								<div>
-								<h3 class="text-base/7 font-semibold tracking-tight"></h3><a href="https://github.com/GigotBlaster" target="_blank" class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">npetitpi <i class="fa-brands fa-github"></i></a></h3>
-								<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"><i class="fa-solid fa-shield-halved"></i> Security and Protection</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="flex items-center gap-x-6">
-								<img class="size-16 rounded-full" src="#" alt="">
-								<div>
-								<h3 class="text-base/7 font-semibold tracking-tight"></h3><a href="https://github.com/NineSama" target="_blank" class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">mfroissard <i class="fa-brands fa-github"></i></a></h3>
-								<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"><i class="fa-solid fa-gamepad"></i> Pong Game Design</p>
-								</div>
-							</div>
-						</li>
-						<li>
-							<div class="flex items-center gap-x-6">
-								<img class="size-16 rounded-full" src="#" alt="">
-								<div>
-								<h3 class="text-base/7 font-semibold tracking-tight"></h3><a href="https://github.com/ffouquet42" target="_blank" class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">fflanet <i class="fa-brands fa-github"></i></a></h3>
-								<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent"><i class="fa-solid fa-palette"></i> UI & Visual Design</p>
-								</div>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</div>
+<div class="bg-slate-900 py-24 sm:py-32">
+  <div class="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
+    <div class="max-w-xl">
+      <h2 class="text-3xl font-semibold tracking-tight text-pretty sm:text-4xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+        <i class="fa-solid fa-people-group"></i> Our Team
+      </h2>
+      <p class="mt-6 text-lg/8">
+        We are students from 42, a computer programming school, collaborating on a group project as part of our academic journey.
+      </p>
+    </div>
+    <ul role="list" class="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
+      
+      <!-- Member 1 -->
+      <li>
+        <div class="flex items-center gap-x-6">
+          <div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <i class="fa-solid fa-server"></i>
+          </div>
+          <div>
+            <h3 class="text-base/7 font-semibold tracking-tight">
+              <a href="https://github.com/AK7iwi" target="_blank"
+                class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">
+                mfeldman <i class="fa-brands fa-github"></i>
+              </a>
+            </h3>
+            <p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+               Server Development
+            </p>
+          </div>
+        </div>
+      </li>
+
+      <!-- Member 2 -->
+      <li>
+        <div class="flex items-center gap-x-6">
+          <div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <h3 class="text-base/7 font-semibold tracking-tight">
+              <a href="https://github.com/GigotBlaster" target="_blank"
+                class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">
+                npetitpi <i class="fa-brands fa-github"></i>
+              </a>
+            </h3>
+            <p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+               Security and Protection
+            </p>
+          </div>
+        </div>
+      </li>
+
+      <!-- Member 3 -->
+      <li>
+        <div class="flex items-center gap-x-6">
+          <div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <i class="fa-solid fa-gamepad"></i>
+          </div>
+          <div>
+            <h3 class="text-base/7 font-semibold tracking-tight">
+              <a href="https://github.com/NineSama" target="_blank"
+                class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">
+                mfroissard <i class="fa-brands fa-github"></i>
+              </a>
+            </h3>
+            <p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+               Pong Game Design
+            </p>
+          </div>
+        </div>
+      </li>
+
+      <!-- Member 4 -->
+      <li>
+        <div class="flex items-center gap-x-6">
+          <div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <i class="fa-solid fa-palette"></i>
+          </div>
+          <div>
+            <h3 class="text-base/7 font-semibold tracking-tight">
+              <a href="https://github.com/ffouquet42" target="_blank"
+                class="relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[1px] after:bg-indigo-500 after:transition-all after:duration-300">
+                fflanet <i class="fa-brands fa-github"></i>
+              </a>
+            </h3>
+            <p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+               UI & Visual Design
+            </p>
+          </div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</div>
+
 
 			<!-- TECHNOLOGIES -->
 			<div class="bg-white py-20">
