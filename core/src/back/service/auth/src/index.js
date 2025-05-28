@@ -12,9 +12,14 @@ initializeDatabase();
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });
 
+// 
+app.get('/', async () => {
+    reply.code(200).send({ message: 'Server is running' });
+});
+
 // Health check endpoint
 app.get('/health', async () => {
-    return { status: 'ok' };
+    reply.code(200).send( { status: 'Server is healthy' });
 });
 
 app.setErrorHandler((error, request, reply) => {

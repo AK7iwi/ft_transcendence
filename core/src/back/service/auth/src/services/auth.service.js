@@ -35,7 +35,6 @@ class AuthService {
                 twoFactorEnabled: user.two_factor_enabled
             };
         } catch (error) {
-            console.error('Login error:', error);
             throw error;
         }
     }

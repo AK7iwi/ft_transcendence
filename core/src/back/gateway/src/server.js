@@ -36,7 +36,7 @@ const axiosInstance = axios.create({
     timeout: 5000, // 5 seconds timeout
     headers: {
         'Content-Type': 'application/json'
-    },
+    }
 });
 
 // Register axios instance
@@ -61,6 +61,16 @@ fastify.register(authRoutes, { prefix: '/auth' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
+
+
+    // Validation error (schema)
+    if (error.validation) {
+        return reply.status(400).send({
+            success: false,
+            message: error.message
+        });
+    }
+
     fastify.log.error(error);
     reply.status(error.statusCode || 500).send({
         error: error.message || 'Internal Server Error'
