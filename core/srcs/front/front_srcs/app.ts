@@ -32,11 +32,22 @@ class PongApp extends HTMLElement {
     super();
   }
 
-  connectedCallback() {
-    this.innerHTML = `<p hidden>pong-app loaded</p>`;
-    this.updateLinks();
-    this.setupRouter();
+connectedCallback() {
+  this.innerHTML = `<p hidden>pong-app loaded</p>`;
+  this.updateLinks();
+  this.toggleAuthButtons(); // ← ici
+  this.setupRouter();
+}
+
+
+  toggleAuthButtons() {
+  const isAuthenticated = !!localStorage.getItem('token');
+  const authButtons = document.querySelector('#auth-buttons');
+
+  if (authButtons) {
+    authButtons.classList.toggle('hidden', isAuthenticated);
   }
+}
 
 updateLinks() {
   const isAuthenticated = !!localStorage.getItem('token');

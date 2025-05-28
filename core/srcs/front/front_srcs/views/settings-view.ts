@@ -1,590 +1,634 @@
-
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
-import ApiService from '../services/api.service';
-import { API_BASE_URL } from '../config';
 
-@customElement('settings-view')
-export class SettingsView extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
-    .settings-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    .section {
-      background: var(--color-surface);
-      border-radius: 1rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .section-title {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      color: var(--color-text);
-    }
-    .setting-group {
-      margin-bottom: 2rem;
-    }
-    .setting-label {
-      font-size: 1.2rem;
-      font-weight: 500;
-      margin-bottom: 1rem;
-      color: var(--color-text);
-    }
-    .color-options {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .color-button {
-      width: 3rem;
-      height: 3rem;
-      border-radius: 50%;
-      border: 3px solid transparent;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .color-button:hover {
-      transform: scale(1.1);
-    }
-    .color-button.selected {
-      border-color: var(--color-accent);
-    }
-    .number-input, .form-input {
-      width: 100%;
-      padding: 0.8rem;
-      font-size: 1.2rem;
-      border-radius: 0.5rem;
-      border: 2px solid var(--color-border);
-      background: var(--color-background);
-      color: var(--color-text);
-    }
-    .save-button, .button {
-      background-color: var(--color-accent);
-      color: white;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      border-radius: 0.5rem;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      display: block;
-      width: 100%;
-    }
-    .button:hover, .save-button:hover {
-      opacity: 0.9;
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    .success-message {
-      color: green;
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-    .error-message {
-      color: red;
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-  `;
+class SettingsView extends HTMLElement {
+  private settings: GameSettings;
+  private settingsService = SettingsService.getInstance();
+  private user = { username: '', twoFactorEnabled: false };
+  private newUsername = '';
+  private newPassword = '';
+  private confirmPassword = '';
+  private code2FA = '';
+  private qrCode = '';
+  private errorMessage = '';
 
-  // Game Settings
-  @state() private settings: GameSettings;
-  @state() private showConfirmation = false;
-  private settingsService: SettingsService;
-  private colorOptions = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
-
-  // User Settings
-  @state() private user = { username: '', twoFactorEnabled: false };
-  @state() private newUsername = '';
-  @state() private newPassword = '';
-  @state() private confirmPassword = '';
-  @state() private qrCode = '';
-  @state() private code2FA = '';
-  @state() private isAuthenticated = false;
-  @state() private successMessage = '';
-  @state() private errorMessage = '';
+  private usernameSuccessMessage = '';
+  private usernameErrorMessage = '';
+  private passwordSuccessMessage = '';
+  private passwordErrorMessage = '';
+  private twoFASuccessMessage = '';
+  private twoFAErrorMessage = '';
+  private settingsSuccessMessage = '';
+  private settingsErrorMessage = '';
 
   constructor() {
     super();
-    this.settingsService = SettingsService.getInstance();
     this.settings = this.settingsService.getSettings();
   }
 
   connectedCallback() {
-    super.connectedCallback();
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    ApiService.getProfile()
-      .then(data => {
-        this.user = {
-          username: data.username,
-          twoFactorEnabled: data.twoFactorEnabled,
-        };
-        this.isAuthenticated = true;
-      })
-      .catch(err => {
-        console.error('Failed to load profile:', err);
-        this.isAuthenticated = false;
-      });
+    this.loadUser();
   }
 
-  private showMessage(type: 'success' | 'error', message: string) {
-    if (type === 'success') {
-      this.successMessage = message;
-      this.errorMessage = '';
-    } else {
-      this.errorMessage = message;
-      this.successMessage = '';
-    }
-    setTimeout(() => {
-      this.successMessage = '';
-      this.errorMessage = '';
-    }, 3000);
-  }
-
-  private handleSettingChange(setting: keyof GameSettings, value: any) {
-    this.settings = { ...this.settings, [setting]: value };
-  }
-
-  private saveSettings() {
-    this.settingsService.updateSettings(this.settings);
-    this.showConfirmation = true;
-    setTimeout(() => {
-      this.showConfirmation = false;
-    }, 3000);
-  }
-
-  private async updateUsername() {
+  async loadUser() {
     try {
-      const payload = {
-        username: this.user.username,
-        newUsername: this.newUsername
+      const profile = await ApiService.getProfile();
+      this.user = {
+        username: profile.username,
+        twoFactorEnabled: profile.twoFactorEnabled,
       };
-      const updatedUser = await ApiService.updateUser(payload);
-      this.user.username = updatedUser.username;
-      localStorage.setItem('user', JSON.stringify(this.user));
-      this.newUsername = '';
-      this.showMessage('success', 'Username updated successfully');
-    } catch (err) {
-      console.error('Update username failed:', err);
-      this.showMessage('error', 'Failed to update username');
+    } catch {
+      this.errorMessage = 'Failed to load profile';
     }
+    this.render();
   }
 
-  private async changePassword() {
+  private updateUserField(field: keyof this, value: string) {
+    (this as any)[field] = value;
+  }
+
+  private renderMessage(success: string, error: string): string {
+    if ((this as any)[success]) {
+      return `<p class="text-green-400 text-sm mb-2">${(this as any)[success]}</p>`;
+    }
+    if ((this as any)[error]) {
+      return `<p class="text-red-400 text-sm mb-2">${(this as any)[error]}</p>`;
+    }
+    return '';
+  }
+
+  render() {
+    const twoFAContent = this.qrCode
+      ? this.renderQRCodeInput()
+      : this.user.twoFactorEnabled
+      ? `<p class="text-green-400">✅ 2FA enabled</p>`
+      : this.renderEnable2FAButton();
+
+    this.innerHTML = `
+      <div class="flex flex-col space-y-8 m-20 px-20">
+        <div class="flex justify-between gap-4">
+          ${this.renderUserSettings(twoFAContent)}
+          ${this.renderGameSettings()}
+        </div>
+      </div>
+    `;
+  }
+
+  renderUserSettings(twoFAContent: string): string {
+    return `
+      <div class="w-1/2">
+        <div class="flex justify-center items-center p-4">
+          <div class="p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md">
+            <form class="bg-gray-800 p-6 rounded-2xl w-full">
+              <h2 class="text-2xl font-semibold mb-6 text-center">User Settings</h2>
+              <div class="mb-6 text-center">
+                <p class="text-white text-sm">Logged in as</p>
+                <p class="text-xl font-semibold text-indigo-300">${this.user.username}</p>
+              </div>
+              ${this.renderTextInput('New Username', 'newUsername', this.newUsername, 'text', true)}
+              ${this.renderActionButton('Update Username', () => this.updateUsername())}
+              ${this.renderMessage('usernameSuccessMessage', 'usernameErrorMessage')}
+              <h3 class="text-white font-medium text-sm mt-6 mb-2">Change Password</h3>
+              ${this.renderTextInput('New Password', 'newPassword', this.newPassword, 'password', true)}
+              ${this.renderTextInput('Confirm Password', 'confirmPassword', this.confirmPassword, 'password', true)}
+              ${this.renderActionButton('Update Password', () => this.updatePassword())}
+              ${this.renderMessage('passwordSuccessMessage', 'passwordErrorMessage')}
+              <div class="mt-6 text-white font-medium text-sm text-center mb-2">Two-Factor Authentication (2FA)</div>
+              <div class="text-center">${twoFAContent}</div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderGameSettings(): string {
+    return `
+      <div class="w-1/2">
+        <div class="flex justify-center items-center p-4">
+          <div class="p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md">
+            <div class="bg-gray-800 p-6 rounded-2xl w-full">
+              <h2 class="text-2xl font-semibold mb-6 text-center">Game Settings</h2>
+              ${this.renderColorOptions('Ball Color', 'ballColor')}
+              ${this.renderColorOptions('Paddle Color', 'paddleColor')}
+              ${this.renderGameSettingInputs()}
+              ${this.renderMessage('settingsSuccessMessage', 'settingsErrorMessage')}
+              ${this.renderActionButton('Save', () => this.saveSettings())}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderTextInput(label: string, name: string, value: string, type: string, isUserField = false): string {
+    const onInput = isUserField
+      ? `document.querySelector('settings-view').updateUserField('${name}', this.value)`
+      : `document.querySelector('settings-view').updateSetting('${name}', this.value)`;
+
+    return `
+      <div class="mb-2">
+        <label class="block text-white text-sm font-medium mb-1">${label}</label>
+        <div class="p-[2px] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+          <input type="${type}" name="${name}" value="${value}" placeholder="${label}"
+            class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+            oninput="${onInput}" />
+        </div>
+      </div>
+    `;
+  }
+
+  renderActionButton(text: string, action: () => void): string {
+    const fnName = `action_${text.replace(/\s+/g, '')}`;
+    (this as any)[fnName] = action;
+    return `<button type="button" class="w-full px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full transition hover:opacity-90 mb-6"
+      onclick="document.querySelector('settings-view').${fnName}()">${text}</button>`;
+  }
+
+  renderColorOptions(label: string, key: keyof GameSettings): string {
+    const colors = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
+    const colorClasses: Record<string, string> = {
+      black: 'bg-black', red: 'bg-red-500', blue: 'bg-blue-500',
+      green: 'bg-green-500', yellow: 'bg-yellow-500', purple: 'bg-purple-500'
+    };
+
+    return `
+      <label class="block text-sm font-medium text-white mb-2">${label}</label>
+      <div class="flex space-x-2 mb-4">
+        ${colors.map(color => `
+          <label class="relative">
+            <input type="radio" name="${key}" value="${color}" class="peer hidden"
+              ${this.settings[key] === color ? 'checked' : ''}
+              onchange="document.querySelector('settings-view').updateSetting('${key}', '${color}')">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center
+              peer-checked:ring-2 ring-white">
+              <div class="w-6 h-6 rounded-full ${colorClasses[color]}"></div>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  renderGameSettingInputs(): string {
+    const labels: Record<string, string> = {
+      endScore: 'End Score', ballSpeed: 'Ball Speed', paddleSpeed: 'Paddle Speed'
+    };
+
+    return Object.entries(labels)
+      .map(([key, label]) => this.renderTextInput(label, key, String(this.settings[key as keyof GameSettings]), 'text'))
+      .join('');
+  }
+
+  renderQRCodeInput(): string {
+    return `
+      <p class="text-white text-sm mb-2">Scan this QR code with your authenticator app:</p>
+      <img src="${this.qrCode}" alt="QR Code" class="mb-2 max-w-xs text-center" />
+      ${this.renderTextInput('Enter 2FA code', 'code2FA', this.code2FA, 'text', true)}
+      ${this.renderActionButton('Verify 2FA', () => this.verify2FA())}
+      ${this.renderMessage('twoFASuccessMessage', 'twoFAErrorMessage')}
+    `;
+  }
+
+  renderEnable2FAButton(): string {
+    return `
+      <div>
+        <button type="button" onclick="document.querySelector('settings-view').setup2FA()"
+          class="w-full px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full">
+          <i class="fa-solid fa-shield-halved"></i> Enable 2FA
+        </button>
+        ${this.renderMessage('twoFASuccessMessage', 'twoFAErrorMessage')}
+      </div>
+    `;
+  }
+
+  updateSetting(key: keyof GameSettings, value: string) {
+    const parsed = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key) ? parseInt(value, 10) : value;
+    this.settings = { ...this.settings, [key]: parsed };
+  }
+
+  saveSettings() {
+    try {
+      this.settingsService.updateSettings(this.settings);
+      this.settingsSuccessMessage = 'Settings saved successfully.';
+      this.settingsErrorMessage = '';
+    } catch {
+      this.settingsErrorMessage = 'Failed to save settings.';
+      this.settingsSuccessMessage = '';
+    }
+    this.render();
+  }
+
+  async updateUsername() {
+    this.usernameSuccessMessage = '';
+    this.usernameErrorMessage = '';
+    if (!this.newUsername.trim()) {
+      this.usernameErrorMessage = 'New username cannot be empty.';
+      return this.render();
+    }
+    try {
+      const updatedUser = await ApiService.updateUser({ username: this.user.username, newUsername: this.newUsername });
+      this.user.username = updatedUser.username;
+      this.newUsername = '';
+      this.usernameSuccessMessage = 'Username updated successfully.';
+    } catch {
+      this.usernameErrorMessage = 'Failed to update username.';
+    }
+    this.render();
+  }
+
+  async updatePassword() {
+    this.passwordSuccessMessage = '';
+    this.passwordErrorMessage = '';
+    if (!this.newPassword || !this.confirmPassword) {
+      this.passwordErrorMessage = 'Please fill in both password fields.';
+      return this.render();
+    }
     if (this.newPassword !== this.confirmPassword) {
-      this.showMessage('error', 'Passwords do not match.');
-      return;
+      this.passwordErrorMessage = 'Passwords do not match.';
+      return this.render();
     }
     try {
       await ApiService.updatePassword(this.user.username, this.newPassword);
       this.newPassword = '';
       this.confirmPassword = '';
-      this.showMessage('success', 'Password updated successfully');
-    } catch (err) {
-      this.showMessage('error', 'Failed to update password');
+      this.passwordSuccessMessage = 'Password updated successfully.';
+    } catch {
+      this.passwordErrorMessage = 'Failed to update password.';
     }
+    this.render();
   }
 
-  private async setup2FA() {
+  async setup2FA() {
+    this.twoFASuccessMessage = '';
+    this.twoFAErrorMessage = '';
     try {
       const res = await ApiService.setup2FA();
       this.qrCode = res.qrCode;
-    } catch (err) {
-      this.showMessage('error', 'Erreur lors de la génération du QR code');
+    } catch {
+      this.twoFAErrorMessage = 'Failed to generate QR code';
     }
+    this.render();
   }
 
-  private async handleVerify2FA(e: Event) {
-    e.preventDefault();
+  async verify2FA() {
+    this.twoFASuccessMessage = '';
+    this.twoFAErrorMessage = '';
     try {
       await ApiService.verify2FASetup(this.code2FA);
       this.user.twoFactorEnabled = true;
       localStorage.setItem('user', JSON.stringify(this.user));
       this.qrCode = '';
       this.code2FA = '';
-      this.showMessage('success', '2FA activée avec succès');
-    } catch (err) {
-      this.showMessage('error', 'Échec de l’activation 2FA');
+      this.twoFASuccessMessage = '2FA successfully enabled.';
+    } catch {
+      this.twoFAErrorMessage = 'Failed to verify 2FA code.';
     }
-  }
-
-  render() {
-    return html`
-      <div class="settings-container">
-
-        <!-- Game Settings -->
-        <div class="section">
-          <h1 class="section-title">Game Settings</h1>
-          <div class="setting-group">
-            <label class="setting-label">Ball Color</label>
-            <div class="color-options">
-              ${this.colorOptions.map(color => html`
-                <button
-                  @click=${() => this.handleSettingChange('ballColor', color)}
-                  class="color-button ${this.settings.ballColor === color ? 'selected' : ''}"
-                  style="background-color: ${color}"
-                ></button>
-              `)}
-            </div>
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">Paddle Color</label>
-            <div class="color-options">
-              ${this.colorOptions.map(color => html`
-                <button
-                  @click=${() => this.handleSettingChange('paddleColor', color)}
-                  class="color-button ${this.settings.paddleColor === color ? 'selected' : ''}"
-                  style="background-color: ${color}"
-                ></button>
-              `)}
-            </div>
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">End Score</label>
-            <input type="number" class="number-input"
-              .value=${this.settings.endScore}
-              min="1" max="20"
-              @input=${(e: Event) => this.handleSettingChange('endScore', +(e.target as HTMLInputElement).value)}
-            />
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">Ball Speed</label>
-            <input type="number" class="number-input"
-              .value=${this.settings.ballSpeed}
-              min="1" max="10"
-              @input=${(e: Event) => this.handleSettingChange('ballSpeed', +(e.target as HTMLInputElement).value)}
-            />
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">Paddle Speed</label>
-            <input type="number" class="number-input"
-              .value=${this.settings.paddleSpeed}
-              min="1" max="10"
-              @input=${(e: Event) => this.handleSettingChange('paddleSpeed', +(e.target as HTMLInputElement).value)}
-            />
-          </div>
-
-          ${this.showConfirmation ? html`<div class="success-message">Settings saved successfully</div>` : ''}
-
-          <button class="save-button" @click=${this.saveSettings}>Save Settings</button>
-        </div>
-
-        <!-- User Settings -->
-        <div class="section">
-          <h1 class="section-title">User Settings</h1>
-
-          ${this.successMessage ? html`<div class="success-message">${this.successMessage}</div>` : ''}
-          ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
-
-          <div class="setting-group">
-            <label class="setting-label">Current Username: ${this.user.username}</label>
-            <div class="form-group">
-              <label class="setting-label">New Username</label>
-              <input class="form-input" .value=${this.newUsername} @input=${(e: Event) => this.newUsername = (e.target as HTMLInputElement).value} />
-            </div>
-            <button class="button" @click=${this.updateUsername}>Update Username</button>
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">Change Password</label>
-            <div class="form-group">
-              <label class="setting-label">New Password</label>
-              <input type="password" class="form-input" .value=${this.newPassword} @input=${(e: Event) => this.newPassword = (e.target as HTMLInputElement).value} />
-            </div>
-            <div class="form-group">
-              <label class="setting-label">Confirm Password</label>
-              <input type="password" class="form-input" .value=${this.confirmPassword} @input=${(e: Event) => this.confirmPassword = (e.target as HTMLInputElement).value} />
-            </div>
-            <button class="button" @click=${this.changePassword}>Update Password</button>
-          </div>
-
-          <div class="setting-group">
-            <label class="setting-label">Two-Factor Authentication (2FA)</label>
-            ${this.user.twoFactorEnabled ? html`
-              <p>✅ 2FA activée</p>
-            ` : this.qrCode ? html`
-              <div>
-                <p>Scanne ce code QR avec ton application d’authentification :</p>
-                <img src="${this.qrCode}" alt="QR Code" style="max-width: 200px;" />
-                <form @submit=${this.handleVerify2FA}>
-                  <label>Code :</label>
-                  <input type="text" .value=${this.code2FA} @input=${(e: Event) => this.code2FA = (e.target as HTMLInputElement).value} />
-                  <button class="button" type="submit">Vérifier</button>
-                </form>
-              </div>
-            ` : html`
-              <button class="button" @click=${this.setup2FA}>Activer 2FA</button>
-            `}
-          </div>
-        </div>
-      </div>
-    `;
+    this.render();
   }
 }
 
+customElements.define('settings-view', SettingsView);
 
-// import { LitElement, html, css } from 'lit';
-// import { customElement, state } from 'lit/decorators.js';
+
+// import ApiService from '../services/api.service';
 // import { SettingsService } from '../services/settings-service';
 // import type { GameSettings } from '../services/settings-service';
 
-// @customElement('settings-view')
-// export class SettingsView extends LitElement {
-//   static styles = css`
-//     :host {
-//       display: block;
-//     }
-//     .settings-container {
-//       max-width: 800px;
-//       margin: 0 auto;
-//       padding: 2rem;
-//     }
-//     .section {
-//       background: var(--color-surface);
-//       border-radius: 1rem;
-//       padding: 2rem;
-//       margin-bottom: 2rem;
-//       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-//     }
-//     .section-title {
-//       font-size: 1.8rem;
-//       font-weight: bold;
-//       margin-bottom: 1.5rem;
-//       color: var(--color-text);
-//     }
-//     .setting-group {
-//       margin-bottom: 2rem;
-//     }
-//     .setting-label {
-//       font-size: 1.2rem;
-//       font-weight: 500;
-//       margin-bottom: 1rem;
-//       color: var(--color-text);
-//     }
-//     .color-options {
-//       display: flex;
-//       gap: 1rem;
-//       flex-wrap: wrap;
-//     }
-//     .color-button {
-//       width: 3rem;
-//       height: 3rem;
-//       border-radius: 50%;
-//       border: 3px solid transparent;
-//       cursor: pointer;
-//       transition: transform 0.2s;
-//     }
-//     .color-button:hover {
-//       transform: scale(1.1);
-//     }
-//     .color-button.selected {
-//       border-color: var(--color-accent);
-//     }
-//     .number-input {
-//       width: 100%;
-//       padding: 0.8rem;
-//       font-size: 1.2rem;
-//       border-radius: 0.5rem;
-//       border: 2px solid var(--color-border);
-//       background: var(--color-background);
-//       color: var(--color-text);
-//     }
-//     .toggle-container {
-//       display: flex;
-//       align-items: center;
-//       justify-content: space-between;
-//       padding: 1rem 0;
-//     }
-//     .toggle-label {
-//       font-size: 1.2rem;
-//       color: var(--color-text);
-//     }
-//     .toggle-switch {
-//       position: relative;
-//       width: 4rem;
-//       height: 2rem;
-//     }
-//     .toggle-switch input {
-//       opacity: 0;
-//       width: 0;
-//       height: 0;
-//     }
-//     .toggle-slider {
-//       position: absolute;
-//       cursor: pointer;
-//       top: 0;
-//       left: 0;
-//       right: 0;
-//       bottom: 0;
-//       background-color: var(--color-border);
-//       transition: .4s;
-//       border-radius: 2rem;
-//     }
-//     .toggle-slider:before {
-//       position: absolute;
-//       content: "";
-//       height: 1.6rem;
-//       width: 1.6rem;
-//       left: 0.2rem;
-//       bottom: 0.2rem;
-//       background-color: white;
-//       transition: .4s;
-//       border-radius: 50%;
-//     }
-//     input:checked + .toggle-slider {
-//       background-color: var(--color-accent);
-//     }
-//     input:checked + .toggle-slider:before {
-//       transform: translateX(2rem);
-//     }
-//     .save-button {
-//       background-color: var(--color-accent);
-//       color: white;
-//       padding: 1rem 2rem;
-//       font-size: 1.2rem;
-//       border-radius: 0.5rem;
-//       border: none;
-//       cursor: pointer;
-//       transition: opacity 0.2s;
-//     }
-//     .save-button:hover {
-//       opacity: 0.9;
-//     }
-//   `;
-
-//   @state()
+// class SettingsView extends HTMLElement {
 //   private settings: GameSettings;
-// @state()
-// private showConfirmation = false;
+//   private settingsService = SettingsService.getInstance();
+//   private user = { username: '', twoFactorEnabled: false };
+//   private newUsername = '';
+//   private newPassword = '';
+//   private confirmPassword = '';
+//   private code2FA = '';
+//   private qrCode = '';
+//   private errorMessage = '';
 
+// private usernameSuccessMessage = '';
+// private usernameErrorMessage = '';
+// private passwordSuccessMessage = '';
+// private passwordErrorMessage = '';
+// private twoFASuccessMessage = '';
+// private twoFAErrorMessage = '';
+// private settingsSuccessMessage = '';
+// private settingsErrorMessage = '';
 
-
-//   private colorOptions = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
-//   private settingsService: SettingsService;
 
 //   constructor() {
 //     super();
-//     this.settingsService = SettingsService.getInstance();
 //     this.settings = this.settingsService.getSettings();
 //   }
 
-//   private handleSettingChange(setting: keyof GameSettings, value: any) {
-//     this.settings = { ...this.settings, [setting]: value };
+//   connectedCallback() {
+//     this.loadUser();
 //   }
 
-// private saveSettings() {
-//   this.settingsService.updateSettings(this.settings);
-//   this.showConfirmation = true;
-//   setTimeout(() => {
-//     this.showConfirmation = false;
-//   }, 3000); // Cache après 3 secondes
+//   async loadUser() {
+//     try {
+//       const profile = await ApiService.getProfile();
+//       this.user = {
+//         username: profile.username,
+//         twoFactorEnabled: profile.twoFactorEnabled,
+//       };
+//     } catch {
+//       this.errorMessage = 'Failed to load profile';
+//     }
+//     this.render();
+//   }
+
+// private renderUsernameMessage(): string {
+//   if (this.usernameSuccessMessage) {
+//     return `<p class="text-green-400 text-sm mb-2">${this.usernameSuccessMessage}</p>`;
+//   }
+//   if (this.usernameErrorMessage) {
+//     return `<p class="text-red-400 text-sm mb-2">${this.usernameErrorMessage}</p>`;
+//   }
+//   return '';
+// }
+
+// private renderPasswordMessage(): string {
+//   if (this.passwordSuccessMessage) {
+//     return `<p class="text-green-400 text-sm mb-2">${this.passwordSuccessMessage}</p>`;
+//   }
+//   if (this.passwordErrorMessage) {
+//     return `<p class="text-red-400 text-sm mb-2">${this.passwordErrorMessage}</p>`;
+//   }
+//   return '';
+// }
+
+// private renderTwoFAMessage(): string {
+//   if (this.twoFASuccessMessage) {
+//     return `<p class="text-green-400 text-sm mt-2">${this.twoFASuccessMessage}</p>`;
+//   }
+//   if (this.twoFAErrorMessage) {
+//     return `<p class="text-red-400 text-sm mt-2">${this.twoFAErrorMessage}</p>`;
+//   }
+//   return '';
+// }
+
+// private renderSettingsMessage(): string {
+//   if (this.settingsSuccessMessage) {
+//     return `<p class="text-green-400 text-sm mt-2 text-center">${this.settingsSuccessMessage}</p>`;
+//   }
+//   if (this.settingsErrorMessage) {
+//     return `<p class="text-red-400 text-sm mt-2 text-center">${this.settingsErrorMessage}</p>`;
+//   }
+//   return '';
 // }
 
 
-
 //   render() {
-//     return html`
+//     const twoFAContent = this.qrCode
+//       ? this.renderQRCodeInput()
+//       : this.user.twoFactorEnabled
+//         ? `<p class="text-green-400">✅ 2FA enabled</p>`
+//         : this.renderEnable2FAButton();
 
-//         <div class="settings-container">
-//           <h1 class="section-title">Game Settings</h1>
-
-//           <div class="section">
-//             <div class="setting-group">
-//               <label class="setting-label">Ball Color</label>
-//               <div class="color-options">
-//                 ${this.colorOptions.map(color => html`
-//                   <button
-//                     @click=${() => this.handleSettingChange('ballColor', color)}
-//                     class="color-button ${this.settings.ballColor === color ? 'selected' : ''}"
-//                     style="background-color: ${color}"
-//                   ></button>
-//                 `)}
-//               </div>
-//             </div>
-
-//             <div class="setting-group">
-//               <label class="setting-label">Paddle Color</label>
-//               <div class="color-options">
-//                 ${this.colorOptions.map(color => html`
-//                   <button
-//                     @click=${() => this.handleSettingChange('paddleColor', color)}
-//                     class="color-button ${this.settings.paddleColor === color ? 'selected' : ''}"
-//                     style="background-color: ${color}"
-//                   ></button>
-//                 `)}
-//               </div>
-//             </div>
-
-//             <div class="setting-group">
-//               <label class="setting-label">End Score</label>
-//               <input
-//                 type="number"
-//                 .value=${this.settings.endScore}
-//                 @input=${(e: Event) => this.handleSettingChange('endScore', +(e.target as HTMLInputElement).value)}
-//                 min="1"
-//                 max="20"
-//                 class="number-input"
-//               />
-//             </div>
-
-//             <div class="setting-group">
-//               <label class="setting-label">Ball Speed</label>
-//               <input
-//                 type="number"
-//                 .value=${this.settings.ballSpeed}
-//                 @input=${(e: Event) => this.handleSettingChange('ballSpeed', +(e.target as HTMLInputElement).value)}
-//                 min="1"
-//                 max="10"
-//                 class="number-input"
-//               />
-//             </div>
-
-//             <div class="setting-group">
-//               <label class="setting-label">Paddle Speed</label>
-//               <input
-//                 type="number"
-//                 .value=${this.settings.paddleSpeed}
-//                 @input=${(e: Event) => this.handleSettingChange('paddleSpeed', +(e.target as HTMLInputElement).value)}
-//                 min="1"
-//                 max="10"
-//                 class="number-input"
-//               />
-//             </div>
-//           </div>
-
-
-//           <div class="flex justify-end">
-//           ${this.showConfirmation ? html`
-//   <div style="margin-bottom: 1rem; color: green; font-weight: bold;">
-//     Settings saved successfully
-//   </div>
-// ` : ''}
-
-//             <button
-//               @click=${this.saveSettings}
-//               class="save-button"
-//             >
-//               Save Settings
-//             </button>
-//           </div>
+//     this.innerHTML = `
+//       <div class="flex flex-col space-y-8 m-20 px-20">
+//         <div class="flex justify-between gap-4">
+//           ${this.renderUserSettings(twoFAContent)}
+//           ${this.renderGameSettings()}
 //         </div>
-
+//       </div>
 //     `;
 //   }
-// } 
+
+//   renderUserSettings(twoFAContent: string): string {
+//     return `
+//       <div class="w-1/2">
+//         <div class="flex justify-center items-center p-4">
+//           <div class="p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md">
+//             <form class="bg-gray-800 p-6 rounded-2xl w-full">
+//               <h2 class="text-2xl font-semibold mb-6 text-center">User Settings</h2>
+
+//               <div class="mb-6 text-center">
+//                 <p class="text-white text-sm">Logged in as</p>
+//                 <p class="text-xl font-semibold text-indigo-300">${this.user.username}</p>
+//               </div>
+
+//               ${this.renderTextInput('New Username', 'newUsername', '', 'text')}
+// ${this.renderActionButton('Update Username', () => this.updateUsername())}
+// ${this.renderUsernameMessage()}
+
+
+//               <h3 class="text-white font-medium text-sm mt-6 mb-2">Change Password</h3>
+//               ${this.renderTextInput('New Password', 'newPassword', '', 'password')}
+//               ${this.renderTextInput('Confirm Password', 'confirmPassword', '', 'password')}
+// ${this.renderActionButton('Update Password', () => this.updatePassword())}
+// ${this.renderPasswordMessage()}
+
+
+//               <div class="mt-6 text-white font-medium text-sm text-center mb-2">Two-Factor Authentication (2FA)</div>
+//               <div class="text-center">${twoFAContent}</div>
+//             </form>
+//           </div>
+//         </div>
+//       </div>
+//     `;
+//   }
+
+// renderGameSettings(): string {
+//   return `
+//     <div class="w-1/2">
+//       <div class="flex justify-center items-center p-4">
+//         <div class="p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md">
+//           <div class="bg-gray-800 p-6 rounded-2xl w-full">
+//             <h2 class="text-2xl font-semibold mb-6 text-center">Game Settings</h2>
+//             ${this.renderColorOptions('Ball Color', 'ballColor')}
+//             ${this.renderColorOptions('Paddle Color', 'paddleColor')}
+//             ${this.renderGameSettingInputs()}
+//             ${this.renderSettingsMessage()}
+//             ${this.renderActionButton('Save', () => this.saveSettings())}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   `;
+// }
+
+
+// renderTextInput(label: string, name: string, value: string, type: string, prefix = ''): string {
+//   const fullName = prefix + name;
+//   return `
+//     <div class="mb-2">
+//       <label class="block text-white text-sm font-medium mb-1">${label}</label>
+//       <div class="p-[2px] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+//         <input type="${type}" name="${fullName}" placeholder="${label}" value="${value}"
+//           class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+//           oninput="document.querySelector('settings-view').updateSetting('${name}', this.value)" />
+//       </div>
+//     </div>
+//   `;
+// }
+
+
+//   renderActionButton(text: string, action: () => void): string {
+//     const fnName = `action_${text.replace(/\s+/g, '')}`;
+//     (this as any)[fnName] = action;
+//     return `
+//       <button type="button" class="w-full px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full transition text-center hover:opacity-90 mb-6"
+//         onclick="document.querySelector('settings-view').${fnName}()">${text}</button>
+//     `;
+//   }
+
+//   renderColorOptions(label: string, key: keyof GameSettings): string {
+//     const colors = ['black', 'red', 'blue', 'green', 'yellow', 'purple'];
+//     const colorClasses: Record<string, string> = {
+//       black: 'bg-black border-black',
+//       red: 'bg-red-500 border-red-500',
+//       blue: 'bg-blue-500 border-blue-500',
+//       green: 'bg-green-500 border-green-500',
+//       yellow: 'bg-yellow-500 border-yellow-500',
+//       purple: 'bg-purple-500 border-purple-500',
+//     };
+
+//     return `
+//       <label class="block text-sm font-medium text-white mb-2">${label}</label>
+//       <div class="flex space-x-2 mb-4">
+//         ${colors.map(color => `
+//           <label class="relative">
+//             <input type="radio" name="${key}" value="${color}" class="peer hidden"
+//               ${this.settings[key] === color ? 'checked' : ''}
+//               onchange="document.querySelector('settings-view').updateSetting('${key}', '${color}')">
+//             <div class="w-7 h-7 rounded-full flex items-center justify-center
+//               peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:via-purple-500 peer-checked:to-pink-500">
+//               <div class="w-6 h-6 rounded-full ${colorClasses[color]}"></div>
+//             </div>
+//           </label>
+//         `).join('')}
+//       </div>
+//     `;
+//   }
+
+//   renderGameSettingInputs(): string {
+//     const labels: Record<string, string> = {
+//       endScore: 'End Score',
+//       ballSpeed: 'Ball Speed',
+//       paddleSpeed: 'Paddle Speed'
+//     };
+
+//     return ['endScore', 'ballSpeed', 'paddleSpeed'].map(key =>
+//   this.renderTextInput(labels[key], key, String(this.settings[key as keyof GameSettings]), 'text', 'game_')
+// ).join('');
+
+//   }
+
+//   renderQRCodeInput(): string {
+//     return `
+//   <p class="text-white text-sm mb-2">Scan this QR code with your authenticator app:</p>
+//   <img src="${this.qrCode}" alt="QR Code" class="mb-2 max-w-xs text-center" />
+//   ${this.renderTextInput('Enter 2FA code', 'code2FA', '', 'text')}
+//   ${this.renderActionButton('Verify 2FA', () => this.verify2FA())}
+//   ${this.renderTwoFAMessage()}
+// `;
+
+//   }
+
+//   renderEnable2FAButton(): string {
+//     return `
+//   <div>
+//     <button type="button" onclick="document.querySelector('settings-view').setup2FA()"
+//       class="w-full px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition text-center inline-block">
+//       <i class="fa-solid fa-shield-halved"></i> Enable 2FA
+//     </button>
+//     ${this.renderTwoFAMessage()}
+//   </div>
+// `;
+
+//   }
+
+//   updateSetting(key: keyof GameSettings, value: string) {
+//     const parsed = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key) ? parseInt(value, 10) : value;
+//     this.settings = { ...this.settings, [key]: parsed };
+//   }
+
+// saveSettings() {
+//   try {
+//     this.settingsService.updateSettings(this.settings);
+//     this.settingsSuccessMessage = 'Settings saved successfully.';
+//     this.settingsErrorMessage = '';
+//   } catch {
+//     this.settingsErrorMessage = 'Failed to save settings.';
+//     this.settingsSuccessMessage = '';
+//   }
+//   this.render();
+// }
+
+
+// async updateUsername() {
+//   this.usernameSuccessMessage = '';
+//   this.usernameErrorMessage = '';
+//   if (!this.newUsername.trim()) {
+//     this.usernameErrorMessage = 'New username cannot be empty.';
+//     return this.render();
+//   }
+//   try {
+//     const updatedUser = await ApiService.updateUser({ username: this.user.username, newUsername: this.newUsername });
+//     this.user.username = updatedUser.username;
+//     this.newUsername = '';
+//     this.usernameSuccessMessage = 'Username updated successfully.';
+//   } catch {
+//     this.usernameErrorMessage = 'Failed to update username.';
+//   }
+//   this.render();
+// }
+
+// async updatePassword() {
+//   this.passwordSuccessMessage = '';
+//   this.passwordErrorMessage = '';
+//   if (!this.newPassword || !this.confirmPassword) {
+//     this.passwordErrorMessage = 'Please fill in both password fields.';
+//     return this.render();
+//   }
+//   if (this.newPassword !== this.confirmPassword) {
+//     this.passwordErrorMessage = 'Passwords do not match.';
+//     return this.render();
+//   }
+//   try {
+//     await ApiService.updatePassword(this.user.username, this.newPassword);
+//     this.newPassword = '';
+//     this.confirmPassword = '';
+//     this.passwordSuccessMessage = 'Password updated successfully.';
+//   } catch {
+//     this.passwordErrorMessage = 'Failed to update password.';
+//   }
+//   this.render();
+// }
+
+
+//   async setup2FA() {
+//   this.twoFASuccessMessage = '';
+//   this.twoFAErrorMessage = '';
+//   try {
+//     const res = await ApiService.setup2FA();
+//     this.qrCode = res.qrCode;
+//     this.render();
+//   } catch {
+//     this.twoFAErrorMessage = 'Failed to generate QR code';
+//     this.render();
+//   }
+// }
+
+// async verify2FA() {
+//   this.twoFASuccessMessage = '';
+//   this.twoFAErrorMessage = '';
+//   try {
+//     await ApiService.verify2FASetup(this.code2FA);
+//     this.user.twoFactorEnabled = true;
+//     localStorage.setItem('user', JSON.stringify(this.user));
+//     this.qrCode = '';
+//     this.code2FA = '';
+//     this.twoFASuccessMessage = '2FA successfully enabled.';
+//   } catch {
+//     this.twoFAErrorMessage = 'Failed to verify 2FA code.';
+//   }
+//   this.render();
+// }
+
+// }
+
+// customElements.define('settings-view', SettingsView);
