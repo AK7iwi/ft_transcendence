@@ -7,10 +7,8 @@ const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
 const PADDLE_MARGIN = 0.02;
 
-@customElement('game-remote-view')
-export class GameRemoteView extends LitElement {
-
-
+@customElement('game-view')
+export class GameView extends LitElement {
   static styles = css`
     :host {
       display: block;

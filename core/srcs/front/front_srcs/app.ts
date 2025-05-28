@@ -4,8 +4,11 @@ import './styles.css';
 
 import './views/home-view.ts';
 import './views/game-view.ts';
+import './views/game-remote-view.ts';
 import './views/tournament-view.ts';
 import './views/chat-view.ts';
+import './views/friend-profile-view.ts';
+
 import './views/friend-view.ts';
 import './views/settings-view.ts';
 import './views/profile-view.ts';
@@ -40,12 +43,12 @@ connectedCallback() {
 }
 
 
-  toggleAuthButtons() {
-  const isAuthenticated = !!localStorage.getItem('token');
-  const authButtons = document.querySelector('#auth-buttons');
+toggleAuthButtons() {
+  const authButtons = document.querySelector('#auth-buttons') as HTMLElement;
+  const token = localStorage.getItem('token');
 
   if (authButtons) {
-    authButtons.classList.toggle('hidden', isAuthenticated);
+    authButtons.style.display = token ? 'none' : 'flex';
   }
 }
 
@@ -105,12 +108,14 @@ const dynamicLinks = isAuthenticated ? authLinks : [];
     router.setRoutes([
       { path: '/', component: 'home-view' },
       { path: '/game', component: 'game-view' },
+      { path: '/game-remote', component: 'game-remote-view' },
       { path: '/register', component: 'register-view' },
       { path: '/login', component: 'login-view' },
 
       // Routes protégées
       { path: '/tournament', component: 'tournament-view', action: requireAuth },
       { path: '/chat', component: 'chat-view', action: requireAuth },
+      { path: '/friend-profile', component: 'friend-profile-view', action: requireAuth },
       { path: '/friends', component: 'friend-view', action: requireAuth },
       { path: '/settings', component: 'settings-view', action: requireAuth },
       { path: '/profile', component: 'profile-view', action: requireAuth },

@@ -151,6 +151,12 @@ private async handleBlockUser() {
     };
   }
 
+
+  private inviteToPlay(friendId?: string) {
+  if (!friendId) return;
+  window.location.href = `/game-remote?id=${friendId}`;
+}
+
   async loadMessages(friendId: string) {
     this.selectedConversationId = friendId;
 
@@ -236,8 +242,8 @@ private async handleBlockUser() {
               <div class="header-info">
                 <div class="chat-with-name">${current.name}</div>
               </div>
-              <div class="chat-actions">
-                <button class="chat-button invite-button" @click=${() => console.log('Invite clicked')}>Invite to Play</button>
+              <div class="chat-actions">y
+<button class="chat-button invite-button" @click=${() => this.inviteToPlay(current?.id)}>Invite to Play</button>
 <button class="chat-button profile-button" @click=${() => this.viewFriendProfile(current?.id)}>View Profile</button>
                 <button class="chat-button block-button" @click=${this.handleBlockUser}>Block</button>
               </div>

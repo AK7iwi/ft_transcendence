@@ -178,8 +178,8 @@ class HomeView extends HTMLElement {
 							<span class="mt-2 text-sm font-medium text-gray-700">Docker</span>
 						</div>
 						<div class="flex flex-col items-center">
-							<img class="max-h-12 w-full object-contain" src="https://www.php.net/images/logos/new-php-logo.svg" alt="PHP" width="158" height="48">
-							<span class="mt-2 text-sm font-medium text-gray-700">PHP</span>
+  							<img class="max-h-12 w-full object-contain" src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" alt="WebSocket" width="158" height="48">
+  							<span class="mt-2 text-sm font-medium text-gray-700">WebSocket</span>
 						</div>
 					</div>
 				</div>
