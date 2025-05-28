@@ -12,11 +12,12 @@ services:
     env_file: .env
     volumes:
       - ./src/back/security:/usr/src/app/security
+      - ./certs:/usr/src/app/certs
     networks:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "https://localhost:3000/health", "--insecure"]
       interval: 10s
       timeout: 5s
       retries: 3

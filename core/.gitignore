@@ -44,6 +44,8 @@ certs/
 **/certs/
 **/certificates/
 **/keys/
+# Ignore certificate files
+core/src/back/gateway/src/certs/*.pem
 
 # Database files
 *.sqlite

@@ -8,12 +8,25 @@ const authRoutes = require('./routes/auth.routes');
 // const tournamentRoutes = require('./routes/tournament.routes');
 // const chatRoutes = require('./routes/chat.routes');
 // const userRoutes = require('./routes/user.routes');
+const fs = require('fs');
+const path = require('path');
 
 // Initialize Fastify
-const fastify = fastifyModule({ logger: true });
+const fastify = fastifyModule({
+    logger: true,
+    https: {
+      key: fs.readFileSync(path.join(__dirname, '../certs/key.pem')),
+      cert: fs.readFileSync(path.join(__dirname, '../certs/cert.pem')),
+    },
+  });
 
 // Register plugins
-fastify.register(cors, { origin: true });
+fastify.register(cors, {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  });
 
 // Register websocket
 fastify.register(websocket);
@@ -31,12 +44,12 @@ fastify.decorate('axios', axiosInstance);
 
 // Basic route
 fastify.get('/', async (request, reply) => {
-    return { message: 'Server is running' };
+    reply.code(200).send({ message: 'Server is running' });
 });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
-    return { status: 'Server is healthy' };
+    reply.code(200).send( { status: 'Server is healthy' });
 });
 
 // Register routes

@@ -9,9 +9,6 @@ RUN apt-get update && apt-get upgrade -y && \
 # Set working directory
 WORKDIR /usr/src/app
 
-# Create certificates directory and set permissions
-RUN mkdir -p /usr/src/app/certs && chmod 755 /usr/src/app/certs
-
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
