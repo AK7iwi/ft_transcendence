@@ -192,8 +192,6 @@ export class GameView extends LitElement {
     if (!this.canvas) return;
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
-    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['ArrowUp']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['ArrowDown']) this.paddle2.y += this.paddle2.speed;
     this.clampPaddlePosition(this.paddle1);
@@ -335,7 +333,7 @@ export class GameView extends LitElement {
   render() {
     return html`
       <div class="game-container">
-        <div class="score-display">
+       <div class="score-display">
   <span>Player 1: ${this.score.player1}</span>
   <span style="margin: 0 1rem;">|</span>
   <span>Player 2: ${this.score.player2}</span>
