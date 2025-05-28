@@ -1,5 +1,3 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
 
@@ -7,68 +5,19 @@ const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
 const PADDLE_MARGIN = 0.02;
 
-@customElement('game-remote-view')
-export class GameRemoteView extends LitElement {
-
-
-  static styles = css`
-    :host {
-      display: block;
-      width: 100%;
-      min-height: calc(100vh - 80px);
-      position: relative;
-      overflow: hidden;
-    }
-    .game-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: calc(100vh - 80px);
-      box-sizing: border-box;
-      padding: 0.5rem;
-      overflow: hidden;
-      position: relative;
-    }
-    .responsive-canvas {
-      width: 80%;
-      height: 60vh;
-      max-width: 1000px;
-      max-height: 60vh;
-      min-width: 300px;
-      min-height: 200px;
-      background: white;
-      border: 2px solid var(--color-accent);
-      display: block;
-      margin: 0.25rem auto;
-    }
-    .score-display {
-      color: var(--color-text);
-      font-size: clamp(1.5rem, 3vw, 2rem);
-      margin: 0.25rem 0;
-      font-family: var(--font-mono);
-    }
-    .controls-info {
-      color: var(--color-text-secondary);
-      margin-top: 0.25rem;
-      text-align: center;
-      font-size: clamp(0.8rem, 1.5vw, 1rem);
-    }
-  `;
-
-  @state() private score = { player1: 0, player2: 0 };
-  @state() private isGameStarted = false;
-  @state() private isGameOver = false;
-  @state() private winner = '';
-  @state() private countdown = 0;
-  @state() private isBallActive = false;
-  @state() private isInitialCountdown = false;
-  @state() private isPaused = false;
+class GameView extends HTMLElement {
+  private score = { player1: 0, player2: 0 };
+  private isGameStarted = false;
+  private isGameOver = false;
+  private winner = '';
+  private countdown = 0;
+  private isBallActive = false;
+  private isInitialCountdown = false;
+  private isPaused = false;
 
   private keysPressed: Record<string, boolean> = {};
-  private canvas: HTMLCanvasElement | null = null;
-  private ctx: CanvasRenderingContext2D | null = null;
+  private canvas!: HTMLCanvasElement;
+  private ctx!: CanvasRenderingContext2D;
   private animationFrameId = 0;
   private gameLoop = false;
   private settingsService = SettingsService.getInstance();
@@ -81,60 +30,69 @@ export class GameRemoteView extends LitElement {
   constructor() {
     super();
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
+    window.addEventListener('resize', this.handleResize);
   }
 
-  private clampPaddlePosition(paddle: { y: number; height: number }) {
-    paddle.y = Math.max(0, Math.min(this.canvas!.height - paddle.height, paddle.y));
+  connectedCallback() {
+    this.render();
   }
 
-  private drawCenteredText(text: string, size: number, y: number) {
-    this.ctx!.font = `bold ${size}px Arial`;
-    this.ctx!.fillText(text, this.canvas!.width / 2, y);
+  private render() {
+    this.innerHTML = `
+      <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
+        <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
+          <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">Player 1</span>
+          <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20" id="score">0 - 0</span>
+          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">Player 2</span>
+        </div>
+        <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+          <div class="bg-white rounded-xl overflow-hidden">
+            <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4 mt-6">
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Player 1:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
+          </span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Pause:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
+          </span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Player 2:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↑</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↓</span>
+          </span>
+        </div>
+      </div>
+    `;
+
+    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext('2d')!;
+    this.setupEventListeners();
+    this.initGame();
+    this.draw();
   }
 
-  private updateGameSettings() {
-    this.paddle1.speed = this.settings.paddleSpeed;
-    this.paddle2.speed = this.settings.paddleSpeed;
-    this.ball.speed = this.settings.ballSpeed;
-    this.ball.dx = this.settings.ballSpeed;
-    this.ball.dy = this.settings.ballSpeed;
-  }
-
-  private initGame() {
-    if (!this.canvas || !this.ctx) return;
-    const container = this.canvas.parentElement!;
-    let width = container.clientWidth;
-    let height = width / CANVAS_ASPECT_RATIO;
-    if (height > container.clientHeight) {
-      height = container.clientHeight;
-      width = height * CANVAS_ASPECT_RATIO;
+  private updateScoreDisplay() {
+    const scoreEl = document.getElementById('score');
+    if (scoreEl) {
+      scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
-    this.canvas.width = width;
-    this.canvas.height = height;
+  }
 
-    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
-    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
-    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
-
-    this.resetBall();
-    this.gameLoop = false;
-    this.isGameStarted = false;
-    this.isBallActive = false;
+  private handleSettingsChanged = (e: Event) => {
+    this.settings = (e as CustomEvent<GameSettings>).detail;
     this.updateGameSettings();
-  }
+  };
 
-  private resetBall() {
-    if (!this.canvas) return;
-    this.ball.x = this.canvas.width / 2;
-    this.ball.y = this.canvas.height / 2;
-    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    this.isBallActive = false;
-    this.startBallCountdown();
-  }
+  private handleResize = () => {
+    if (this.isGameStarted) return;
+    this.initGame();
+    this.draw();
+  };
 
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
@@ -158,6 +116,48 @@ export class GameRemoteView extends LitElement {
     }
   }
 
+  private updateGameSettings() {
+    this.paddle1.speed = this.settings.paddleSpeed;
+    this.paddle2.speed = this.settings.paddleSpeed;
+    this.ball.speed = this.settings.ballSpeed;
+    this.ball.dx = this.settings.ballSpeed;
+    this.ball.dy = this.settings.ballSpeed;
+  }
+
+  private initGame() {
+    const container = this.canvas.parentElement!;
+    let width = container.clientWidth;
+    let height = width / CANVAS_ASPECT_RATIO;
+    if (height > container.clientHeight) {
+      height = container.clientHeight;
+      width = height * CANVAS_ASPECT_RATIO;
+    }
+    this.canvas.width = width;
+    this.canvas.height = height;
+
+    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+
+    this.resetBall();
+    this.gameLoop = false;
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.updateGameSettings();
+  }
+
+  private resetBall() {
+    this.ball.x = this.canvas.width / 2;
+    this.ball.y = this.canvas.height / 2;
+    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+    this.isBallActive = false;
+    this.startBallCountdown();
+  }
+
   private startInitialCountdown() {
     const interval = setInterval(() => {
       this.countdown--;
@@ -169,6 +169,7 @@ export class GameRemoteView extends LitElement {
         this.isInitialCountdown = false;
         this.startGameLoop();
       }
+      this.draw();
     }, 1000);
   }
 
@@ -180,6 +181,7 @@ export class GameRemoteView extends LitElement {
         clearInterval(interval);
         this.isBallActive = true;
       }
+      this.draw();
     }, 1000);
   }
 
@@ -191,13 +193,12 @@ export class GameRemoteView extends LitElement {
   }
 
   private updateGame() {
-    if (!this.canvas) return;
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['ArrowUp']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['ArrowDown']) this.paddle2.y += this.paddle2.speed;
-    this.clampPaddlePosition(this.paddle1);
-    this.clampPaddlePosition(this.paddle2);
+    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
+    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
     if (this.isBallActive && !this.isGameOver) {
       this.ball.x += this.ball.dx;
@@ -228,11 +229,61 @@ export class GameRemoteView extends LitElement {
       if (this.ball.x <= 0) {
         this.score.player2++;
         this.score.player2 >= this.settings.endScore ? this.endGame('Player 2') : this.resetBall();
+        this.updateScoreDisplay();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
         this.score.player1 >= this.settings.endScore ? this.endGame('Player 1') : this.resetBall();
+        this.updateScoreDisplay();
       }
     }
+  }
+
+  private drawCenteredText(text: string, size: number, y: number) {
+    this.ctx.font = `bold ${size}px Arial`;
+    this.ctx.fillStyle = '#000';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(text, this.canvas.width / 2, y);
+  }
+
+  private draw() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.fillStyle = this.settings.paddleColor;
+    this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
+    this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
+
+    if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
+      this.ctx.beginPath();
+      this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
+      this.ctx.fillStyle = this.settings.ballColor;
+      this.ctx.fill();
+      this.ctx.closePath();
+    }
+
+    this.ctx.beginPath();
+    this.ctx.setLineDash([5, 15]);
+    this.ctx.moveTo(this.canvas.width / 2, 0);
+    this.ctx.lineTo(this.canvas.width / 2, this.canvas.height);
+    this.ctx.strokeStyle = '#000';
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+
+    if (this.isGameOver) {
+      this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
+      this.drawCenteredText('Press SPACE to Play Again', 24, this.canvas.height / 2 + 30);
+    } else if (this.isPaused) {
+      this.drawCenteredText('Paused', 48, this.canvas.height / 2 - 30);
+    } else if (!this.isGameStarted) {
+      this.drawCenteredText(
+        this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
+        this.isInitialCountdown ? 72 : 48,
+        this.canvas.height / 2
+      );
+    } else if (!this.isBallActive && this.countdown > 0) {
+      this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
+    }
+
+    if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
   }
 
   private endGame(winner: string) {
@@ -260,92 +311,9 @@ export class GameRemoteView extends LitElement {
     this.draw();
   }
 
-  private draw() {
-    if (!this.ctx || !this.canvas) return;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.fillStyle = this.settings.paddleColor;
-    this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
-    this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
-
-    if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
-      this.ctx.beginPath();
-      this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = this.settings.ballColor;
-      this.ctx.fill();
-      this.ctx.closePath();
-    }
-
-    this.ctx.beginPath();
-    this.ctx.setLineDash([5, 15]);
-    this.ctx.moveTo(this.canvas.width / 2, 0);
-    this.ctx.lineTo(this.canvas.width / 2, this.canvas.height);
-    this.ctx.strokeStyle = '#000';
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
-
-    this.ctx.textAlign = 'center';
-    this.ctx.fillStyle = '#000';
-
-    if (this.isGameOver) {
-      this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
-      this.drawCenteredText('Press SPACE to Play Again', 24, this.canvas.height / 2 + 30);
-    } else if (this.isPaused) {
-      this.drawCenteredText('⏸️ Paused', 48, this.canvas.height / 2 - 30);
-      this.drawCenteredText('Press P to Resume', 24, this.canvas.height / 2 + 30);
-    } else if (!this.isGameStarted) {
-      this.drawCenteredText(
-        this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
-        this.isInitialCountdown ? 72 : 48,
-        this.canvas.height / 2
-      );
-    } else if (!this.isBallActive && this.countdown > 0) {
-      this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
-    }
-
-    if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
-  }
-
-  private handleResize = () => {
-    if (this.isGameStarted) return;
-    this.initGame();
-    this.draw();
-  };
-
-  firstUpdated() {
-    this.canvas = this.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas?.getContext('2d') || null;
-    this.initGame();
-    this.setupEventListeners();
-    this.draw();
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.gameLoop = false;
-    cancelAnimationFrame(this.animationFrameId);
-    window.removeEventListener('resize', this.handleResize);
-  }
-
-  private handleSettingsChanged = (e: Event) => {
-    this.settings = (e as CustomEvent<GameSettings>).detail;
-    this.updateGameSettings();
-  };
-
-  render() {
-    return html`
-      <div class="game-container">
-       <div class="score-display">
-  <span>Player 1: ${this.score.player1}</span>
-  <span style="margin: 0 1rem;">|</span>
-  <span>Player 2: ${this.score.player2}</span>
-</div>
-
-        <canvas class="responsive-canvas"></canvas>
-        <div class="controls-info">
-          Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause
-        </div>
-      </div>
-    `;
+  public start() {
+    this.render();
   }
 }
+
+customElements.define('game-view', GameView);

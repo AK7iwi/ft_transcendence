@@ -1,133 +1,77 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 
-@customElement('friend-view')
-export class FriendView extends LitElement {
-  static styles = css`
-    .container {
-      max-width: 600px;
-      margin: 2rem auto;
-    }
+class FriendView extends HTMLElement {
+  private username = '';
+  private message = '';
+  private messageType: 'success' | 'error' | '' = '';
+  private friends: { id: number; username: string; avatar: string }[] = [];
+  private onlineUserIds: number[] = [];
+  private currentUserId = Number(localStorage.getItem('userId') || 0);
 
-    input {
-      padding: 0.5rem;
-      margin-right: 0.5rem;
-    }
+  constructor() {
+    super();
+  }
 
-    button {
-      padding: 0.5rem 1rem;
-    }
+  connectedCallback() {
+    this.loadFriends();
+    this.setupWebSocket();
+  }
 
-    .message {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    .success {
-      color: green;
-    }
-
-    .error {
-      color: red;
-    }
-
-    ul {
-      margin-top: 1.5rem;
-      list-style: none;
-      padding: 0;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    img {
-      border-radius: 50%;
-    }
-  `;
-
-  @state() private username = '';
-  @state() private message = '';
-  @state() private messageType: 'success' | 'error' | '' = '';
-  @state() private friends: { id: number; username: string; avatar: string }[] = [];
-@state() private onlineUserIds: number[] = [];
-@state() private currentUserId = Number(localStorage.getItem('userId')); // ou une méthode propre
-
-
-connectedCallback() {
-  super.connectedCallback();
-  this.loadFriends();
-  this.setupWebSocket(); // 👈 ajoute ceci
-}
-
-setupWebSocket() {
-  const socket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
-
-  socket.onopen = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      socket.send(JSON.stringify({type: 'auth',payload : { token }}));
-    }
-  };
-
-  socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === 'user-status') {
-        this.handleUserStatus(data);
+  setupWebSocket() {
+    const socket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
+    socket.onopen = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        socket.send(JSON.stringify({ type: 'auth', payload: { token } }));
       }
+    };
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'user-status') {
+          this.handleUserStatus(data);
+        }
+      } catch (err) {
+        console.error('Invalid WebSocket message', err);
+      }
+    };
+  }
+
+  handleUserStatus(data: { userId: number; status: 'online' | 'offline' }) {
+    if (data.status === 'online' && !this.onlineUserIds.includes(data.userId)) {
+      this.onlineUserIds.push(data.userId);
+    } else if (data.status === 'offline') {
+      this.onlineUserIds = this.onlineUserIds.filter(id => id !== data.userId);
+    }
+    this.render();
+  }
+
+  async loadFriends() {
+    try {
+      const result = await ApiService.getFriends();
+      this.friends = (result.friends || result).map(friend => ({
+        ...friend,
+        avatar: friend.avatar
+          ? friend.avatar.replace(/^\/?avatars\/?/, '')
+          : ''
+      }));
+      this.render();
     } catch (err) {
-      console.error('Invalid WebSocket message', err);
+      this.message = 'Error loading friends';
+      this.messageType = 'error';
+      this.render();
     }
-  };
-}
-
-handleUserStatus(data: { userId: number; status: 'online' | 'offline' }) {
-  if (data.status === 'online') {
-    if (!this.onlineUserIds.includes(data.userId)) {
-      this.onlineUserIds = [...this.onlineUserIds, data.userId];
-    }
-  } else {
-    this.onlineUserIds = this.onlineUserIds.filter(id => id !== data.userId);
   }
-}
-
-
-async loadFriends() {
-  try {
-    console.log('⏳ Loading friends...');
-    const result = await ApiService.getFriends();
-    console.log('✅ Friends loaded:', result);
-
-    // Nettoyage des avatars : on retire les slashes et les doublons de path
-    this.friends = (result.friends || result).map(friend => ({
-      ...friend,
-      avatar: friend.avatar
-        ? friend.avatar.replace(/^\/?avatars\/?/, '') // on garde juste "avatar_1.png"
-        : ''
-    }));
-  } catch (err) {
-    console.error('❌ Failed to load friends:', err);
-    this.message = 'Error loading friends';
-    this.messageType = 'error';
-  }
-}
-
-
 
   async handleAddFriend(e: Event) {
     e.preventDefault();
     this.message = '';
     this.messageType = '';
-
     if (!this.username.trim()) {
       this.message = 'Please enter a username';
       this.messageType = 'error';
+      this.render();
       return;
     }
 
@@ -136,79 +80,88 @@ async loadFriends() {
       this.message = result.message || 'Friend added';
       this.messageType = 'success';
       this.username = '';
-      this.loadFriends();
+      await this.loadFriends();
     } catch (err: any) {
       this.message = err.message || 'Error';
       this.messageType = 'error';
+      this.render();
     }
   }
 
   async handleRemoveFriend(friendId: number) {
     this.message = '';
     this.messageType = '';
-
     try {
       const result = await ApiService.removeFriend(friendId);
       this.message = result.message || 'Friend removed';
       this.messageType = 'success';
-      this.loadFriends();
+      await this.loadFriends();
     } catch (err: any) {
       this.message = err.message || 'Error';
       this.messageType = 'error';
+      this.render();
     }
   }
 
+  handleInput(e: Event) {
+    this.username = (e.target as HTMLInputElement).value;
+  }
+
   render() {
-    return html`
-      <div class="container">
-        <h2>Friend List</h2>
+    this.innerHTML = '';
 
-        <form @submit=${this.handleAddFriend}>
-          <input
-            type="text"
-            .value=${this.username}
-            @input=${(e: Event) => this.username = (e.target as HTMLInputElement).value}
-            placeholder="Enter username"
-            required
-          />
-          <button type="submit">Add Friend</button>
-        </form>
+    const main = document.createElement('main');
+    main.className = 'flex justify-center items-center min-h-[60vh] p-6';
 
-        ${this.message
-          ? html`<div class="message ${this.messageType}">${this.message}</div>`
-          : null}
+    const wrapper = document.createElement('div');
+    wrapper.className = 'p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-xl';
 
-        <ul>
-          ${this.friends.map(friend => html`
-            <li>
-          <img
-  src="${friend.avatar?.startsWith('/avatars/')
-    ? `${API_BASE_URL}${friend.avatar}`
-    : `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`}"
-  width="30"
-  height="30"
-  style="border-radius: 50%;"
-/>
-<span>${friend.username}</span>
+    const card = document.createElement('div');
+    card.className = 'bg-gray-800 rounded-2xl p-8 w-full';
 
-      <span 
-        style="
-          display:inline-block;
-          width:10px;
-          height:10px;
-          border-radius:50%;
-          background-color: ${this.onlineUserIds.includes(friend.id) ? 'green' : 'gray'};
-        "
-        title="${this.onlineUserIds.includes(friend.id) ? 'Online' : 'Offline'}"
-      ></span>
-
-      <button @click=${() => this.handleRemoveFriend(friend.id)}>Remove</button>
-    </li>
-  `)}
-</ul>
-
-
-      </div>
+    card.innerHTML = `
+      <h2 class="text-3xl font-bold mb-6 text-center text-white">Friend List</h2>
+      <form class="flex gap-2 mb-6" onsubmit="return false;">
+        <input type="text" name="username" placeholder="Enter username"
+          value="${this.username}"
+          class="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none"
+          required />
+        <button type="submit"
+          class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold px-4 py-2 rounded-full transition">
+          Add Friend
+        </button>
+      </form>
+      ${this.message ? `<div class="text-center font-semibold ${this.messageType === 'success' ? 'text-green-400' : 'text-red-500'} mb-4">${this.message}</div>` : ''}
+      <ul class="space-y-4">
+        ${this.friends.map(friend => `
+          <li class="flex items-center justify-between bg-gray-700 p-4 rounded-xl">
+            <div class="flex items-center gap-4">
+              <img src="${friend.avatar?.startsWith('/avatars/') ? `${API_BASE_URL}${friend.avatar}` : `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`}" width="40" height="40" class="rounded-full" />
+              <span class="text-white">${friend.username}</span>
+              <span class="w-3 h-3 rounded-full ${this.onlineUserIds.includes(friend.id) ? 'bg-green-500' : 'bg-gray-400'}" title="${this.onlineUserIds.includes(friend.id) ? 'Online' : 'Offline'}"></span>
+            </div>
+            <button data-remove="${friend.id}"
+              class="text-sm bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-1 rounded-full">
+              Remove
+            </button>
+          </li>
+        `).join('')}
+      </ul>
     `;
+
+    wrapper.appendChild(card);
+    main.appendChild(wrapper);
+    this.appendChild(main);
+
+    this.querySelector('form')?.addEventListener('submit', this.handleAddFriend.bind(this));
+    this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this));
+    this.querySelectorAll('[data-remove]').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const id = Number((e.target as HTMLElement).getAttribute('data-remove'));
+        this.handleRemoveFriend(id);
+      });
+    });
   }
 }
+
+customElements.define('friend-view', FriendView);

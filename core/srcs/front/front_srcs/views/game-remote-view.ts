@@ -7,7 +7,7 @@ const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
 const PADDLE_MARGIN = 0.02;
 
-@customElement('game-view')
+@customElement('game-review-view')
 export class GameView extends LitElement {
   static styles = css`
     :host {
@@ -288,8 +288,7 @@ export class GameView extends LitElement {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
       this.drawCenteredText('Press SPACE to Play Again', 24, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
-      this.drawCenteredText('⏸️ Paused', 48, this.canvas.height / 2 - 30);
-      this.drawCenteredText('Press P to Resume', 24, this.canvas.height / 2 + 30);
+      this.drawCenteredText('Paused', 48, this.canvas.height / 2 - 30);
     } else if (!this.isGameStarted) {
       this.drawCenteredText(
         this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
