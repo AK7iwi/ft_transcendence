@@ -9,6 +9,7 @@ import './views/chat-view.ts';
 import './views/friend-view.ts';
 import './views/settings-view.ts';
 import './views/profile-view.ts';
+import './views/friend-profile-view.ts';
 import './views/login-view.ts';
 import './views/register-view.ts';
 
@@ -46,6 +47,8 @@ class PongApp extends HTMLElement {
     }
   }
 
+
+  
   setupRouter() {
     const outlet = document.querySelector('main');
     if (!outlet) {
@@ -55,17 +58,22 @@ class PongApp extends HTMLElement {
 
     const router = new Router(outlet);
     router.setRoutes([
-      { path: '/', component: 'home-view' },
-      { path: '/game', component: 'game-view' },
-      { path: '/tournament', component: 'tournament-view' },
-      { path: '/chat', component: 'chat-view' },
-      { path: '/friends', component: 'friend-view' },
-      { path: '/settings', component: 'settings-view' },
-      { path: '/profile', component: 'profile-view' },
-      { path: '/login', component: 'login-view' },
-      { path: '/register', component: 'register-view' },
-      { path: '(.*)', redirect: '/' }
-    ]);
+  { path: '/', component: 'home-view' },
+  { path: '/game', component: 'game-view' },
+  { path: '/register', component: 'register-view' },
+  { path: '/login', component: 'login-view' },
+
+  // Routes protégées (uniquement si connecté)
+  { path: '/tournament', component: 'tournament-view', action: requireAuth },
+  { path: '/chat', component: 'chat-view', action: requireAuth },
+  { path: '/friends', component: 'friend-view', action: requireAuth },
+  { path: '/settings', component: 'settings-view', action: requireAuth },
+  { path: '/profile', component: 'profile-view', action: requireAuth },
+  { path: '/friend-profile', component: 'friend-profile-view', action: requireAuth },
+
+  { path: '(.*)', redirect: '/' }
+]);
+
   }
 }
 
