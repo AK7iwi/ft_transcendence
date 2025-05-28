@@ -61,11 +61,9 @@ fastify.register(authRoutes, { prefix: '/auth' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
-
-
     // Validation error (schema)
-    if (error.validation) {
-        return reply.status(400).send({
+    if (error.statusCode) {
+        return reply.status(error.statusCode).send({
             success: false,
             message: error.message
         });
