@@ -3,17 +3,19 @@ import { customElement, state } from 'lit/decorators.js';
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
 
+const COUNTDOWN_START = 3;
+const CANVAS_ASPECT_RATIO = 16 / 9;
+const PADDLE_MARGIN = 0.02;
+
 @customElement('game-view')
 export class GameView extends LitElement {
   static styles = css`
     :host {
       display: block;
       width: 100%;
-      height: 100%;
+      min-height: calc(100vh - 80px);
+      position: relative;
       overflow: hidden;
-      position: fixed;
-      top: 0;
-      left: 0;
     }
     .game-container {
       display: flex;
@@ -26,7 +28,6 @@ export class GameView extends LitElement {
       padding: 0.5rem;
       overflow: hidden;
       position: relative;
-      margin-top: 2rem;
     }
     .responsive-canvas {
       width: 80%;
@@ -52,67 +53,41 @@ export class GameView extends LitElement {
       text-align: center;
       font-size: clamp(0.8rem, 1.5vw, 1rem);
     }
-
-    @media (max-width: 768px) {
-      .game-container {
-        padding: 0.25rem;
-        height: calc(100vh - 120px);
-        margin-top: 1rem;
-      }
-      .responsive-canvas {
-        width: 95%;
-        height: 50vh;
-      }
-      .score-display {
-        margin: 0.15rem 0;
-      }
-      .controls-info {
-        margin-top: 0.15rem;
-      }
-    }
   `;
 
-  @state()
-  private score = { player1: 0, player2: 0 };
+  @state() private score = { player1: 0, player2: 0 };
+  @state() private isGameStarted = false;
+  @state() private isGameOver = false;
+  @state() private winner = '';
+  @state() private countdown = 0;
+  @state() private isBallActive = false;
+  @state() private isInitialCountdown = false;
+  @state() private isPaused = false;
 
-  @state()
-  private isGameStarted = false;
-
-  @state()
-  private isGameOver = false;
-
-  @state()
-  private winner = '';
-
-  @state()
-  private countdown = 0;
-
-  @state()
-  private isBallActive = false;
-
-  @state()
-  private isInitialCountdown = false;
-
-  @state()
-  private isPaused = false;
-
+  private keysPressed: Record<string, boolean> = {};
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
-  private animationFrameId: number = 0;
-  private gameLoop: boolean = false;
-  private settingsService: SettingsService;
-  private settings: GameSettings;
+  private animationFrameId = 0;
+  private gameLoop = false;
+  private settingsService = SettingsService.getInstance();
+  private settings: GameSettings = this.settingsService.getSettings();
 
-  // Game objects
-  private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
-  private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5, dy: 0 };
+  private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
+  private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
 
   constructor() {
     super();
-    this.settingsService = SettingsService.getInstance();
-    this.settings = this.settingsService.getSettings();
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
+  }
+
+  private clampPaddlePosition(paddle: { y: number; height: number }) {
+    paddle.y = Math.max(0, Math.min(this.canvas!.height - paddle.height, paddle.y));
+  }
+
+  private drawCenteredText(text: string, size: number, y: number) {
+    this.ctx!.font = `bold ${size}px Arial`;
+    this.ctx!.fillText(text, this.canvas!.width / 2, y);
   }
 
   private updateGameSettings() {
@@ -125,38 +100,22 @@ export class GameView extends LitElement {
 
   private initGame() {
     if (!this.canvas || !this.ctx) return;
-
-    // Set canvas size based on container size
-    const container = this.canvas.parentElement;
-    if (container) {
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      
-      // Calculate aspect ratio (16:9)
-      const aspectRatio = 16 / 9;
-      let width = containerWidth;
-      let height = width / aspectRatio;
-
-      // If height is too large, scale based on height instead
-      if (height > containerHeight) {
-        height = containerHeight;
-        width = height * aspectRatio;
-      }
-
-      this.canvas.width = width;
-      this.canvas.height = height;
+    const container = this.canvas.parentElement!;
+    let width = container.clientWidth;
+    let height = width / CANVAS_ASPECT_RATIO;
+    if (height > container.clientHeight) {
+      height = container.clientHeight;
+      width = height * CANVAS_ASPECT_RATIO;
     }
+    this.canvas.width = width;
+    this.canvas.height = height;
 
-    // Initialize paddle positions
-    this.paddle1.x = this.canvas.width * 0.02; // 2% from left
+    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
     this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * 0.98 - this.paddle2.width; // 2% from right
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    // Initialize ball position
     this.resetBall();
-
-    // Don't start game loop automatically
     this.gameLoop = false;
     this.isGameStarted = false;
     this.isBallActive = false;
@@ -167,60 +126,41 @@ export class GameView extends LitElement {
     if (!this.canvas) return;
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
-    
-    // Random angle between -60 and 60 degrees (in radians)
     const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    
-    // Random direction (left or right)
     const direction = Math.random() > 0.5 ? 1 : -1;
-    
-    // Calculate dx and dy based on angle and constant speed
     this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
     this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    
     this.isBallActive = false;
     this.startBallCountdown();
   }
 
   private setupEventListeners() {
-    // Keyboard controls
-    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+    ['keydown', 'keyup'].forEach((event) =>
+      window.addEventListener(event, (e) => {
+        if (['w', 's', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
+        this.keysPressed[e.key] = event === 'keydown';
+        if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
+      })
+    );
   }
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
-      return;
-    }
-    if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
+    } else if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
       this.isInitialCountdown = true;
+      this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-      return;
-    }
-    if (e.key === ' ' && this.isGameOver) {
+    } else if (e.key === ' ' && this.isGameOver) {
       this.resetGame();
-      return;
     }
-    if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
-    
-    if (e.key.toLowerCase() === 'w') this.paddle1.dy = -this.paddle1.speed;
-    if (e.key.toLowerCase() === 's') this.paddle1.dy = this.paddle1.speed;
-    if (e.key === 'ArrowUp') this.paddle2.dy = -this.paddle2.speed;
-    if (e.key === 'ArrowDown') this.paddle2.dy = this.paddle2.speed;
-  }
-
-  private handleKeyUp(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's') this.paddle1.dy = 0;
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') this.paddle2.dy = 0;
   }
 
   private startInitialCountdown() {
-    this.countdown = 3;
-    const countdownInterval = setInterval(() => {
+    const interval = setInterval(() => {
       this.countdown--;
       if (this.countdown <= 0) {
-        clearInterval(countdownInterval);
+        clearInterval(interval);
         this.isGameStarted = true;
         this.gameLoop = true;
         this.isBallActive = true;
@@ -231,11 +171,11 @@ export class GameView extends LitElement {
   }
 
   private startBallCountdown() {
-    this.countdown = 3;
-    const countdownInterval = setInterval(() => {
+    this.countdown = COUNTDOWN_START;
+    const interval = setInterval(() => {
       this.countdown--;
       if (this.countdown <= 0) {
-        clearInterval(countdownInterval);
+        clearInterval(interval);
         this.isBallActive = true;
       }
     }, 1000);
@@ -250,57 +190,47 @@ export class GameView extends LitElement {
 
   private updateGame() {
     if (!this.canvas) return;
+    if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['ArrowUp']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['ArrowDown']) this.paddle2.y += this.paddle2.speed;
+    this.clampPaddlePosition(this.paddle1);
+    this.clampPaddlePosition(this.paddle2);
 
-    // Move paddles
-    this.paddle1.y += this.paddle1.dy;
-    this.paddle2.y += this.paddle2.dy;
-
-    // Keep paddles in bounds
-    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
-    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
-
-    // Move ball only if active and game is not over
     if (this.isBallActive && !this.isGameOver) {
       this.ball.x += this.ball.dx;
       this.ball.y += this.ball.dy;
 
-      // Ball collision with top and bottom
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
-        this.ball.dy *= -1;
+      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
+
+      const ballHitsPaddle = (p: any) =>
+        this.ball.y + this.ball.size / 2 >= p.y &&
+        this.ball.y - this.ball.size / 2 <= p.y + p.height;
+
+      if (
+        this.ball.dx < 0 &&
+        this.ball.x <= this.paddle1.x + this.paddle1.width &&
+        this.ball.x >= this.paddle1.x &&
+        ballHitsPaddle(this.paddle1)
+      ) {
+        this.ball.dx *= -1;
+      } else if (
+        this.ball.dx > 0 &&
+        this.ball.x + this.ball.size >= this.paddle2.x &&
+        this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+        ballHitsPaddle(this.paddle2)
+      ) {
+        this.ball.dx *= -1;
       }
 
-      // Ball collision with paddles
-      if (this.ball.dx < 0) { // Moving left
-        if (this.ball.x <= this.paddle1.x + this.paddle1.width && 
-            this.ball.x >= this.paddle1.x &&
-            this.ball.y + this.ball.size/2 >= this.paddle1.y &&
-            this.ball.y - this.ball.size/2 <= this.paddle1.y + this.paddle1.height) {
-          this.ball.dx *= -1;
-        }
-      } else { // Moving right
-        if (this.ball.x + this.ball.size >= this.paddle2.x &&
-            this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-            this.ball.y + this.ball.size/2 >= this.paddle2.y &&
-            this.ball.y - this.ball.size/2 <= this.paddle2.y + this.paddle2.height) {
-          this.ball.dx *= -1;
-        }
-      }
-
-      // Score points
       if (this.ball.x <= 0) {
         this.score.player2++;
-        if (this.score.player2 >= this.settings.endScore) {
-          this.endGame('Player 2');
-        } else {
-          this.resetBall();
-        }
+        this.score.player2 >= this.settings.endScore ? this.endGame('Player 2') : this.resetBall();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
-        if (this.score.player1 >= this.settings.endScore) {
-          this.endGame('Player 1');
-        } else {
-          this.resetBall();
-        }
+        this.score.player1 >= this.settings.endScore ? this.endGame('Player 1') : this.resetBall();
       }
     }
   }
@@ -309,13 +239,10 @@ export class GameView extends LitElement {
     this.isGameOver = true;
     this.winner = winner;
     this.gameLoop = false;
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
+    cancelAnimationFrame(this.animationFrameId);
   }
 
   private resetGame() {
-    // Reset all game states
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
     this.winner = '';
@@ -323,38 +250,23 @@ export class GameView extends LitElement {
     this.isBallActive = false;
     this.isInitialCountdown = false;
     this.gameLoop = false;
-    
-    // Reinitialize the game
     this.initGame();
-    
-    // Draw the initial state
     this.draw();
   }
 
   private togglePause() {
     this.isPaused = !this.isPaused;
-    if (this.isPaused) {
-      if (this.animationFrameId) {
-        cancelAnimationFrame(this.animationFrameId);
-      }
-    } else {
-      this.startGameLoop();
-    }
+    this.isPaused ? cancelAnimationFrame(this.animationFrameId) : this.startGameLoop();
+    this.draw();
   }
 
   private draw() {
     if (!this.ctx || !this.canvas) return;
-
-    // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Draw paddles
     this.ctx.fillStyle = this.settings.paddleColor;
     this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
     this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
-    
 
-    // Draw ball only if game is started and ball is active
     if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
       this.ctx.beginPath();
       this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
@@ -362,9 +274,7 @@ export class GameView extends LitElement {
       this.ctx.fill();
       this.ctx.closePath();
     }
-    
 
-    // Draw center line
     this.ctx.beginPath();
     this.ctx.setLineDash([5, 15]);
     this.ctx.moveTo(this.canvas.width / 2, 0);
@@ -373,72 +283,52 @@ export class GameView extends LitElement {
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
-    // Draw messages with improved visibility
-    this.ctx.textAlign = 'center'; 
+    this.ctx.textAlign = 'center';
     this.ctx.fillStyle = '#000';
 
     if (this.isGameOver) {
-      this.ctx.font = 'bold 48px Arial';
-      this.ctx.fillText(`${this.winner} Wins!`, this.canvas.width / 2, this.canvas.height / 2 - 30);
-      this.ctx.font = 'bold 24px Arial';
-      this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+      this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
+      this.drawCenteredText('Press SPACE to Play Again', 24, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
-      this.ctx.font = 'bold 48px Arial';
-      this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2 - 30);
-      this.ctx.font = 'bold 24px Arial';
-      this.ctx.fillText('Press P to Resume', this.canvas.width / 2, this.canvas.height / 2 + 30);
+      this.drawCenteredText('⏸️ Paused', 48, this.canvas.height / 2 - 30);
+      this.drawCenteredText('Press P to Resume', 24, this.canvas.height / 2 + 30);
     } else if (!this.isGameStarted) {
-      if (this.isInitialCountdown) {
-        this.ctx.font = 'bold 72px Arial';
-        this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
-      } else {
-        this.ctx.font = 'bold 48px Arial';
-        this.ctx.fillText('Press SPACE to Start', this.canvas.width / 2, this.canvas.height / 2);
-      }
+      this.drawCenteredText(
+        this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
+        this.isInitialCountdown ? 72 : 48,
+        this.canvas.height / 2
+      );
     } else if (!this.isBallActive && this.countdown > 0) {
-      this.ctx.font = 'bold 72px Arial';
-      this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
+      this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
 
-    // Request next frame if game is not started
-    if (!this.isGameStarted) {
-      requestAnimationFrame(() => this.draw());
-    }
+    if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
   }
 
-  // Add resize handler
   private handleResize = () => {
-    if (this.isGameStarted) return; // Don't resize during gameplay
+    if (this.isGameStarted) return;
     this.initGame();
     this.draw();
   };
 
   firstUpdated() {
     this.canvas = this.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
-    if (this.canvas) {
-      this.ctx = this.canvas.getContext('2d');
-      this.initGame();
-      this.setupEventListeners();
-      this.draw();
-      window.addEventListener('resize', this.handleResize);
-    }
+    this.ctx = this.canvas?.getContext('2d') || null;
+    this.initGame();
+    this.setupEventListeners();
+    this.draw();
+    window.addEventListener('resize', this.handleResize);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.gameLoop = false;
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
-    window.removeEventListener('settingsChanged', this.handleSettingsChanged);
+    cancelAnimationFrame(this.animationFrameId);
     window.removeEventListener('resize', this.handleResize);
   }
 
   private handleSettingsChanged = (e: Event) => {
-    const customEvent = e as CustomEvent<GameSettings>;
-    this.settings = customEvent.detail;
+    this.settings = (e as CustomEvent<GameSettings>).detail;
     this.updateGameSettings();
   };
 
@@ -446,8 +336,11 @@ export class GameView extends LitElement {
     return html`
       <div class="game-container">
         <div class="score-display">
-          ${this.score.player1} - ${this.score.player2}
-        </div>
+  <span>Player 1: ${this.score.player1}</span>
+  <span style="margin: 0 1rem;">|</span>
+  <span>Player 2: ${this.score.player2}</span>
+</div>
+
         <canvas class="responsive-canvas"></canvas>
         <div class="controls-info">
           Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause
@@ -455,4 +348,4 @@ export class GameView extends LitElement {
       </div>
     `;
   }
-} 
+}
