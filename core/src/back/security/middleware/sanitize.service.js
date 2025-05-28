@@ -45,7 +45,7 @@ class SanitizeService {
         }
     }
 
-    static securityMiddleware(request, reply) {
+    static async securityMiddleware(request, reply) {
         try {
             SanitizeService.xssProtection(request, reply);
             SanitizeService.sqlInjectionProtection(request, reply);

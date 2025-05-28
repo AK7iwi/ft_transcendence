@@ -1,5 +1,9 @@
 const authSchema  = require('../schemas/auth.schema');
 const SanitizeService = require('../../security/middleware/sanitize.service');
+// require('dotenv').config();
+
+// Add this near the top of the file after require('dotenv').config()
+console.log('Auth Service URL:', process.env.AUTH_SERVICE_URL);
 
 module.exports = async function (fastify, opts) {
     // Register route
@@ -7,6 +11,7 @@ module.exports = async function (fastify, opts) {
         schema: authSchema.register,
         preHandler: SanitizeService.securityMiddleware,
         handler: async (request, reply) => {
+            console.log('Handler started');
             try {
                 const response = await fastify.axios.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/register`,
