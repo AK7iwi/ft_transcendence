@@ -1,28 +1,24 @@
 const xss = require('xss');
-const sanitize  = require('validator');
 
 class SanitizeService {
     static xssProtection(request, reply) {
         const processObject = (obj) => {
             for (let key in obj) {
                 if (typeof obj[key] === 'string') {
-                    obj[key] = xss(sanitize(obj[key]).trim());
+                    obj[key] = xss(obj[key].trim());
                 } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                     processObject(obj[key]);
                 }
             }
         };
-
+        
         try {
             if (request.body) processObject(request.body);
             if (request.query) processObject(request.query);
             if (request.params) processObject(request.params);
         } catch (error) {
             console.error('[XSS PROTECTION]', error.message);
-            return reply.code(400).send({ 
-                error: 'Invalid input detected',
-                message: 'The request contains potentially harmful content'
-            });
+            throw error;
         }
     }
 
@@ -45,16 +41,23 @@ class SanitizeService {
             if (request.params) checkForSQLInjection(request.params);
         } catch (error) {
             console.error('[SQL INJECTION PROTECTION]', error.message);
-            return reply.code(400).send({ 
-                error: 'Invalid input detected',
-                message: 'The request contains potentially harmful content'
-            });
+            throw error;
         }
     }
 
     static securityMiddleware(request, reply) {
-        SanitizeService.xssProtection(request, reply);
-        SanitizeService.sqlInjectionProtection(request, reply);
+        try {
+            SanitizeService.xssProtection(request, reply);
+            SanitizeService.sqlInjectionProtection(request, reply);
+        } catch (error) {
+            console.error('[SECURITY] Error in middleware:', error);
+            return reply.code(400).send({ 
+                error: 'Invalid input detected',
+                message: error.message.includes('SQL') ? 
+                    'The request contains potentially harmful content SQL' :
+                    'The request contains potentially harmful content xss'
+            });
+        }
     }
 }
 

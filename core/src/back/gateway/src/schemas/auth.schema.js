@@ -13,7 +13,8 @@ const authSchema = {
                 password: {
                     type: 'string',
                     minLength: 8,
-                    maxLength: 100
+                    maxLength: 100,
+                    pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?]{8,}$'
                 }
             },
             additionalProperties: false
@@ -51,7 +52,8 @@ const authSchema = {
                 username: {
                     type: 'string',
                     minLength: 3,
-                    maxLength: 20
+                    maxLength: 20,
+                    pattern: '^[a-zA-Z0-9_-]+$'
                 },
                 password: {
                     type: 'string',
@@ -93,4 +95,4 @@ const authSchema = {
     }
 };
 
-module.exports = { authSchema }; 
+module.exports = authSchema ; 

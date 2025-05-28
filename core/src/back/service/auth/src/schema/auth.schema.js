@@ -7,16 +7,17 @@ const authSchema = {
                 username: {
                     type: 'string',
                     minLength: 3,
-                    maxLength: 30,
+                    maxLength: 20,
                     pattern: '^[a-zA-Z0-9_-]+$'
                 },
                 password: {
                     type: 'string',
                     minLength: 8,
                     maxLength: 100,
-                    pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$'
+                    pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?]{8,}$'
                 }
-            }
+            },
+            additionalProperties: false
         }
     },
     login: {
@@ -27,7 +28,7 @@ const authSchema = {
                 username: {
                     type: 'string',
                     minLength: 3,
-                    maxLength: 30,
+                    maxLength: 20,
                     pattern: '^[a-zA-Z0-9_-]+$'
                 },
                 password: {
@@ -35,7 +36,8 @@ const authSchema = {
                     minLength: 8,
                     maxLength: 100
                 }
-            }
+            },
+            additionalProperties: false
         }
     }
 };
