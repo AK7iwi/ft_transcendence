@@ -4,6 +4,7 @@ import './styles.css';
 
 import './views/home-view.ts';
 import './views/game-view.ts';
+import './views/gamelog-view.ts';
 import './views/game-remote-view.ts';
 import './views/tournament-view.ts';
 import './views/chat-view.ts';
@@ -66,33 +67,36 @@ updateLinks() {
   // Ces liens doivent toujours être visibles
   const staticLinks = [
     { href: '/', icon: 'fa-solid fa-house', label: 'Home' },
-    { href: '/game', icon: 'fa-solid fa-gamepad', label: 'Game' },
+    // "Pong" seulement si pas connecté
+    ...(isAuthenticated ? [] : [{ href: '/game', icon: 'fa-solid fa-gamepad', label: 'Pong' }])
   ];
 
-  // Liens visibles uniquement si l’utilisateur est connecté
+  // Liens visibles uniquement si connecté
   const authLinks = [
+    { href: '/gamelog', icon: 'fa-solid fa-gamepad', label: 'Game' },
     { href: '/tournament', icon: 'fa-solid fa-trophy', label: 'Tournament' },
     { href: '/chat', icon: 'fa-solid fa-comments', label: 'Chat' },
     { href: '/friends', icon: 'fa-solid fa-user-group', label: 'Friends' },
     { href: '/settings', icon: 'fa-solid fa-gear', label: 'Settings' },
-    { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' },
+    { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' }
   ];
 
   const createLink = ({ href, icon, label }: any) => {
     const link = document.createElement('a');
     link.href = href;
-    link.className = 'relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-indigo-500 after:transition-all after:duration-300';
+    link.className =
+      'relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-indigo-500 after:transition-all after:duration-300';
     link.innerHTML = `<i class="${icon}"></i> ${label}`;
     return link;
   };
 
-  // Ajout des liens publics
   staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
 
-  // Ajout des liens dynamiques selon l'état
-const dynamicLinks = isAuthenticated ? authLinks : [];
-  dynamicLinks.forEach(link => navLinks.appendChild(createLink(link)));
+  if (isAuthenticated) {
+    authLinks.forEach(link => navLinks.appendChild(createLink(link)));
+  }
 }
+
 
 
 
@@ -108,6 +112,7 @@ const dynamicLinks = isAuthenticated ? authLinks : [];
     router.setRoutes([
       { path: '/', component: 'home-view' },
       { path: '/game', component: 'game-view' },
+      { path: '/gamelog', component: 'gamelog-view', action: requireAuth },
       { path: '/game-remote', component: 'game-remote-view' },
       { path: '/register', component: 'register-view' },
       { path: '/login', component: 'login-view' },

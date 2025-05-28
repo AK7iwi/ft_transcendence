@@ -98,6 +98,32 @@ db.exec(`CREATE TABLE IF NOT EXISTS blocks (
     FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
 );`);
+db.exec(`CREATE TABLE IF NOT EXISTS game_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  winner_id INTEGER NOT NULL,
+  loser_id INTEGER NOT NULL,
+  played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (loser_id) REFERENCES users(id) ON DELETE CASCADE
+);`);
+
+// Ajout sécurisé des colonnes "wins" et "losses"
+try {
+    db.prepare(`ALTER TABLE users ADD COLUMN wins INTEGER DEFAULT 0`).run();
+} catch (err) {
+    if (!err.message.includes('duplicate column name')) {
+        console.error('Erreur en ajoutant la colonne wins :', err.message);
+    }
+}
+
+try {
+    db.prepare(`ALTER TABLE users ADD COLUMN losses INTEGER DEFAULT 0`).run();
+} catch (err) {
+    if (!err.message.includes('duplicate column name')) {
+        console.error('Erreur en ajoutant la colonne losses :', err.message);
+    }
+}
+
 
 
         // Ajout sécurisé de la colonne "status"
@@ -117,6 +143,26 @@ db.exec(`CREATE TABLE IF NOT EXISTS blocks (
         process.exit(1);
     }
 }
+
+function updateAllWinLossCounts() {
+  // Réinitialise les compteurs
+  db.prepare(`UPDATE users SET wins = 0, losses = 0`).run();
+
+  // Compte les victoires
+  db.prepare(`
+    UPDATE users SET wins = (
+      SELECT COUNT(*) FROM game_results WHERE winner_id = users.id
+    )
+  `).run();
+
+  // Compte les défaites
+  db.prepare(`
+    UPDATE users SET losses = (
+      SELECT COUNT(*) FROM game_results WHERE loser_id = users.id
+    )
+  `).run();
+}
+
 
 // Custom DB functions
 async function getUserByUsername(username) {
@@ -166,12 +212,23 @@ async function enableTwoFactor(username) {
   stmt.run(username);
 }
 
+function recordGameResult(winnerId, loserId) {
+  const stmt = db.prepare(`
+    INSERT INTO game_results (winner_id, loser_id)
+    VALUES (?, ?)
+  `);
+  stmt.run(winnerId, loserId);
+}
+
+
 
 module.exports.updateUser = updateUser;
 
 
 // Initialize DB
 initializeDatabase();
+updateAllWinLossCounts(); // <-- ajoute cette ligne
+
 
 // Export custom API
 module.exports = {
@@ -182,5 +239,6 @@ module.exports = {
     updateUser,
     updatePassword,
     storeTwoFactorSecret,
-    enableTwoFactor
+    enableTwoFactor,
+    recordGameResult
 };

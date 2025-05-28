@@ -50,6 +50,10 @@ fastify.decorate('authenticate', authenticate);
 // Routes
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
+fastify.register(require('./routes/gamelog.routes'), { prefix: '/game' });
+
+
+
 
 fastify.get('/avatars/:filename', async (req, reply) => {
   const file = req.params.filename;

@@ -15,22 +15,28 @@ async function authRoutes(fastify, options) {
       try {
         const id = req.user.id;
         const user = dbApi.db.prepare(
-          'SELECT id, username, avatar, two_factor_enabled FROM users WHERE id = ?'
-        ).get(id);
+  'SELECT id, username, avatar, two_factor_enabled, wins, losses FROM users WHERE id = ?'
+).get(id);
+
 
         if (!user) {
           return reply.status(404).send({ error: 'Utilisateur non trouvé' });
         }
 
         return {
-          id: user.id,
-          username: user.username,
-          avatar: user.avatar || '/avatars/default.png',
-          twoFactorEnabled: !!user.two_factor_enabled
-        };
+  id: user.id,
+  username: user.username,
+  avatar: user.avatar || '/avatars/default.png',
+  twoFactorEnabled: !!user.two_factor_enabled,
+  wins: user.wins,
+  losses: user.losses
+};
+
       } catch (err) {
-        return reply.status(500).send({ error: 'Internal Server Error' });
-      }
+  console.error('🔥 Erreur dans /auth/me :', err);
+  return reply.status(500).send({ error: 'Internal Server Error' });
+}
+
     }
   });
 
