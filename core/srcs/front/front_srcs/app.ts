@@ -9,7 +9,6 @@ import './views/chat-view.ts';
 import './views/friend-view.ts';
 import './views/settings-view.ts';
 import './views/profile-view.ts';
-import './views/friend-profile-view.ts';
 import './views/login-view.ts';
 import './views/register-view.ts';
 
@@ -19,6 +18,7 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
 export default wsService;
 
+// Fonction pour protéger les routes
 function requireAuth(context: any, commands: any) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -27,14 +27,13 @@ function requireAuth(context: any, commands: any) {
   return undefined;
 }
 
-
 class PongApp extends HTMLElement {
   constructor() {
     super();
   }
 
   connectedCallback() {
-    this.innerHTML = `<p hidden>pong-app loaded</p>`; // placeholder pour éviter de casser l’arbre DOM
+    this.innerHTML = `<p hidden>pong-app loaded</p>`;
     this.updateLinks();
     this.setupRouter();
   }
@@ -65,7 +64,6 @@ updateLinks() {
     { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' },
   ];
 
-
   const createLink = ({ href, icon, label }: any) => {
     const link = document.createElement('a');
     link.href = href;
@@ -78,13 +76,13 @@ updateLinks() {
   staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
 
   // Ajout des liens dynamiques selon l'état
-  const dynamicLinks = isAuthenticated ? authLinks : [];
-
+const dynamicLinks = isAuthenticated ? authLinks : [];
   dynamicLinks.forEach(link => navLinks.appendChild(createLink(link)));
 }
 
 
-  
+
+
   setupRouter() {
     const outlet = document.querySelector('main');
     if (!outlet) {
@@ -94,22 +92,20 @@ updateLinks() {
 
     const router = new Router(outlet);
     router.setRoutes([
-  { path: '/', component: 'home-view' },
-  { path: '/game', component: 'game-view' },
-  { path: '/register', component: 'register-view' },
-  { path: '/login', component: 'login-view' },
+      { path: '/', component: 'home-view' },
+      { path: '/game', component: 'game-view' },
+      { path: '/register', component: 'register-view' },
+      { path: '/login', component: 'login-view' },
 
-  // Routes protégées (uniquement si connecté)
-  { path: '/tournament', component: 'tournament-view', action: requireAuth },
-  { path: '/chat', component: 'chat-view', action: requireAuth },
-  { path: '/friends', component: 'friend-view', action: requireAuth },
-  { path: '/settings', component: 'settings-view', action: requireAuth },
-  { path: '/profile', component: 'profile-view', action: requireAuth },
-  { path: '/friend-profile', component: 'friend-profile-view', action: requireAuth },
+      // Routes protégées
+      { path: '/tournament', component: 'tournament-view', action: requireAuth },
+      { path: '/chat', component: 'chat-view', action: requireAuth },
+      { path: '/friends', component: 'friend-view', action: requireAuth },
+      { path: '/settings', component: 'settings-view', action: requireAuth },
+      { path: '/profile', component: 'profile-view', action: requireAuth },
 
-  { path: '(.*)', redirect: '/' }
-]);
-
+      { path: '(.*)', redirect: '/' }
+    ]);
   }
 }
 
