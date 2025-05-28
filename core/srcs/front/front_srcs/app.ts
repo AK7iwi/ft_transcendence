@@ -19,6 +19,15 @@ const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
 export default wsService;
 
+function requireAuth(context: any, commands: any) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return commands.redirect('/login');
+  }
+  return undefined;
+}
+
+
 class PongApp extends HTMLElement {
   constructor() {
     super();
@@ -30,22 +39,49 @@ class PongApp extends HTMLElement {
     this.setupRouter();
   }
 
-  updateLinks() {
-    const isAuthenticated = !!localStorage.getItem('token');
-    const navLinks = document.querySelector('#nav-links'); // ⚠️ important : doit être en dehors de <pong-app>
+updateLinks() {
+  const isAuthenticated = !!localStorage.getItem('token');
+  const navLinks = document.querySelector('#nav-links');
 
-    if (navLinks) {
-      navLinks.innerHTML = `
-        ${!isAuthenticated ? `<a href="/register" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Register</a>` : ''}
-        <a href="/game" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Game</a>
-        <a href="/tournament" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Tournament</a>
-        <a href="/chat" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Chat</a>
-        <a href="/friends" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Friends</a>
-        <a href="/settings" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Settings</a>
-        <a href="/profile" class="text-white hover:text-purple-400 font-medium text-lg px-3 py-1 rounded-md transition">Profile</a>
-      `;
-    }
+  if (!navLinks) {
+    console.warn('❌ nav-links not found');
+    return;
   }
+
+  navLinks.innerHTML = ''; // Nettoyer l'existant
+
+  // Ces liens doivent toujours être visibles
+  const staticLinks = [
+    { href: '/', icon: 'fa-solid fa-house', label: 'Home' },
+    { href: '/game', icon: 'fa-solid fa-gamepad', label: 'Game' },
+  ];
+
+  // Liens visibles uniquement si l’utilisateur est connecté
+  const authLinks = [
+    { href: '/tournament', icon: 'fa-solid fa-trophy', label: 'Tournament' },
+    { href: '/chat', icon: 'fa-solid fa-comments', label: 'Chat' },
+    { href: '/friends', icon: 'fa-solid fa-user-group', label: 'Friends' },
+    { href: '/settings', icon: 'fa-solid fa-gear', label: 'Settings' },
+    { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' },
+  ];
+
+
+  const createLink = ({ href, icon, label }: any) => {
+    const link = document.createElement('a');
+    link.href = href;
+    link.className = 'relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-indigo-500 after:transition-all after:duration-300';
+    link.innerHTML = `<i class="${icon}"></i> ${label}`;
+    return link;
+  };
+
+  // Ajout des liens publics
+  staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
+
+  // Ajout des liens dynamiques selon l'état
+  const dynamicLinks = isAuthenticated ? authLinks : [];
+
+  dynamicLinks.forEach(link => navLinks.appendChild(createLink(link)));
+}
 
 
   
