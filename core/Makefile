@@ -16,7 +16,7 @@ clean:
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
 fclean:
 	docker compose -f ./srcs/docker-compose.yml down -v
-	-docker volume rm sqlite_data || true
+	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
 	-docker system prune -af --volumes
 	@clear
 

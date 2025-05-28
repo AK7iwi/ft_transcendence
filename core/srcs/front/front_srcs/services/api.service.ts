@@ -1,6 +1,25 @@
 import { API_BASE_URL } from '../config';
 
 export default class ApiService {
+
+
+static async blockUser(blockedId: number) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE_URL}/auth/block`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ blockedId })
+  });
+
+  if (!res.ok) throw new Error('Failed to block user');
+  return res.json();
+}
+
+
+
     private static readonly MAX_RETRIES = 3;
     private static readonly RETRY_DELAY_MS = 1000;
     private static readonly TIMEOUT_MS = 5000;
@@ -326,6 +345,22 @@ static async removeFriend(friendId: number) {
   return json;
 }
 
+static async getUserById(id: string) {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${this.baseUrl}/users/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const json = await this.safeParseJSON(response);
+
+  if (!response.ok) {
+    throw new Error(json?.error || 'Failed to fetch user');
+  }
+
+  return json;
+}
 
 
 

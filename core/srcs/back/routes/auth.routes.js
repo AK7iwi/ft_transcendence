@@ -346,10 +346,28 @@ console.log('📥 Headers reçus:', request.headers);
   }
 });
 
+// Route pour bloquer un utilisateur
+fastify.post('/block', {
+  preHandler: [fastify.authenticate],
+  handler: async (req, reply) => {
+    const blockerId = req.user.id;
+    const { blockedId } = req.body;
+console.log(`[BLOCK] ${blockerId} → ${blockedId}`);
 
+    if (!blockedId) {
+      return reply.code(400).send({ error: 'blockedId is required' });
+    }
 
-
-
+    try {
+      const stmt = dbApi.db.prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)');
+      stmt.run(blockerId, blockedId);
+      return reply.code(201).send({ message: 'User blocked successfully' });
+    } catch (err) {
+      console.error('Error blocking user:', err.message);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  }
+});
 
 fastify.delete('/friends/remove', {
   preHandler: [authenticate],
