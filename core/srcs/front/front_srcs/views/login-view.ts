@@ -103,8 +103,11 @@ class LoginView extends HTMLElement {
     const main = document.createElement('main');
     main.className = 'flex justify-center items-center min-h-[60vh] p-6';
 
+    const wrapper = document.createElement('div');
+    wrapper.className = 'p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md';
+
     const form = document.createElement('form');
-    form.className = 'bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md';
+    form.className = 'bg-gray-800 rounded-2xl p-8 w-full';
     form.onsubmit = this.show2FAForm ? this.handle2FASubmit.bind(this) : this.handleSignIn.bind(this);
 
     if (this.show2FAForm) {
@@ -116,19 +119,18 @@ class LoginView extends HTMLElement {
       `;
     } else {
       form.innerHTML = `
-        <h2 class="text-4xl font-semibold mb-6 text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Sign In</h2>
+        <h2 class="text-4xl font-semibold mb-6 text-center">Sign In</h2>
         <div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-			<input type="text" name="username"
-				class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
-				placeholder="Username" required value="${this.signInForm.username}" />
-		</div>
+          <input type="text" name="username"
+            class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+            placeholder="Username" required value="${this.signInForm.username}" />
+        </div>
         <div class="p-[2px] mb-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-			<input type="password" name="password"
-				class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
-				placeholder="Password" required value="${this.signInForm.password}" />
-		</div>
-
-        <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white font-semibold py-2 px-4 rounded-full transition" ${this.isLoading ? 'disabled' : ''}>
+          <input type="password" name="password"
+            class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+            placeholder="Password" required value="${this.signInForm.password}" />
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white rounded-full transition" ${this.isLoading ? 'disabled' : ''}>
           ${this.isLoading ? 'Signing in...' : 'Log In'}
         </button>
         ${this.signInError ? `<div class="text-red-500 mt-4 text-center">${this.signInError}</div>` : ''}
@@ -139,7 +141,8 @@ class LoginView extends HTMLElement {
       input.addEventListener('input', this.handleInput.bind(this))
     );
 
-    main.appendChild(form);
+    wrapper.appendChild(form);
+    main.appendChild(wrapper);
     this.appendChild(main);
   }
 }

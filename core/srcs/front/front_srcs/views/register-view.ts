@@ -66,37 +66,39 @@ class RegisterView extends HTMLElement {
     const main = document.createElement('main');
     main.className = 'flex justify-center items-center min-h-[60vh] p-6';
 
+    const wrapper = document.createElement('div');
+    wrapper.className = 'p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg w-full max-w-md';
+
     const form = document.createElement('form');
-    form.className = 'bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md';
+    form.className = 'bg-gray-800 rounded-2xl p-8 w-full';
     form.onsubmit = this.handleSignUp.bind(this);
 
     form.innerHTML = `
-      <h2 class="text-4xl font-semibold mb-6 text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Sign Up</h2>
+      <h2 class="text-4xl font-semibold mb-6 text-center">Sign Up</h2>
 
       <!-- Username -->
-		<div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-		<input type="text" name="username" placeholder="Username"
-			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
-			required value="${this.signUpForm.username}" />
-		</div>
+      <div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <input type="text" name="username" placeholder="Username"
+          class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+          required value="${this.signUpForm.username}" />
+      </div>
 
-		<!-- Password -->
-		<div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-		<input type="password" name="password" placeholder="Password"
-			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
-			required value="${this.signUpForm.password}" />
-		</div>
+      <!-- Password -->
+      <div class="p-[2px] mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <input type="password" name="password" placeholder="Password"
+          class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+          required value="${this.signUpForm.password}" />
+      </div>
 
-		<!-- Confirm Password -->
-		<div class="p-[2px] mb-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-		<input type="password" name="confirmPassword" placeholder="Confirm Password"
-			class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
-			required value="${this.signUpForm.confirmPassword}" />
-		</div>
-
+      <!-- Confirm Password -->
+      <div class="p-[2px] mb-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <input type="password" name="confirmPassword" placeholder="Confirm Password"
+          class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+          required value="${this.signUpForm.confirmPassword}" />
+      </div>
 
       <button type="submit"
-        class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white font-semibold py-2 px-4 rounded-full transition"
+        class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white rounded-full transition"
         ${this.isLoading ? 'disabled' : ''}>
         ${this.isLoading ? 'Registering...' : 'Register'}
       </button>
@@ -109,7 +111,8 @@ class RegisterView extends HTMLElement {
       input.addEventListener('input', this.handleInput.bind(this))
     );
 
-    main.appendChild(form);
+    wrapper.appendChild(form);
+    main.appendChild(wrapper);
     this.appendChild(main);
   }
 }
