@@ -1,13 +1,12 @@
 const db = require('./connection');
 
-class UserModel {
+class DbModel {
     static async createTable() {
         const stmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                avatar TEXT,
                 two_factor_secret TEXT,
                 two_factor_enabled BOOLEAN DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -33,6 +32,26 @@ class UserModel {
         `);
         return stmt.get(username);
     }
+
+    static async updateUsername(currentUsername, newUsername) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET username = ?,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE username = ?
+        `);
+        return stmt.run(newUsername, currentUsername);
+    }
+
+    static async updatePassword(username, hashedPassword) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET password = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE username = ?
+        `);
+        return stmt.run(hashedPassword, username);
+    }
 }
 
-module.exports = UserModel; 
+module.exports = DbModel; 

@@ -1,15 +1,14 @@
 const PasswordService = require('../../security/password/password.service');
-const UserModel = require('../database/user.model');
-const axios = require('axios');
+const DbModel = require('../database/db.model');
 
 class AuthService {
     static async registerUser(username, password) {
         try {
             const hashedPassword = await PasswordService.hashPassword(password);
-            const result = await UserModel.insertUser(username, hashedPassword);
+            const result = await DbModel.insertUser(username, hashedPassword);
             
             // Notify user service to create profile
-            await axios.post(`${process.env.USER_SERVICE_URL}/user/profile`, {
+            await app.axios.post(`${process.env.USER_SERVICE_URL}/internal/profile`, {
                 userId: result.lastInsertRowid,
                 username: username
             });
@@ -28,7 +27,7 @@ class AuthService {
 
     static async loginUser(username, password) {
         try {
-            const user = await UserModel.findUserByUsername(username);
+            const user = await DbModel.findUserByUsername(username);
             if (!user) {
                 throw new Error('User not found');
             }

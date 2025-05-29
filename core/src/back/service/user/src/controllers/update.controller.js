@@ -1,7 +1,7 @@
 const UpdateService = require('../services/update.service');
 
 class UpdateController {
-    async updateUsername(request, reply) {
+    static async updateUsername(request, reply) {
         try {
             const { username, newUsername } = request.body;
             const updatedUser = await UpdateService.updateUsername(username, newUsername);
@@ -10,11 +10,12 @@ class UpdateController {
               success: true,
               message: 'User updated successfully',
               data: {
-                user: updatedUser
+                id: updatedUser.id,
+                username: updatedUser.username
               }
             });
           } catch (error) {
-            fastify.log.error('[UPDATE ERROR]', error);
+            request.log.error('[UPDATE ERROR]', error);
             return reply.code(400).send({
               success: false,
               message: error.message
@@ -22,7 +23,7 @@ class UpdateController {
           }
     }
 
-    async updatePassword(request, reply) {
+    static async updatePassword(request, reply) {
         try {
             const { username, newPassword } = request.body;
             const updatedUser = await UpdateService.updatePassword(username, newPassword);
@@ -36,7 +37,7 @@ class UpdateController {
               }
             });
           } catch (error) {
-            fastify.log.error('[UPDATE PASSWORD ERROR]', error);
+            request.log.error('[UPDATE PASSWORD ERROR]', error);
             return reply.code(400).send({
               success: false,
               message: error.message

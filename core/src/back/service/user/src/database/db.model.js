@@ -1,6 +1,6 @@
 const db = require('./connection');
 
-class UserModel {
+class DbModel {
     static async createTable() {
         const stmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS user_profiles (
@@ -36,4 +36,4 @@ class UserModel {
     }
 }
 
-module.exports = UserModel; 
+module.exports = DbModel; 
