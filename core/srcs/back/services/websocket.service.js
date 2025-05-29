@@ -19,10 +19,7 @@ class WebSocketService {
   }
 
   setupWebSocket() {
-    console.log('[WS SERVER] WebSocket server initialized with path /ws');
-    this.sendToGameClient('hello');
     this.wss.on('connection', (ws) => {
-      console.log('here? \'connection\'');
       const clientId = this.generateClientId();
       this.clients.set(clientId, ws);
 
@@ -35,9 +32,7 @@ class WebSocketService {
       }));
 
       ws.on('message', (rawMessage) => {
-        console.log('here? \'message\'');
         try {
-          console.log('[SERVER] Received raw message string:', rawMessage);
           const data = JSON.parse(rawMessage);
           this.handleMessage(clientId, ws, data);
         } catch (err) {
@@ -47,17 +42,14 @@ class WebSocketService {
       });
 
       ws.on('close', () => {
-        console.log(`on close : hostId: ${this.roles.hostId} | guestId: ${this.roles.guestId} and ws.userId: ${ws.userId} `);
-        // if (ws.userId)
-        //   this.handleRemoteDc(ws.userId);
+        console.log(`🛑 Player ${ws.userId} Disconnected. Id : ${clientId}`);
+        this.broadcast({ type: 'game', data: { action: 'playerDC' } });
         this.handleDisconnect(clientId, ws); // N
       });
 
       ws.on('pong', () => {
-        console.log('here? \'pong\'');
         ws.isAlive = true;
       });
-      console.log('here?');
       ws.isAlive = true;
     });
 
@@ -82,22 +74,17 @@ class WebSocketService {
 
   handlePlayerJoin(userId) {
     let role;
-    console.log(`in handleplayerJoin: userId = ${userId}`);
     if (this.roles.hostId === userId || !this.roles.hostId) {
       this.roles.hostId = userId;
       role = 'host';
-      console.log('------------- HOST');
     } else if (this.roles.guestId === userId || !this.roles.guestId) {
       this.roles.guestId = userId;
       role = 'guest';
-      console.log('------------- GUEST');
     } else {
       role = 'noob';
       console.warn(`🔴 Room full. Host: ${this.roles.hostId} | Guest: ${this.roles.guestId}`);
-      console.log('------------- NOOB');
     }
 
-    console.log('------------- SENDTOCLIENT');
     this.sendToGameClient(userId, {
       type: 'game',
       data: { action: 'playerJoined', role }
@@ -106,8 +93,6 @@ class WebSocketService {
 
 
   handleMessage(clientId, ws, data) {
-    console.log(`[SERVER] Parsed message:`, data);
-    console.log('[WS SERVER] Message brut reçu :', data);
     switch (data.type) {
       case 'auth':
         this.handleAuth(clientId, ws, data.payload.token);
@@ -117,7 +102,6 @@ class WebSocketService {
         break;
       case 'game':
         this.handleGameMessage(clientId, data.payload);
-        console.log('sending to handle game message');
         break;
       case 'tournament':
         this.handleTournamentMessage(clientId, data.payload);
@@ -149,7 +133,6 @@ class WebSocketService {
 
 
 handleDirectMessage(clientId, payload) {
-  console.log('[WS SERVER] handleDirectMessage payload:', payload);
 
   const { toUserId, text } = payload || {};
   const fromWs = this.clients.get(clientId);
@@ -215,7 +198,6 @@ handleAuth(clientId, ws, token) {
     // this.broadcast({ type: 'game', data: { action : 'playerJoined', by: `${decoded.id}`}});
     if (decoded.id < this.presence.length) {
       this.presence[decoded.id] = 1;
-      console.log(`✅ User ${decoded.id} is online`);
     }
     this.sendToClient(clientId, {
       type: 'auth-success',
@@ -230,27 +212,12 @@ handleAuth(clientId, ws, token) {
   } catch (err) {
     console.error('❌ Invalid token:', err.message);
     this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
-    ws.close();
+    // ws.close(); // ???
   }
 }
-  // handleRemoteDc(userId)
-  // {
-  //   if (this.roles.hostId === userId) {
-  //     this.roles.hostId = null;
-  //     console.log(`hostId: ${this.roles.hostId} and ${userId}`);
-  //     return;
-  //   }
-  //   else if (this.roles.guestId === userId) {
-  //     this.roles.guestId = null;
-  //     console.log(`Guest: ${this.roles.guestId} and ${userId}`);
-  //     return;
-  //   }
-  // }
 
   handleDisconnect(clientId, ws) {
     this.presence[ws.userId] = 0;
-    console.log(`❌ User ${ws.userId} is offline`);
-    console.log(`❌ Client disconnected: ${clientId}`);
     this.clients.delete(clientId);
     if (ws.userId && this.onlineUsers.has(ws.userId)) {
       this.onlineUsers.delete(ws.userId);
@@ -284,7 +251,6 @@ handleAuth(clientId, ws, token) {
   }
 
   handleGameMessage(clientId, payload) {
-    console.log('going through handle game message');
     const { action, userId, ...rest } = payload || {};
     switch (action) {
       case 'pause':
@@ -297,7 +263,6 @@ handleAuth(clientId, ws, token) {
         const wsUserId = this.clients.get(clientId)?.userId;
         if (wsUserId) {
           this.handlePlayerJoin(wsUserId);
-          console.log('sending to handlePlayerJoin for userId:', wsUserId);
         } else {
           console.warn(`⚠️ Cannot join: missing userId for client ${clientId}`);
         }
@@ -411,6 +376,7 @@ sendToGameClient(userId, message) {
     ws.send(JSON.stringify(message));
   }
 }
+
   getOnlineUserIds() {
     return Array.from(this.onlineUsers.keys());
   }

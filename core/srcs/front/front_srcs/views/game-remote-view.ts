@@ -96,7 +96,9 @@ export class GameRemoteView extends LitElement {
   @state()
   private isPaused = false;
   
-  
+  @state()
+  private isDDOS = false;
+
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private animationFrameId: number = 0;
@@ -158,7 +160,6 @@ private initWebSocket() {
 
   private sendMessage(action: string, payload: Record<string, any> = {}) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      console.log('[CLIENT] Sending:', { type: 'game', payload: { action, ...payload } });
       this.socket.send(JSON.stringify({
         type: 'game',
         payload: { action, ...payload },
@@ -172,7 +173,6 @@ private initWebSocket() {
     if (message.type === 'connection')
       this.playerId = message.clientId;
     if (message.type === 'auth-success') {
-      console.log(`[CLIENT] Auth success, sending join with ${message.userId}`);
       const userId = message.userId;
       this.sendMessage('join', { userId });
     }
@@ -182,6 +182,14 @@ private initWebSocket() {
         case 'playerJoined':
           this.playerRole = data.role;
           console.log(`🎮 You are the ${this.playerRole}`);
+          break;
+        case 'playerDC':
+          this.isGameOver = true;
+          this.gameLoop = false;
+          this.isDDOS = true;
+          if (this.animationFrameId)
+            cancelAnimationFrame(this.animationFrameId);
+          this.draw();
           break;
         case 'waiting':
           console.log(data.message);
@@ -238,7 +246,6 @@ private initWebSocket() {
           }
           break;
         case 'movePaddle':
-          console.log('move paddle');
           if (data.clientId === this.playerId) return;
           if (this.playerRole === 'host')
             this.targetPaddle2Y = data.y;
@@ -327,6 +334,11 @@ private initWebSocket() {
     // pause
     if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
       this.sendMessage('pause');
+      return;
+    }
+    if (e.key === ' ' && this.isGameOver && this.isDDOS) {
+      this.isDDOS = false;
+      this.sendMessage('resetGame');
       return;
     }
     // start
@@ -513,7 +525,6 @@ private updateGame() {
 
   private resetGame() {
     // Reset all game states
-    console.log("trying to reset game ...");
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
     this.winner = '';
@@ -577,11 +588,21 @@ private updateGame() {
     this.ctx.fillStyle = '#000';
 
     if (this.isGameOver) {
-      this.ctx.font = 'bold 48px Arial';
-      const message = `${this.winner} Wins!`;
-      this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 - 30);
-      this.ctx.font = 'bold 24px Arial';
-      this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+      if (this.isDDOS) {
+        this.ctx.font = 'bold 48px Arial';
+        const message = 'Opponent Disconnected!';
+        this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 - 30);
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.fillText('Match Terminated - Press Space', this.canvas.width / 2, this.canvas.height / 2 + 30);
+        return;
+      }
+      else {
+        this.ctx.font = 'bold 48px Arial';
+        const message = `${this.winner} Wins!`;
+        this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 - 30);
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+      }
     } else if (this.isPaused) {
       this.ctx.font = 'bold 48px Arial';
       this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2 - 30);
