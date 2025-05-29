@@ -69,9 +69,10 @@ fastify.setErrorHandler((error, request, reply) => {
         });
     }
 
-    fastify.log.error(error);
-    reply.status(error.statusCode || 500).send({
-        error: error.message || 'Internal Server Error'
+    // Handle other errors
+    return reply.status(500).send({
+        success: false,
+        message: 'Internal Server Error'
     });
 });
 

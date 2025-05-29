@@ -13,7 +13,10 @@ class AuthService {
             ) {
                 throw new Error('Username already exists');
             }
-            throw error;
+            if (error.code === 'SQLITE_ERROR') {
+                throw new Error('Database error occurred');
+            }
+            throw new Error('Registration failed');
         }
     }
 
@@ -35,7 +38,10 @@ class AuthService {
                 twoFactorEnabled: user.two_factor_enabled
             };
         } catch (error) {
-            throw error;
+            if (error.message === 'User not found' || error.message === 'Invalid password') {
+                throw error;
+            }
+            throw new Error('Login failed');
         }
     }
 }

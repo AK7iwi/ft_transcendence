@@ -52,7 +52,7 @@ class SanitizeService {
         } catch (error) {
             console.error('[SECURITY] Error in middleware:', error);
             return reply.code(400).send({ 
-                error: 'Invalid input detected',
+                success: false,
                 message: error.message.includes('SQL') ? 
                     'The request contains potentially harmful content SQL' :
                     'The request contains potentially harmful content xss'

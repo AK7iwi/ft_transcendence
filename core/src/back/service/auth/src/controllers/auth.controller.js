@@ -57,5 +57,4 @@ class AuthController {
     }
 }
 
-// Export an instance of the controller instead of the class
 module.exports = new AuthController();

@@ -15,7 +15,10 @@ class AuthMiddleware {
             // Add user info to request
             request.user = decoded;
         } catch (error) {
-            reply.code(401).send({ error: 'Unauthorized' });
+            reply.code(401).send({ 
+                success: false,
+                message: 'Unauthorized'
+            });
         }
     }
 }

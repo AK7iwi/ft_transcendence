@@ -36,9 +36,10 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response.data);
             } catch (error) {
                 request.log.error(error);
-                return reply.code(error.response?.status || 401).send({
+                const statusCode = error.response?.status || 500;
+                return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: error.response?.data?.message || error.message || 'Internal Server Error'
                 });
             }
         }

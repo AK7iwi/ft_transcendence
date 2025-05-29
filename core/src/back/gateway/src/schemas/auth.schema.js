@@ -84,7 +84,21 @@ const authSchema = {
                     }
                 }
             },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
             401: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
