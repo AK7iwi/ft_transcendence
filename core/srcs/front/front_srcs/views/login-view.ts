@@ -50,34 +50,38 @@ class LoginView extends HTMLElement {
     if (target.name === 'code2FA') this.code2FA = target.value;
   }
 
-  async handleSignIn(e: Event) {
-    e.preventDefault();
-    this.signInError = '';
-    this.isLoading = true;
-    this.render();
+async handleSignIn(e: Event) {
+  e.preventDefault();
+  this.signInError = '';
+  this.isLoading = true;
+  this.render();
 
-    try {
-      const { username, password } = this.signInForm;
-      if (!username || !password) throw new Error('Please fill in all fields');
+  try {
+    const response = await ApiService.login(this.signInForm.username, this.signInForm.password);
 
-      const response = await ApiService.login(username, password);
+    // Toujours stocker le token après un login réussi
+    localStorage.setItem('token', response.token);
 
-      if (response.twofa) {
-        this.show2FAForm = true;
-        this.render();
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify({ username: response.user.username }));
-      localStorage.setItem('token', response.token);
-      window.location.href = '/profile';
-    } catch (error: any) {
-      this.signInError = error.message || 'Login failed';
+    if (response.twofa) {
+      this.show2FAForm = true;
       this.render();
-    } finally {
-      this.isLoading = false;
+      return;
     }
+
+    // Sinon on peut directement récupérer le profil
+    const profile = await ApiService.getProfile();
+    console.log('✅ Profil récupéré depuis /auth/me:', profile);
+    localStorage.setItem('user', JSON.stringify(profile));
+
+    window.location.href = '/profile';
+  } catch (error: any) {
+    this.signInError = error.message || 'Login failed';
+    this.render();
+  } finally {
+    this.isLoading = false;
   }
+}
+
 
   async handle2FASubmit(e: Event) {
     e.preventDefault();

@@ -60,6 +60,8 @@ export class ProfileView extends LitElement {
   @state() private successMessage: string = '';
   @state() private errorMessage: string = '';
   @state() private isAuthenticated = false;
+@state() private wins: number = 0;
+@state() private losses: number = 0;
 
   connectedCallback() {
     super.connectedCallback();
@@ -67,23 +69,23 @@ export class ProfileView extends LitElement {
     if (!token) return;
 
     ApiService.getProfile()
-      .then(data => {
-  this.user = {
-    username: data.username,
-    avatar: data.avatar
-  };
-  this.avatarUrl = data.avatar
-    ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
-    : `${API_BASE_URL}/avatars/default.png`;
-  this.isAuthenticated = true;
+  .then(data => {
+    this.user = {
+      username: data.username,
+      avatar: data.avatar
+    };
+    this.avatarUrl = data.avatar
+      ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
+      : `${API_BASE_URL}/avatars/default.png`;
+    this.wins = data.wins;
+    this.losses = data.losses;
+    this.isAuthenticated = true;
+  })
+  .catch(err => {
+    console.error('Failed to load profile:', err);
+    this.isAuthenticated = false;
+  });
 
-  // 👇 Appel de la méthode pour afficher les stats
-  this.loadUserStats();
-})
-      .catch(err => {
-        console.error('Failed to load profile:', err);
-        this.isAuthenticated = false;
-      });
   }
 
   private showMessage(type: 'success' | 'error', message: string) {
@@ -155,11 +157,12 @@ async loadUserStats() {
         ` : html`
           <div class="readonly-info">
             <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
-          </div>
-          <div class="readonly-info">
-  <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
-  <div id="user-stats" style="margin-top: 1rem;"></div> <!-- 👈 ICI -->
+          <div class="info-line"><span class="label">Victoires :</span> ${this.wins}</div>
+<div class="info-line"><span class="label">Défaites :</span> ${this.losses}</div>
+<div class="info-line"><span class="label">Taux de victoire :</span>
+  ${this.wins + this.losses > 0 ? ((this.wins / (this.wins + this.losses)) * 100).toFixed(1) : '0'}%
 </div>
+
 
 
           <h3>Avatar</h3>

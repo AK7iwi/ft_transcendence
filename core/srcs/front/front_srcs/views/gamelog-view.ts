@@ -1,6 +1,7 @@
 //gamelog-view.ts
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
+import { API_BASE_URL } from '../config';
 
 const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
@@ -28,6 +29,9 @@ class GamelogView extends HTMLElement {
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
 
+
+  private user: { id: number; username: string } = { id: 0, username: '' };
+
   constructor() {
     super();
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
@@ -39,8 +43,9 @@ class GamelogView extends HTMLElement {
   }
 
   private render() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-const playerName = user.username || 'Player 1';
+    this.user = JSON.parse(localStorage.getItem('user') || '{}');
+const playerName = this.user.username || 'Player 1';
+
 
     this.innerHTML = `
       <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
@@ -296,29 +301,26 @@ private endGame(winner: string) {
   this.gameLoop = false;
   cancelAnimationFrame(this.animationFrameId);
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+let result: { winnerId?: number; loserId?: number } = {};
 
-  const winnerId = winner === 'Player 1' ? user.id : null;
-  const loserId = winner === 'Player 2' ? user.id : null;
+if (winner === 'Player 1') {
+  result.winnerId = this.user.id;
+} else {
+  result.loserId = this.user.id;
+}
 
-  if (!user.id) {
-    console.warn('⚠️ Impossible d’enregistrer le résultat : utilisateur non connecté');
-    return;
-  }
 
-  if (!winnerId && !loserId) {
-    console.warn('⚠️ Aucun résultat à enregistrer (pas de gagnant/perdant défini)');
-    return;
-  }
+fetch(`${API_BASE_URL}/game/result`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  },
+  body: JSON.stringify(result)
+})
 
-  fetch('/game/result', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    },
-    body: JSON.stringify({ winnerId, loserId })
-  }).then(res => {
+
+.then(res => {
     if (!res.ok) throw new Error('Erreur serveur');
     return res.json();
   }).then(data => {
@@ -327,7 +329,6 @@ private endGame(winner: string) {
     console.error('❌ Enregistrement échoué :', err.message);
   });
 }
-
 
 
   private resetGame() {
