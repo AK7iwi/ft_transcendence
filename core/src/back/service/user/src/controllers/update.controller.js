@@ -3,14 +3,13 @@ const UpdateService = require('../services/update.service');
 class UpdateController {
     static async updateUsername(request, reply) {
         try {
-            const { username, newUsername } = request.body;
-            const updatedUser = await UpdateService.updateUsername(username, newUsername);
+            const { currentUsername, newUsername } = request.body;
+            const updatedUser = await UpdateService.updateUsername(currentUsername, newUsername);
             
             return reply.code(200).send({
               success: true,
               message: 'User updated successfully',
               data: {
-                id: updatedUser.id,
                 username: updatedUser.username
               }
             });
@@ -32,7 +31,6 @@ class UpdateController {
               success: true,
               message: 'Password updated successfully',
               data: {
-                id: updatedUser.id,
                 username: updatedUser.username
               }
             });

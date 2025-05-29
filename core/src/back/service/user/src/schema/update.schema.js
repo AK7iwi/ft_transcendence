@@ -2,9 +2,9 @@ const updateSchema = {
     updateUsername: {
         body: {
             type: 'object',
-            required: ['username', 'newUsername'],
+            required: ['currentUsername', 'newUsername'],
             properties: {
-                username: {
+                currentUsername: {
                     type: 'string',
                     minLength: 3,
                     maxLength: 20,

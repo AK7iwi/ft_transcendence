@@ -8,14 +8,13 @@ class InternalController {
             
             return reply.code(200).send({
                 success: true,
-                message: 'Username updated in auth service'
+                message: 'Username updated in auth service',
+                data: {
+                    username: newUsername
+                }
             });
         } catch (error) {
-            request.log.error({
-                err: error,
-                currentUsername,
-                newUsername
-            }, 'Failed to update username in auth service');
+            request.log.error('[UPDATE USERNAME ERROR]', error);
             return reply.code(400).send({
                 success: false,
                 message: error.message
@@ -29,13 +28,13 @@ class InternalController {
             await InternalService.updatePassword(username, hashedPassword);
             return reply.code(200).send({
                 success: true,
-                message: 'Password updated in auth service'
+                message: 'Password updated in auth service',
+                data: {
+                    username: username
+                }
             });
         } catch (error) {
-            request.log.error({
-                err: error,
-                username
-            }, 'Failed to update password in auth service');
+            request.log.error('[UPDATE PASSWORD ERROR]', error);
             return reply.code(400).send({
                 success: false,
                 message: error.message
