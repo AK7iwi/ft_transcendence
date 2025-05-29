@@ -166,6 +166,12 @@ async function enableTwoFactor(username) {
   stmt.run(username);
 }
 
+// mat
+function getUsernameById(userId) {
+  const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
+  const result = stmt.get(userId);
+  return result?.username || 'unknown';
+}
 
 module.exports.updateUser = updateUser;
 
@@ -182,5 +188,6 @@ module.exports = {
     updateUser,
     updatePassword,
     storeTwoFactorSecret,
-    enableTwoFactor
+    enableTwoFactor,
+    getUsernameById
 };
