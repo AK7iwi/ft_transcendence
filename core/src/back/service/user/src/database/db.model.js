@@ -34,6 +34,12 @@ class DbModel {
         `);
         return stmt.run(hashedPassword, username);
     }
+
+    static async createUser(userId, username) {
+        const stmt = db.prepare(`
+            INSERT INTO user_profiles (user_id, username) VALUES (?, ?)`);
+        return stmt.run(userId, username);
+    }
 }
 
 module.exports = DbModel; 

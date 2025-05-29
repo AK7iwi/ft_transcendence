@@ -1,5 +1,5 @@
 const AuthService = require('../services/auth.service');
-const JwtService = require('../../security/middleware/jwt/jwt.service');
+const JWTService = require('../../security/middleware/jwt.service');
 
 class AuthController {
     async register(request, reply) {
@@ -10,7 +10,7 @@ class AuthController {
             return reply.code(200).send({
                 success: true,
                 message: 'User registered successfully',
-                data: { id: userId, username }
+                data: { username: username, userId: userId }
             });
         } catch (error) {
             request.log.error(error);
@@ -36,7 +36,7 @@ class AuthController {
             }
       
             // Otherwise, classic login with JWT token
-            const token = JwtService.generateToken({
+            const token = JWTService.generateToken({
                 id: user.id,
                 username: user.username
             });
@@ -44,7 +44,7 @@ class AuthController {
             return reply.code(200).send({
                 success: true,
                 message: 'Login successful',
-                data: { user: { id: user.id, username: user.username }, token }
+                data: { user: { username: user.username }, token }
             });
       
         } catch (error) {
@@ -57,4 +57,5 @@ class AuthController {
     }
 }
 
+// Export an instance of the controller instead of the class
 module.exports = new AuthController();
