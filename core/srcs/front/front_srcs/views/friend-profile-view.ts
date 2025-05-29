@@ -54,6 +54,32 @@ export class FriendProfileView extends LitElement {
 
   @state() private user = { username: '', avatar: '' };
   @state() private avatarUrl: string = '';
+@state() private wins: number = 0;
+@state() private losses: number = 0;
+@state() private winRate: number = 0;
+
+
+private async loadStats(friendId: string) {
+  try {
+   const res = await fetch(`${API_BASE_URL}/auth/users/${friendId}/stats`, {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  }
+});
+
+    const data = await res.json();
+    console.log("📊 Stats reçues:", data);
+    this.wins = data.wins;
+    this.losses = data.losses;
+    this.wins = data.wins;
+this.losses = data.losses;
+const total = this.wins + this.losses;
+this.winRate = total > 0 ? Math.round((this.wins / total) * 100) : 0;
+
+  } catch (err) {
+    console.error('Erreur chargement stats ami :', err);
+  }
+}
 
   connectedCallback() {
     super.connectedCallback();
@@ -71,10 +97,12 @@ export class FriendProfileView extends LitElement {
   ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : `${API_BASE_URL}/avatars/${data.avatar}`)
   : `${API_BASE_URL}/avatars/default.png`;
 
+  this.loadStats(friendId);
       })
       .catch(err => {
         console.error('Erreur chargement profil ami:', err);
       });
+
   }
 
   render() {
@@ -87,6 +115,14 @@ export class FriendProfileView extends LitElement {
         <div style="text-align: center;">
           <img src="${this.avatarUrl}" alt="Avatar" width="120" height="120" />
         </div>
+        <div class="readonly-info">
+  <div class="info-line"><span class="label">Username:</span> ${this.user.username}</div>
+  <div class="info-line"><span class="label">Victoires:</span> ${this.wins}</div>
+  <div class="info-line"><span class="label">Défaites:</span> ${this.losses}</div>
+  <div class="info-line"><span class="label">Taux de victoire:</span> ${this.winRate}%</div>
+</div>
+
+
         <button class="back-button" @click=${() => window.history.back()}>← Back to Chat</button>
       </div>
     `;

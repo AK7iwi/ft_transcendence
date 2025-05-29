@@ -54,7 +54,6 @@ fastify.register(require('./routes/gamelog.routes'));
 
 
 
-
 fastify.get('/avatars/:filename', async (req, reply) => {
   const file = req.params.filename;
   const filePath = path.join(__dirname, 'public', 'avatars', file);

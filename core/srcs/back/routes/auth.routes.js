@@ -8,6 +8,26 @@ const { sqlInjectionProtection, xssProtection } = require('../middleware/securit
 
 async function authRoutes(fastify, options) {
 
+fastify.get('/users/:id/stats', async (req, reply) => {
+  const userId = req.params.id;
+
+  try {
+    const row = dbApi.db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
+
+    if (!row) {
+      return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+    }
+
+    return { wins: row.wins, losses: row.losses };
+  } catch (err) {
+    console.error('Erreur chargement stats:', err);
+    return reply.code(500).send({ error: 'Erreur interne du serveur' });
+  }
+});
+
+
+
+
   // GET /auth/me - Récupérer les informations utilisateur
   fastify.get('/me', {
     preHandler: [authenticate],
