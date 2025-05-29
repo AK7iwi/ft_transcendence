@@ -1,16 +1,22 @@
 const PasswordService = require('../../security/password/password.service');
 const UserModel = require('../database/user.model');
+const axios = require('axios');
 
 class AuthService {
     static async registerUser(username, password) {
         try {
             const hashedPassword = await PasswordService.hashPassword(password);
             const result = await UserModel.insertUser(username, hashedPassword);
+            
+            // Notify user service to create profile
+            await axios.post(`${process.env.USER_SERVICE_URL}/user/profile`, {
+                userId: result.lastInsertRowid,
+                username: username
+            });
+
             return result.lastInsertRowid;
         } catch (error) {
-            if (error.code === 'SQLITE_CONSTRAINT' 
-                || error.message.includes('UNIQUE constraint failed: users.username')
-            ) {
+            if (error.code === 'SQLITE_CONSTRAINT') {
                 throw new Error('Username already exists');
             }
             if (error.code === 'SQLITE_ERROR') {

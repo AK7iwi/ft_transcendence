@@ -1,7 +1,7 @@
 const fastify = require('fastify');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
-const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
@@ -10,9 +10,8 @@ const app = fastify({ logger: true });
 initializeDatabase();
 
 // Register routes
-app.register(authRoutes, { prefix: '/auth' });
+app.register(userRoutes, { prefix: '/user' });
 
-// Test endpoint
 app.get('/', async () => {
     reply.code(200).send({ message: 'Server is running' });
 });
@@ -26,7 +25,7 @@ app.get('/health', async () => {
 const start = async () => {
     try {
         await app.listen({ 
-            port: process.env.AUTH_PORT,
+            port: process.env.USER_PORT,
             host: '0.0.0.0'
         });
     } catch (err) {
