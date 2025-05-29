@@ -1,6 +1,5 @@
-const UpdateController = require('../controllers/update.controller');
 const updateSchema = require('../schema/update.schema');
-const JWTService = require('../../security/middleware/jwt.service');
+const UpdateController = require('../controllers/update.controller');
 
 module.exports = async function (fastify, opts) {
 

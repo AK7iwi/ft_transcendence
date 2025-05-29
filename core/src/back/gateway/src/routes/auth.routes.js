@@ -5,7 +5,7 @@ module.exports = async function (fastify, opts) {
     // Register route
     fastify.post('/register', {
         schema: authSchema.register,
-        preHandler: SanitizeService.securityMiddleware,
+        preHandler: SanitizeService.sanitize,
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(
@@ -27,7 +27,7 @@ module.exports = async function (fastify, opts) {
     // Login route
     fastify.post('/login', {
         schema: authSchema.login,
-        preHandler: SanitizeService.securityMiddleware,
+        preHandler: SanitizeService.sanitize,
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(

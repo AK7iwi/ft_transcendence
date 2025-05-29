@@ -1,5 +1,5 @@
 const AuthService = require('../services/auth.service');
-const JWTService = require('../../security/middleware/jwt.service');
+const JwtService = require('../../security/middleware/jwt/jwt.service');
 
 class AuthController {
     async register(request, reply) {
@@ -36,7 +36,7 @@ class AuthController {
             }
       
             // Otherwise, classic login with JWT token
-            const token = JWTService.generateToken({
+            const token = JwtService.generateToken({
                 id: user.id,
                 username: user.username
             });

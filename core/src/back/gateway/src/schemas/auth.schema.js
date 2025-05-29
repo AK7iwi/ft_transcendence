@@ -28,8 +28,13 @@ const authSchema = {
                     data: {
                         type: 'object',
                         properties: {
-                            id: { type: 'number' },
-                            username: { type: 'string' }
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    id: { type: 'number' },
+                                    username: { type: 'string' }
+                                }
+                            }
                         }
                     }
                 }
@@ -43,7 +48,6 @@ const authSchema = {
             }
         }
     },
-
     login: {
         body: {
             type: 'object',
@@ -58,7 +62,8 @@ const authSchema = {
                 password: {
                     type: 'string',
                     minLength: 8,
-                    maxLength: 100
+                    maxLength: 100,
+                    pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>\\/?]{8,}$'
                 }
             },
             additionalProperties: false

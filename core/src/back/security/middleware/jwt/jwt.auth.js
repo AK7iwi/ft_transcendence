@@ -1,6 +1,6 @@
-const JWTService = require('../../security/middleware/jwt.service');
+const JwtService = require('./jwt.service');
 
-class AuthMiddleware {
+class JwtAuth {
     static async verifyToken(request, reply) {
         try {
             // Get token from header
@@ -10,7 +10,7 @@ class AuthMiddleware {
             }
 
             // Verify token
-            const decoded = JWTService.verifyToken(token);
+            const decoded = JwtService.verifyToken(token);
             
             // Add user info to request
             request.user = decoded;
@@ -23,4 +23,4 @@ class AuthMiddleware {
     }
 }
 
-module.exports = AuthMiddleware;
+module.exports = JwtAuth;
