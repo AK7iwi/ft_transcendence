@@ -1,7 +1,23 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
+
+import { Router } from '@vaadin/router';
+
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains('invite-play-btn')) {
+    const route = target.getAttribute('data-link');
+    if (route) {
+      e.preventDefault();
+      Router.go(route); // Navigation SPA sans reload
+    }
+  }
+});
+
 
 interface Conversation {
   id: string;
@@ -93,17 +109,39 @@ private async handleBlockUser() {
   @state() private websocket: WebSocket | null = null;
   @state() private inputText = '';
   @state() private selectedConversationId: string = '';
-  @state() private currentUserId = Number(localStorage.getItem('userId'));
+@state() private currentUserId: number = 0;
+
   @state() private messages: { author: string; text: string; me: boolean }[] = [];
   @state() private conversations: Conversation[] = [];
 @state() private flashMessage: string = '';
 @state() private flashType: 'success' | 'error' | '' = '';
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.loadFriendsAsConversations();
-    this.setupWebSocket();
-  }
+
+connectedCallback() {
+  super.connectedCallback();
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  this.currentUserId = user?.id || 0;
+
+  console.log('[CHAT] Connected as user ID:', this.currentUserId); // ✅ vérif visuelle
+
+  this.loadFriendsAsConversations();
+  this.setupWebSocket();
+}
+
+firstUpdated(_changedProperties: Map<string | number | symbol, unknown>) {
+  this.renderRoot.addEventListener('click', (e: Event) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('invite-play-btn')) {
+      const route = target.getAttribute('data-link');
+      if (route) {
+        e.preventDefault();
+        Router.go(route);
+      }
+    }
+  });
+}
+
 
   async loadFriendsAsConversations() {
     const result = await ApiService.getFriends();
@@ -115,6 +153,8 @@ private async handleBlockUser() {
     }));
   }
 
+
+  
   setupWebSocket() {
     this.websocket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
 
@@ -151,11 +191,49 @@ private async handleBlockUser() {
     };
   }
 
+private inviteToPlay(friendId?: string) {
+  console.log('[INVITE] Clicked Invite to Play →', friendId);
+  console.log('[INVITE] currentUserId =', this.currentUserId);
+  console.log('[INVITE] WebSocket is', this.websocket);
 
-  private inviteToPlay(friendId?: string) {
-  if (!friendId) return;
-  window.location.href = `/game-remote?id=${friendId}`;
+  if (!friendId || !this.currentUserId) return;
+  if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+    console.warn('[INVITE] WebSocket not ready');
+    return;
+  }
+
+  const gameUrl = `/game-remote?id=${this.currentUserId}`;
+
+  const invitationMessage = `
+    <div>
+      🎮 <strong>Invitation to play Pong!</strong><br/>
+      <button 
+        data-link="${gameUrl}" 
+        class="invite-play-btn" 
+        style="margin-top: 5px; padding: 6px 12px; background-color: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        ▶ Play with me
+      </button>
+    </div>
+  `;
+
+  this.websocket.send(JSON.stringify({
+    type: 'dm',
+    payload: {
+      toUserId: Number(friendId),
+      text: invitationMessage
+    }
+  }));
+
+  console.log('[INVITE] Message sent over WebSocket:', invitationMessage);
+
+  this.messages = [...this.messages, {
+    author: 'You',
+    text: invitationMessage,
+    me: true
+  }];
 }
+
+
 
   async loadMessages(friendId: string) {
     this.selectedConversationId = friendId;
@@ -218,56 +296,89 @@ private async handleBlockUser() {
 }
 
 
-  render() {
-    const current = this.conversations.find(c => c.id === this.selectedConversationId);
-    return html`
-      <div class="chat-wrapper">
-        <div class="conversations">
-          ${this.conversations.map(c => html`
-            <div class="conversation-item ${this.selectedConversationId === c.id ? 'selected' : ''}" @click=${() => this.loadMessages(c.id)}>
-              <div class="conversation-info">
-                <div class="conversation-name">${c.name}</div>
-                <div class="conversation-last">${c.lastMessage}</div>
-              </div>
-            </div>
-          `)}
-        </div>
-        <div class="chat-area">
-          ${current ? html`
-            ${this.flashMessage ? html`
-  <div class="flash-message ${this.flashType}">${this.flashMessage}</div>
-` : ''}
+ render() {
+  const current = this.conversations.find(c => c.id === this.selectedConversationId);
 
-            <div class="chat-header">
-              <div class="header-info">
-                <div class="chat-with-name">${current.name}</div>
-              </div>
-              <div class="chat-actions">y
-<button class="chat-button invite-button" @click=${() => this.inviteToPlay(current?.id)}>Invite to Play</button>
-<button class="chat-button profile-button" @click=${() => this.viewFriendProfile(current?.id)}>View Profile</button>
-                <button class="chat-button block-button" @click=${this.handleBlockUser}>Block</button>
-              </div>
+  return html`
+    <div class="chat-wrapper">
+      <div class="conversations">
+        ${this.conversations.map(c => html`
+          <div
+            class="conversation-item ${this.selectedConversationId === c.id ? 'selected' : ''}"
+            @click=${() => this.loadMessages(c.id)}
+          >
+            <div class="conversation-info">
+              <div class="conversation-name">${c.name}</div>
+              <div class="conversation-last">${c.lastMessage}</div>
             </div>
-            <div class="messages">
-              ${this.messages.map(msg => html`
-                <div class="message-container ${msg.me ? 'right' : 'left'}">
-                  <div class="bubble ${msg.me ? 'right' : 'left'}">${msg.text}</div>
-                </div>
-              `)}
-            </div>
-            <div class="input-container">
-              <input
-                type="text"
-                placeholder="Type your message..."
-                .value=${this.inputText}
-                @input=${this.handleInput}
-                @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && this.sendMessage()}
-              />
-              <button class="send-button" ?disabled=${!this.inputText.trim()} @click=${this.sendMessage}>Send</button>
-            </div>
-          ` : html`<p style="padding: 2rem;">Select a conversation to begin</p>`}
-        </div>
+          </div>
+        `)}
       </div>
-    `;
-  }
+
+      <div class="chat-area">
+        ${current ? html`
+          ${this.flashMessage ? html`
+            <div class="flash-message ${this.flashType}">${this.flashMessage}</div>
+          ` : ''}
+
+          <div class="chat-header">
+            <div class="header-info">
+              <div class="chat-with-name">${current.name}</div>
+            </div>
+            <div class="chat-actions">
+              <button
+  class="chat-button invite-button"
+  @click=${() => this.inviteToPlay(this.selectedConversationId)}
+>
+  Invite to Play
+</button>
+
+              <button
+                class="chat-button profile-button"
+                @click=${() => this.viewFriendProfile(current?.id)}
+              >
+                View Profile
+              </button>
+              <button
+                class="chat-button block-button"
+                @click=${this.handleBlockUser}
+              >
+                Block
+              </button>
+            </div>
+          </div>
+
+          <div class="messages">
+            ${this.messages.map(msg => html`
+              <div class="message-container ${msg.me ? 'right' : 'left'}">
+                <div class="bubble ${msg.me ? 'right' : 'left'}">
+                  ${unsafeHTML(msg.text)}
+                </div>
+              </div>
+            `)}
+          </div>
+
+          <div class="input-container">
+            <input
+              type="text"
+              placeholder="Type your message..."
+              .value=${this.inputText}
+              @input=${this.handleInput}
+              @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && this.sendMessage()}
+            />
+            <button
+              class="send-button"
+              ?disabled=${!this.inputText.trim()}
+              @click=${this.sendMessage}
+            >
+              Send
+            </button>
+          </div>
+        ` : html`
+          <p style="padding: 2rem;">Select a conversation to begin</p>
+        `}
+      </div>
+    </div>
+  `;
+}
 }

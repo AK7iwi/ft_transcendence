@@ -42,8 +42,6 @@ fastify.register(fastifyCors, {
   credentials: true
 });
 
-
-
 // Middleware
 fastify.decorate('authenticate', authenticate);
 
@@ -51,8 +49,6 @@ fastify.decorate('authenticate', authenticate);
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
 fastify.register(require('./routes/gamelog.routes'));
-
-
 
 fastify.get('/avatars/:filename', async (req, reply) => {
   const file = req.params.filename;

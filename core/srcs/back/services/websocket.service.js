@@ -10,6 +10,7 @@ class WebSocketService {
 
     this.clients = new Map();        // clientId → ws
     this.onlineUsers = new Map();    // userId → ws
+this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, clients: Set<clientId> }
 
     this.setupWebSocket();
   }
@@ -216,23 +217,103 @@ handleAuth(clientId, ws, token) {
     console.log(`[Chat] ${clientId}: ${payload.text.trim()}`);
     this.broadcast(chatMessage);
   }
+handleJoinGame(clientId, { userId, role }) {
+  if (!userId || !role) return;
 
-  handleGameMessage(clientId, payload) {
-    const { action, ...rest } = payload || {};
-    switch (action) {
-      case 'pause':
-        this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
-        break;
-      case 'scoreUpdate':
-        this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
-        break;
-      case 'join':
-        this.broadcast({ type: 'game', data: { action: 'playerJoined', clientId } });
-        break;
-      default:
-        console.warn(`[WS] Unknown game action:`, action);
+  const ws = this.clients.get(clientId);
+  if (!ws) return;
+
+  const roomId = role === 'host' ? userId : ws.roomId;
+  if (!roomId) return;
+
+  // Si host, crée la room
+  if (role === 'host') {
+    this.rooms.set(userId, {
+      host: userId,
+      guest: null,
+      clients: new Set([clientId])
+    });
+    ws.roomId = userId;
+  } else if (role === 'guest') {
+    const room = this.rooms.get(roomId);
+    if (room) {
+      room.guest = userId;
+      room.clients.add(clientId);
+      ws.roomId = roomId;
+
+      // Notifie les deux joueurs
+      for (const client of room.clients) {
+        this.sendToClient(client, {
+          type: 'game',
+          data: {
+            action: 'playerJoined',
+            role: client === clientId ? 'guest' : 'host'
+          }
+        });
+      }
+
+      console.log(`[GAME] Guest ${userId} joined room ${roomId}`);
+    } else {
+      this.sendToClient(clientId, {
+        type: 'error',
+        message: 'Room not found'
+      });
     }
   }
+}
+
+handleRejoinGame(clientId, { userId, role }) {
+  const roomId = role === 'host' ? userId : this.findRoomByUser(userId);
+  if (!roomId) return;
+
+  const ws = this.clients.get(clientId);
+  const room = this.rooms.get(roomId);
+  if (!room) return;
+
+  ws.roomId = roomId;
+  room.clients.add(clientId);
+
+  this.sendToClient(clientId, {
+    type: 'game',
+    data: {
+      action: 'playerJoined',
+      role
+    }
+  });
+
+  console.log(`[GAME] ${role} ${userId} rejoined room ${roomId}`);
+}
+
+findRoomByUser(userId) {
+  for (const [roomId, room] of this.rooms.entries()) {
+    if (room.host === userId || room.guest === userId) {
+      return roomId;
+    }
+  }
+  return null;
+}
+
+
+handleGameMessage(clientId, payload) {
+  const { action, ...rest } = payload || {};
+  switch (action) {
+    case 'pause':
+      this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
+      break;
+    case 'scoreUpdate':
+      this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
+      break;
+    case 'join':
+      this.handleJoinGame(clientId, payload);
+      break;
+    case 'rejoin':
+      this.handleRejoinGame(clientId, payload);
+      break;
+    default:
+      console.warn(`[WS] Unknown game action:`, action);
+  }
+}
+
 
   handleTournamentMessage(clientId, payload) {
     this.broadcast({
