@@ -49,7 +49,7 @@ fastify.get('/', async (request, reply) => {
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
-    reply.code(200).send( { status: 'Server is healthy' });
+    reply.code(200).send( { message: 'Server is healthy' });
 });
 
 // Register routes

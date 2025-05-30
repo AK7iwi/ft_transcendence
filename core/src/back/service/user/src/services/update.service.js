@@ -2,7 +2,7 @@ const PasswordService = require('../../security/password/password.service');
 const DbModel = require('../database/db.model');
 
 class UpdateService {
-    static async updateUsername(currentUsername, newUsername) {
+    static async updateUsername(currentUsername, newUsername, axiosInstance) {
         try {
             const result = await DbModel.updateUsername(currentUsername, newUsername);
             if (!result.changes) {
@@ -10,7 +10,7 @@ class UpdateService {
             }
 
             // Notify auth service to update username
-            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/username`, {
+            await axiosInstance.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/username`, {
                 currentUsername,
                 newUsername
             });
@@ -23,7 +23,7 @@ class UpdateService {
         }
     }
 
-    static async updatePassword(username, newPassword) {
+    static async updatePassword(username, newPassword, axiosInstance) {
         try {
             const hashedPassword = await PasswordService.hashPassword(newPassword);
             const result = await DbModel.updatePassword(username, hashedPassword);
@@ -33,7 +33,7 @@ class UpdateService {
             }
 
             // Notify auth service to update password
-            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/password`, {
+            await axiosInstance.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/password`, {
                 username,
                 hashedPassword
             });

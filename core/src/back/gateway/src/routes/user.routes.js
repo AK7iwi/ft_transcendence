@@ -50,7 +50,7 @@ module.exports = async function (fastify, opts) {
     //Internal routes
     fastify.post('/internal/user', {
         schema: userSchema.createUser,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(

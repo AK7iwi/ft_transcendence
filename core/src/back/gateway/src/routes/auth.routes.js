@@ -51,7 +51,7 @@ module.exports = async function (fastify, opts) {
     
     fastify.put('/internal/username', {
         schema: authSchema.updateUsername,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.put(
@@ -72,7 +72,7 @@ module.exports = async function (fastify, opts) {
 
     fastify.put('/internal/password', {
         schema: authSchema.updatePassword,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.put(

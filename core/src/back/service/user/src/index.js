@@ -26,13 +26,16 @@ initializeDatabase();
 app.register(updateRoutes, { prefix: '/user' });
 app.register(internalRoutes, { prefix: '/user' });
 
-app.get('/', async () => {
+app.get('/', async (request, reply) => {
     reply.code(200).send({ message: 'Server is running' });
 });
 
 // Health check endpoint
-app.get('/health', async () => {
-    reply.code(200).send( { status: 'Server is healthy' });
+app.get('/health', async (request, reply) => {
+    reply.code(200).send({ 
+        status: 'healthy',
+        message: 'Server is healthy'
+    });
 });
 
 // Start server

@@ -18,7 +18,7 @@ curl -k -X POST \
 
 SQL injection: 
 
-
-  curl -k -v -X POST https://localhost:3000/auth/login \
--H "Content-Type: application/json" \
--d '{"username": "admin", "password": "SELECT * FROM users"}'
+curl -k -v -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "SELECT * FROM users"}' \
+  https://localhost:3000/auth/login

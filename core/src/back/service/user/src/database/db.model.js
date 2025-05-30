@@ -37,8 +37,9 @@ class DbModel {
 
     static async createUser(userId, username) {
         const stmt = db.prepare(`
-            INSERT INTO user_profiles (user_id, username) VALUES (?, ?)`);
-        return stmt.run(userId, username);
+            INSERT INTO user_profiles (user_id, username, password) 
+            VALUES (?, ?, ?)`);
+        return stmt.run(userId, username, ''); // Empty password initially
     }
 }
 

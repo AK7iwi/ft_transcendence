@@ -5,7 +5,7 @@ class AuthController {
     async register(request, reply) {
         try {
             const { username, password } = request.body;
-            const userId = await AuthService.registerUser(username, password);
+            const userId = await AuthService.registerUser(username, password, request.server.axios);   
 
             return reply.code(200).send({
                 success: true,
@@ -44,7 +44,7 @@ class AuthController {
             return reply.code(200).send({
                 success: true,
                 message: 'Login successful',
-                data: { user: { username: user.username }, token }
+                data: { user: { username: user.username }}
             });
       
         } catch (error) {

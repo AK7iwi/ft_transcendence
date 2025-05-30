@@ -29,10 +29,10 @@ const authSchema = {
                         type: 'object',
                         properties: {
                             user: {
-                                type: 'object',
-                                properties: {
-                                    id: { type: 'number' },
-                                    username: { type: 'string' }
+                        type: 'object',
+                        properties: {
+                            id: { type: 'number' },
+                            username: { type: 'string' }
                                 }
                             }
                         }
