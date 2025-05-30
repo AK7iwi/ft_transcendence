@@ -153,41 +153,23 @@ private renderNextMatch() {
 
   render() {
     this.innerHTML = `
-      <main class="max-w-xl mx-auto p-8 text-white font-sans">
-      <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg p-1 mb-8">
-        <div class="bg-gray-800 rounded-xl p-6">
-          <h2 class="text-3xl font-bold text-center mb-6">Tournament</h2>
-          <form class="flex gap-2 mb-4" onsubmit="return false;">
-            <input
-              type="text"
-              placeholder="Username"
-              value="${this.username}"
-              name="username"
-              class="flex-1 rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
-            />
-            <input
-              type="text"
-              placeholder="Nickname"
-              value="${this.nickname}"
-              name="nickname"
-              class="flex-1 rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
-            />
-            <button
-              type="submit"
-              class="rounded-full bg-indigo-600 px-6 py-2 text-white font-semibold hover:opacity-90 transition"
-            >
-              Join
-            </button>
-          </form>
-          <ul class="mb-6 text-indigo-300 font-semibold">
-            ${this.players.map(p => `<li>${p.username} (${p.nickname})</li>`).join('')}
-          </ul>
-          <button
-            class="w-full rounded-2xl bg-purple-600 py-3 text-white font-bold hover:bg-purple-700 transition"
-          >
-            Start Tournament
-          </button>
+      <main class="p-8 max-w-xl mx-auto text-white">
 
+        <div id="tournament-ui">
+          <h2 class="text-3xl font-bold mb-4 text-center">Tournament</h2>
+          <form class="flex gap-2 mb-4" onsubmit="return false;">
+            <input type="text" placeholder="Username" value="${this.username}" class="flex-1 px-4 py-2 rounded bg-gray-700" name="username" />
+            <input type="text" placeholder="Nickname" value="${this.nickname}" class="flex-1 px-4 py-2 rounded bg-gray-700" name="nickname" />
+            <button class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">Join</button>
+          </form>
+          ${this.message ? `<div class="mb-4 font-semibold text-center ${this.messageType === 'error' ? 'text-red-500' : 'text-green-400'}">${this.message}</div>` : ''}
+    
+          <ul class="mb-6">
+            ${this.players.map(p => `<li class="mb-1">${p.username} (${p.nickname})</li>`).join('')}
+          </ul>
+    
+          <button class="w-full py-2 bg-purple-600 rounded text-white font-bold mb-4">Start Tournament</button>
+    
           ${this.bracket.length > 0 ? `
             <div class="mt-6">
               <h3 class="text-xl font-bold mb-2">Matchups</h3>
@@ -196,10 +178,9 @@ private renderNextMatch() {
               </ul>
             </div>
           ` : ''}
-
+    
           ${this.renderNextMatch()}
         </div>
-      </div>
     
         <div id="game-ui" style="display:none;">
           <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
