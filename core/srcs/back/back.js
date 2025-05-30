@@ -77,6 +77,30 @@ fastify.get('/chat/messages/:userId', {
   }
 });
 
+const { saveRemoteGame } = require('./db'); // ajuste si nécessaire
+
+fastify.post('/remote-game', async (request, reply) => {
+  const { player1Id, player2Id, score1, score2, winnerId } = request.body;
+
+  if (
+    typeof player1Id !== 'number' ||
+    typeof player2Id !== 'number' ||
+    typeof score1 !== 'number' ||
+    typeof score2 !== 'number' ||
+    typeof winnerId !== 'number'
+  ) {
+    return reply.code(400).send({ error: 'Invalid input data' });
+  }
+
+  try {
+    saveRemoteGame({ player1Id, player2Id, score1, score2, winnerId });
+    reply.code(201).send({ message: 'Remote game saved' });
+  } catch (err) {
+    console.error('Error saving remote game:', err);
+    reply.code(500).send({ error: 'Database error' });
+  }
+});
+
 
 
 fastify.post('/chat/message', {

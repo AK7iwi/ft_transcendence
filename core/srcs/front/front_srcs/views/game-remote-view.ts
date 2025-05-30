@@ -432,7 +432,7 @@ private updateGame() {
   }
 }
 
-  private endGame(winner: string) {
+  private async endGame(winner: string) {
   this.isGameOver = true;
   this.winner = winner;
   this.gameLoop = false;
@@ -452,9 +452,29 @@ if (isPlayer1Winner) {
   loserId = this.settings.player1Id;
 }
 
+try {
+  const response = await fetch(`${API_BASE_URL}/remote-game`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      player1Id: this.settings.player1Id,
+      player2Id: this.settings.player2Id,
+      score1: this.score.player1,
+      score2: this.score.player2,
+      winnerId,
+    }),
+  });
 
-  // 👇 On envoie au backend via WebSocket, ou via une API REST
-this.websocketService.send('gameResult', { winnerId, loserId });
+  if (!response.ok) {
+    console.error('❌ Failed to save remote game');
+  } else {
+    console.log('✅ Remote game saved');
+  }
+} catch (err) {
+  console.error('❌ Error sending remote game:', err);
+}
 
   this.draw();
 }
@@ -529,25 +549,24 @@ private draw() {
     this.draw();
   };
 
-  connectedCallback() {
-  this.attachShadow({ mode: 'open' });
-  this.render(); // ✅ Appelle ton vrai render
+connectedCallback() {
+  this.render(); // ✅ Génére le HTML directement dans le composant
 
-  this.canvas = this.shadowRoot!.querySelector('canvas')!;
-  this.ctx = this.canvas.getContext('2d');
+  this.canvas = this.querySelector('canvas');
+  this.ctx = this.canvas?.getContext('2d') || null;
 
   this.initGame();
   this.setupEventListeners();
   this.initWebSocket();
 
-  this.ball.x = this.canvas.width / 2;
-  this.ball.y = this.canvas.height / 2;
+  if (this.canvas) {
+    this.ball.x = this.canvas.width / 2;
+    this.ball.y = this.canvas.height / 2;
+  }
 
   this.draw();
   window.addEventListener('resize', this.handleResize);
 }
-
-
 
   private handleSettingsChanged = (e: Event) => {
     const customEvent = e as CustomEvent<GameSettings>;
@@ -590,13 +609,22 @@ private draw() {
 
   return null;
 }
-private render() {
-  if (!this.shadowRoot) return;
 
+disconnectedCallback() {
+  window.removeEventListener('resize', this.handleResize);
+  window.removeEventListener('settingsChanged', this.handleSettingsChanged);
+  window.removeEventListener('keydown', this.handleKeyDown);
+  window.removeEventListener('keyup', this.handleKeyUp);
+
+  if (this.socket) this.socket.close();
+  if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+}
+
+private render() {
   const message = this.getGameMessage();
   const playerName = JSON.parse(localStorage.getItem('user') || '{}')?.username || 'Player 1';
 
-  this.shadowRoot.innerHTML = `
+  this.innerHTML = `
     <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-4 bg-gray-100 relative">
       <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
         <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
@@ -647,9 +675,10 @@ private render() {
   `;
 
   // Mise à jour du canvas après le changement du DOM
-  this.canvas = this.shadowRoot.querySelector('canvas');
+  this.canvas = this.querySelector('canvas');
   this.ctx = this.canvas?.getContext('2d') || null;
 }
+
 
 
 } 

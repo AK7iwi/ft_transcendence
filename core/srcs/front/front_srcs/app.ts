@@ -36,70 +36,76 @@ class PongApp extends HTMLElement {
     super();
   }
 
-connectedCallback() {
-  this.innerHTML = `<p hidden>pong-app loaded</p>`;
-  this.updateLinks();
-  this.toggleAuthButtons(); // ← ici
-  this.setupRouter();
-}
-
-
-toggleAuthButtons() {
-  const authButtons = document.querySelector('#auth-buttons') as HTMLElement;
-  const token = localStorage.getItem('token');
-
-  if (authButtons) {
-    authButtons.style.display = token ? 'none' : 'flex';
-  }
-}
-
-updateLinks() {
-  const isAuthenticated = !!localStorage.getItem('token');
-  const navLinks = document.querySelector('#nav-links');
-
-  if (!navLinks) {
-    console.warn('❌ nav-links not found');
-    return;
+  connectedCallback() {
+    this.innerHTML = `<p hidden>pong-app loaded</p>`;
+    this.updateLinks();
+    this.toggleAuthButtons();
+    this.setupRouter();
   }
 
-  navLinks.innerHTML = ''; // Nettoyer l'existant
+  toggleAuthButtons() {
+    const authButtons = document.querySelector('#auth-buttons') as HTMLElement;
+    const token = localStorage.getItem('token');
+    if (authButtons) {
+      authButtons.style.display = token ? 'none' : 'flex';
+    }
+  }
 
-  // Ces liens doivent toujours être visibles
-  const staticLinks = [
-    { href: '/', icon: 'fa-solid fa-house', label: 'Home' },
-    // "Pong" seulement si pas connecté
-    ...(isAuthenticated ? [] : [{ href: '/game', icon: 'fa-solid fa-gamepad', label: 'Pong' }])
-  ];
+  updateLinks() {
+    const isAuthenticated = !!localStorage.getItem('token');
+    const navLinks = document.querySelector('#nav-links');
 
-  // Liens visibles uniquement si connecté
-  const authLinks = [
-    { href: '/gamelog', icon: 'fa-solid fa-gamepad', label: 'Game' },
-    { href: '/tournament', icon: 'fa-solid fa-trophy', label: 'Tournament' },
-    { href: '/chat', icon: 'fa-solid fa-comments', label: 'Chat' },
-    { href: '/friends', icon: 'fa-solid fa-user-group', label: 'Friends' },
-    { href: '/settings', icon: 'fa-solid fa-gear', label: 'Settings' },
-    { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' }
-  ];
+    if (!navLinks) {
+      console.warn('❌ nav-links not found');
+      return;
+    }
 
-  const createLink = ({ href, icon, label }: any) => {
-    const link = document.createElement('a');
-    link.href = href;
-    link.className =
-      'relative transition duration-300 ease-in-out hover:text-indigo-500 after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-indigo-500 after:transition-all after:duration-300';
-    link.innerHTML = `<i class="${icon}"></i> ${label}`;
-    return link;
-  };
+    navLinks.innerHTML = ''; // Reset existing links
 
-  staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
+    const staticLinks = [
+      { href: '/', icon: 'fa-solid fa-house', label: 'Home' },
+      ...(isAuthenticated ? [] : [{ href: '/game', icon: 'fa-solid fa-gamepad', label: 'Pong' }])
+    ];
 
-  if (isAuthenticated) {
+    const authLinks = isAuthenticated ? [
+      { href: '/gamelog', icon: 'fa-solid fa-gamepad', label: 'Game' },
+      { href: '/tournament', icon: 'fa-solid fa-trophy', label: 'Tournament' },
+      { href: '/chat', icon: 'fa-solid fa-comments', label: 'Chat' },
+      { href: '/friends', icon: 'fa-solid fa-user-group', label: 'Friends' },
+      { href: '/settings', icon: 'fa-solid fa-gear', label: 'Settings' },
+      { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' },
+      { href: '#', icon: 'fa-solid fa-right-from-bracket', label: 'Logout', onClick: this.logout.bind(this) }
+    ] : [];
+
+    const createLink = ({ href, icon, label, onClick }: any) => {
+      const link = document.createElement('a');
+      link.href = href;
+      link.className =
+        'relative transition duration-300 ease-in-out ' +
+        'hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500 ' +
+        'after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
+        'hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500 ' +
+        'after:transition-all after:duration-300';
+      link.innerHTML = `<i class="${icon}"></i> ${label}`;
+      if (onClick) {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          onClick();
+        });
+      }
+      return link;
+    };
+
+    staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
     authLinks.forEach(link => navLinks.appendChild(createLink(link)));
   }
-}
 
-
-
-
+  logout() {
+    localStorage.removeItem('token');
+    this.updateLinks();
+    this.toggleAuthButtons();
+    window.location.href = '/';
+  }
 
   setupRouter() {
     const outlet = document.querySelector('main');

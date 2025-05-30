@@ -164,10 +164,11 @@ const invitationMessage = `
   <div>
     🎮 <strong>Invitation to play Pong!</strong><br/>
     <button 
-      data-link="${gameUrl}" 
-      class="invite-play-btn mt-2 px-3 py-2 bg-indigo-500 text-white rounded hover:opacity-90">
-      ▶ Play with me
-    </button>
+  		data-link="${gameUrl}" 
+  		class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
+  		▶ Play with me
+	</button>
+
   </div>
 `;
 

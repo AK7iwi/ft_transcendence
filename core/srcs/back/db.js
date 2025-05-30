@@ -106,6 +106,19 @@ db.exec(`CREATE TABLE IF NOT EXISTS game_results (
   FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (loser_id) REFERENCES users(id) ON DELETE CASCADE
 );`);
+db.exec(`CREATE TABLE IF NOT EXISTS remote_games (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  player1_id INTEGER NOT NULL,
+  player2_id INTEGER NOT NULL,
+  score1 INTEGER NOT NULL,
+  score2 INTEGER NOT NULL,
+  winner_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (player1_id) REFERENCES users(id),
+  FOREIGN KEY (player2_id) REFERENCES users(id),
+  FOREIGN KEY (winner_id) REFERENCES users(id)
+);`);
+
 
 // Ajout sécurisé des colonnes "wins" et "losses"
 try {
@@ -143,6 +156,15 @@ try {
         process.exit(1);
     }
 }
+
+function saveRemoteGame({ player1Id, player2Id, score1, score2, winnerId }) {
+  const stmt = db.prepare(`
+    INSERT INTO remote_games (player1_id, player2_id, score1, score2, winner_id)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  stmt.run(player1Id, player2Id, score1, score2, winnerId);
+}
+
 
 function updateAllWinLossCounts() {
   // Réinitialise les compteurs
@@ -240,5 +262,6 @@ module.exports = {
     updatePassword,
     storeTwoFactorSecret,
     enableTwoFactor,
-    recordGameResult
+    recordGameResult,
+    saveRemoteGame,
 };
