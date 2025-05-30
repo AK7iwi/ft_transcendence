@@ -25,14 +25,16 @@ const fastify = fastifyModule({
 });
 
 // DB
-const db = new Database('/data/database.sqlite');
+const { db } = require('./db'); // ou ./services/db selon ton arborescence
+
 
 // Plugins
 fastify.register(fastifyStatic, {
-  root: path.join(__dirname, 'public'),
-  prefix: '/',
+  root: path.join(__dirname, 'public', 'avatars'),
+  prefix: '/avatars/',
   decorateReply: false
 });
+
 
 fastify.register(fastifyMultipart);
 fastify.register(fastifyCors, {
@@ -49,17 +51,6 @@ fastify.decorate('authenticate', authenticate);
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
 fastify.register(require('./routes/gamelog.routes'));
-
-fastify.get('/avatars/:filename', async (req, reply) => {
-  const file = req.params.filename;
-  const filePath = path.join(__dirname, 'public', 'avatars', file);
-  if (fs.existsSync(filePath)) {
-    reply.header('Access-Control-Allow-Origin', '*');
-    return reply.type('image/png').send(fs.createReadStream(filePath));
-  } else {
-    return reply.status(404).send({ error: 'Fichier non trouvé' });
-  }
-});
 
 fastify.get('/chat/messages/:userId', {
   preHandler: authenticate,
