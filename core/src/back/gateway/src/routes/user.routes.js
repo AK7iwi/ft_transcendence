@@ -46,4 +46,26 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+    
+    //Internal routes
+    fastify.post('/internal/user', {
+        schema: userSchema.createUser,
+        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.post(
+                    `${process.env.USER_SERVICE_URL}/user/internal/user`,
+                    request.body
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: error.response?.data?.message || error.message
+                }); 
+            }
+        }
+    });
 };

@@ -1,5 +1,5 @@
 const internalSchema = require('../schema/internal.schema');
-const DbModel = require('../database/db.model');
+const InternalController = require('../controllers/internal.controller');
 
 module.exports = async function (fastify, opts) {
     // Route for auth service to create user profile

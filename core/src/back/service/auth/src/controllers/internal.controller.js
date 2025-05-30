@@ -1,7 +1,7 @@
 const InternalService = require('../services/internal.service');
 
 class InternalController {
-    static async updateUsername(request, reply) {
+    async updateUsername(request, reply) {
         try {
             const { currentUsername, newUsername } = request.body;
             await InternalService.updateUsername(currentUsername, newUsername);
@@ -22,7 +22,7 @@ class InternalController {
         }
     }
 
-    static async updatePassword(request, reply) {
+    async updatePassword(request, reply) {
         try {
             const { username, hashedPassword } = request.body;
             await InternalService.updatePassword(username, hashedPassword);

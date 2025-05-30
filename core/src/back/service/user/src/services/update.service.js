@@ -10,7 +10,7 @@ class UpdateService {
             }
 
             // Notify auth service to update username
-            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/internal/username`, {
+            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/username`, {
                 currentUsername,
                 newUsername
             });
@@ -33,7 +33,7 @@ class UpdateService {
             }
 
             // Notify auth service to update password
-            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/internal/password`, {
+            await app.axios.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/password`, {
                 username,
                 hashedPassword
             });

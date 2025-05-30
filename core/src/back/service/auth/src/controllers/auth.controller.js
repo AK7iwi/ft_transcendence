@@ -1,5 +1,5 @@
 const AuthService = require('../services/auth.service');
-const JWTService = require('../../security/middleware/jwt.service');
+const JWTService = require('../../security/middleware/jwt/jwt.service');
 
 class AuthController {
     async register(request, reply) {

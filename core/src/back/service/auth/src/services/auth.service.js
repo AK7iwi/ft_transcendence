@@ -8,7 +8,7 @@ class AuthService {
             const result = await DbModel.insertUser(username, hashedPassword);
             
             // Notify user service to create profile
-            await app.axios.post(`${process.env.USER_SERVICE_URL}/internal/profile`, {
+            await app.axios.post(`${process.env.USER_SERVICE_URL}/user/internal/user`, {
                 userId: result.lastInsertRowid,
                 username: username
             });

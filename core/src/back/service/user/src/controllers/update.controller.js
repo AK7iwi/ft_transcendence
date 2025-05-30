@@ -1,7 +1,7 @@
 const UpdateService = require('../services/update.service');
 
 class UpdateController {
-    static async updateUsername(request, reply) {
+    async updateUsername(request, reply) {
         try {
             const { currentUsername, newUsername } = request.body;
             const updatedUser = await UpdateService.updateUsername(currentUsername, newUsername);
@@ -22,7 +22,7 @@ class UpdateController {
           }
     }
 
-    static async updatePassword(request, reply) {
+    async updatePassword(request, reply) {
         try {
             const { username, newPassword } = request.body;
             const updatedUser = await UpdateService.updatePassword(username, newPassword);
