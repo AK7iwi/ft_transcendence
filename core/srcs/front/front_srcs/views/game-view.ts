@@ -33,19 +33,9 @@ class GameView extends HTMLElement {
     window.addEventListener('resize', this.handleResize);
   }
 
-connectedCallback() {
-  this.render();
-
-  this.canvas = this.querySelector('canvas');
-  this.ctx = this.canvas?.getContext('2d') || null;
-
-  this.initGame(); // ⚠️ doit être appelé après l’accès canvas
-  this.setupEventListeners();
-  this.initWebSocket();
-
-  this.draw();
-  window.addEventListener('resize', this.handleResize);
-}
+  connectedCallback() {
+    this.render();
+  }
 
   private render() {
     this.innerHTML = `
@@ -68,12 +58,12 @@ connectedCallback() {
           </span>
           <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
             Pause:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
           </span>
           <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
             Player 2:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↑</span>
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↓</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">K</span>
           </span>
         </div>
       </div>
@@ -98,25 +88,21 @@ connectedCallback() {
     this.updateGameSettings();
   };
 
-private handleResize = () => {
-  if (this.isGameStarted) return; // évite les glitchs en plein jeu
-  this.initGame();
-  this.draw();
-};
-
+  private handleResize = () => {
+    if (this.isGameStarted) return;
+    this.initGame();
+    this.draw();
+  };
 
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
-  window.addEventListener(event, (e: Event) => {
-    const keyEvent = e as KeyboardEvent;
-    this.keysPressed[keyEvent.key] = event === 'keydown';
+      window.addEventListener(event, (e: Event) => {
+        const keyEvent = e as KeyboardEvent;
+        this.keysPressed[keyEvent.key] = event === 'keydown';
 
-    if (event === 'keydown') this.handleKeyDown(keyEvent);
-  })
-);
-
-
-
+        if (event === 'keydown') this.handleKeyDown(keyEvent);
+      })
+    );
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -139,40 +125,28 @@ private handleResize = () => {
     this.ball.dy = this.settings.ballSpeed;
   }
 
- private initGame() {
-  if (!this.canvas || !this.ctx) return;
+  private initGame() {
+    const container = this.canvas.parentElement!;
+    let width = container.clientWidth;
+    let height = width / CANVAS_ASPECT_RATIO;
+    if (height > container.clientHeight) {
+      height = container.clientHeight;
+      width = height * CANVAS_ASPECT_RATIO;
+    }
+    this.canvas.width = width;
+    this.canvas.height = height;
 
-  const container = this.canvas.parentElement!;
-  let width = container.clientWidth;
-  let height = width / 16 * 9;
+    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-  if (height > container.clientHeight) {
-    height = container.clientHeight;
-    width = height * (16 / 9);
+    this.resetBall();
+    this.gameLoop = false;
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.updateGameSettings();
   }
-
-  this.canvas.width = width;
-  this.canvas.height = height;
-
-  // Repositionne les paddles
-  this.paddle1.x = this.canvas.width * 0.02;
-  this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-
-  this.paddle2.x = this.canvas.width * 0.98 - this.paddle2.width;
-  this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
-
-  this.targetPaddle1Y = this.paddle1.y;
-  this.targetPaddle2Y = this.paddle2.y;
-
-  this.resetBall(); // ← laisse la logique actuelle ici
-
-  this.gameLoop = false;
-  this.isGameStarted = false;
-  this.isBallActive = false;
-
-  this.updateGameSettings();
-}
-
 
   private resetBall() {
     this.ball.x = this.canvas.width / 2;
@@ -182,6 +156,10 @@ private handleResize = () => {
     this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
     this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
     this.isBallActive = false;
+	this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
     this.startBallCountdown();
   }
 
@@ -220,6 +198,8 @@ private handleResize = () => {
   }
 
   private updateGame() {
+    if (!this.isBallActive || this.isGameOver) return;
+
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
@@ -227,41 +207,39 @@ private handleResize = () => {
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-    if (this.isBallActive && !this.isGameOver) {
-      this.ball.x += this.ball.dx;
-      this.ball.y += this.ball.dy;
+    this.ball.x += this.ball.dx;
+    this.ball.y += this.ball.dy;
 
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
+    if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
 
-      const ballHitsPaddle = (p: any) =>
-        this.ball.y + this.ball.size / 2 >= p.y &&
-        this.ball.y - this.ball.size / 2 <= p.y + p.height;
+    const ballHitsPaddle = (p: any) =>
+      this.ball.y + this.ball.size / 2 >= p.y &&
+      this.ball.y - this.ball.size / 2 <= p.y + p.height;
 
-      if (
-        this.ball.dx < 0 &&
-        this.ball.x <= this.paddle1.x + this.paddle1.width &&
-        this.ball.x >= this.paddle1.x &&
-        ballHitsPaddle(this.paddle1)
-      ) {
-        this.ball.dx *= -1;
-      } else if (
-        this.ball.dx > 0 &&
-        this.ball.x + this.ball.size >= this.paddle2.x &&
-        this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-        ballHitsPaddle(this.paddle2)
-      ) {
-        this.ball.dx *= -1;
-      }
+    if (
+      this.ball.dx < 0 &&
+      this.ball.x <= this.paddle1.x + this.paddle1.width &&
+      this.ball.x >= this.paddle1.x &&
+      ballHitsPaddle(this.paddle1)
+    ) {
+      this.ball.dx *= -1;
+    } else if (
+      this.ball.dx > 0 &&
+      this.ball.x + this.ball.size >= this.paddle2.x &&
+      this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+      ballHitsPaddle(this.paddle2)
+    ) {
+      this.ball.dx *= -1;
+    }
 
-      if (this.ball.x <= 0) {
-        this.score.player2++;
-        this.score.player2 >= this.settings.endScore ? this.endGame('Player 2') : this.resetBall();
-        this.updateScoreDisplay();
-      } else if (this.ball.x >= this.canvas.width) {
-        this.score.player1++;
-        this.score.player1 >= this.settings.endScore ? this.endGame('Player 1') : this.resetBall();
-        this.updateScoreDisplay();
-      }
+    if (this.ball.x <= 0) {
+      this.score.player2++;
+      this.score.player2 >= this.settings.endScore ? this.endGame('Player 2') : this.resetBall();
+      this.updateScoreDisplay();
+    } else if (this.ball.x >= this.canvas.width) {
+      this.score.player1++;
+      this.score.player1 >= this.settings.endScore ? this.endGame('Player 1') : this.resetBall();
+      this.updateScoreDisplay();
     }
   }
 
@@ -329,6 +307,7 @@ private handleResize = () => {
     this.isInitialCountdown = false;
     this.gameLoop = false;
     this.initGame();
+    this.updateScoreDisplay();
     this.draw();
   }
 

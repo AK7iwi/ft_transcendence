@@ -305,11 +305,6 @@ handleAuth(clientId, ws, token) {
 
     console.log(`🔓 Authenticated user ${userId} as ${role}`);
   }
-   catch (err) {
-    console.error('❌ Error in handleAuth:', err);
-    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
-    ws.close();
-  }
 }
 
   handleDisconnect(clientId, ws) {

@@ -62,22 +62,21 @@ class PongApp extends HTMLElement {
 
     navLinks.innerHTML = ''; // Reset existing links
 
+	// Ces 3 lignes servent plus a rien je crois
     const staticLinks = [
-      { href: '/', icon: 'fa-solid fa-house', label: 'Home' },
-      ...(isAuthenticated ? [] : [{ href: '/game', icon: 'fa-solid fa-gamepad', label: 'Pong' }])
+      ,
     ];
 
     const authLinks = isAuthenticated ? [
-      { href: '/gamelog', icon: 'fa-solid fa-gamepad', label: 'Game' },
-      { href: '/tournament', icon: 'fa-solid fa-trophy', label: 'Tournament' },
-      { href: '/chat', icon: 'fa-solid fa-comments', label: 'Chat' },
-      { href: '/friends', icon: 'fa-solid fa-user-group', label: 'Friends' },
-      { href: '/settings', icon: 'fa-solid fa-gear', label: 'Settings' },
-      { href: '/profile', icon: 'fa-solid fa-user', label: 'Profile' },
-      { href: '#', icon: 'fa-solid fa-right-from-bracket', label: 'Logout', onClick: this.logout.bind(this) }
+      { href: '/gamelog', label: 'Game' },
+      { href: '/tournament', label: 'Tournament' },
+      { href: '/chat', label: 'Chat' },
+      { href: '/friends', label: 'Friends' },
+      { href: '/settings', label: 'Settings' },
+      { href: '/profile', label: 'Profile' },
     ] : [];
 
-    const createLink = ({ href, icon, label, onClick }: any) => {
+    const createLink = ({ href, label, onClick }: any) => {
       const link = document.createElement('a');
       link.href = href;
       link.className =
@@ -86,7 +85,7 @@ class PongApp extends HTMLElement {
         'after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
         'hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500 ' +
         'after:transition-all after:duration-300';
-      link.innerHTML = `<i class="${icon}"></i> ${label}`;
+      link.innerHTML = `${label}`;
       if (onClick) {
         link.addEventListener('click', (e) => {
           e.preventDefault();
@@ -130,6 +129,14 @@ class PongApp extends HTMLElement {
       { path: '/friends', component: 'friend-view', action: requireAuth },
       { path: '/settings', component: 'settings-view', action: requireAuth },
       { path: '/profile', component: 'profile-view', action: requireAuth },
+
+	  // dev
+    //   { path: '/tournament', component: 'tournament-view' },
+    //   { path: '/chat', component: 'chat-view' },
+    //   { path: '/friend-profile', component: 'friend-profile-view' },
+    //   { path: '/friends', component: 'friend-view' },
+    //   { path: '/settings', component: 'settings-view' },
+    //   { path: '/profile', component: 'profile-view' },
 
       { path: '(.*)', redirect: '/' }
     ]);
