@@ -255,9 +255,17 @@ static async verify2FA(code: string) {
   return json;
 }
 
+// mat
+static async validateUsername(username: string): Promise<{ valid: boolean; message?: string }> {
+  const res = await fetch(`${this.baseUrl}/tournament/validate-username`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
 
-
-
+  if (!res.ok) throw new Error('Failed to validate username');
+  return await res.json();
+}
 
 static logout() {
   localStorage.removeItem('token');
