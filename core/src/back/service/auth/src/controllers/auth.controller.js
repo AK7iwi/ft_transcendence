@@ -5,7 +5,7 @@ class AuthController {
     async register(request, reply) {
         try {
             const { username, password } = request.body;
-            const user = await AuthService.registerUser(username, password);
+            const user = await AuthService.registerUser(username, password, request.server.axios);
 
             return reply.code(200).send({
                 success: true,
@@ -33,13 +33,13 @@ class AuthController {
     async login(request, reply) {
         try {
             const { username, password } = request.body;
-            const user = await AuthService.loginUser(username, password);
+            const user = await AuthService.loginUser(username, password, request.server.axios);
             
             const token = JWTService.generateToken({
                 id: user.id,
                 username: user.username
             });
-            
+
             // If 2FA is enabled, return a special response (without token)
             if (user.twoFactorEnabled) {
                 return reply.code(200).send({
@@ -54,9 +54,9 @@ class AuthController {
                 message: 'Login successful',
                 data: {
                     user: {
-                        username: user.username
-                    },
-                    token: token
+                        username: user.username,
+                        token: token
+                    }
                 }
             });
       
@@ -70,5 +70,4 @@ class AuthController {
     }
 }
 
-// Export an instance of the controller instead of the class
 module.exports = new AuthController();
