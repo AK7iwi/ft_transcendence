@@ -100,7 +100,7 @@ const userSchema = {
     createUser: {
         body: {
             type: 'object',
-            required: ['userId', 'username'],
+            required: ['userId', 'username', 'hashedPassword'],
             properties: {
                 userId: { type: 'number' }, 
                 username: { 
@@ -108,9 +108,42 @@ const userSchema = {
                     minLength: 3, 
                     maxLength: 20, 
                     pattern: '^[a-zA-Z0-9_-]+$' 
+                },
+                hashedPassword: {
+                    type: 'string',
+                    minLength: 60, // bcrypt hashes are 60 characters
+                    maxLength: 60
                 }
             },
             additionalProperties: false
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    id: { type: 'number' },
+                                    username: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
         }
     }
 };

@@ -3,7 +3,7 @@ const InternalController = require('../controllers/internal.controller');
 
 module.exports = async function (fastify, opts) {
     // Route for auth service to create user profile
-    fastify.post('/internal/user', {
+    fastify.post('/internal/createUser', {
         schema: internalSchema.createUser,
         handler: InternalController.createUser
     });

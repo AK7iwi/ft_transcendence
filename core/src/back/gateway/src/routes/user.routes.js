@@ -48,13 +48,13 @@ module.exports = async function (fastify, opts) {
     });
     
     //Internal routes
-    fastify.post('/internal/user', {
+    fastify.post('/internal/createUser', {
         schema: userSchema.createUser,
         preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(
-                    `${process.env.USER_SERVICE_URL}/user/internal/user`,
+                    `${process.env.USER_SERVICE_URL}/user/internal/createUser`,
                     request.body
                 );
                 return reply.code(200).send(response.data);

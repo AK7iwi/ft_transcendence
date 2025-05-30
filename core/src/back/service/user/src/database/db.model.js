@@ -35,11 +35,11 @@ class DbModel {
         return stmt.run(hashedPassword, username);
     }
 
-    static async createUser(userId, username) {
+    static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`
             INSERT INTO user_profiles (user_id, username, password) 
             VALUES (?, ?, ?)`);
-        return stmt.run(userId, username, ''); // Empty password initially
+        return stmt.run(userId, username, hashedPassword);
     }
 }
 

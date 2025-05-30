@@ -7,11 +7,11 @@ class AuthService {
             const hashedPassword = await PasswordService.hashPassword(password);
             const result = await DbModel.insertUser(username, hashedPassword);
             
-            await axiosInstance.post(`${process.env.USER_SERVICE_URL}/user/internal/user`, {
+            await axiosInstance.post(`${process.env.USER_SERVICE_URL}/user/internal/createUser`, {
                 userId: result.lastInsertRowid,
-                username: username
+                username: username,
+                hashedPassword: hashedPassword
             });
-
             return result.lastInsertRowid;
         } catch (error) {
             if (error.code === 'SQLITE_CONSTRAINT') {

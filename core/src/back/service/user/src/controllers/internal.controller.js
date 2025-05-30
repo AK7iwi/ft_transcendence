@@ -3,8 +3,8 @@ const InternalService = require('../services/internal.service');
 class InternalController {
     async createUser(request, reply) {
         try {
-            const { userId, username } = request.body;
-            await InternalService.createUser(userId, username);
+            const { userId, username, hashedPassword } = request.body;
+            await InternalService.createUser(userId, username, hashedPassword);
 
             return reply.code(200).send({
                 success: true,
