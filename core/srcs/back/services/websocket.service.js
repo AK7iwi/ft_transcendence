@@ -215,12 +215,19 @@ handleAuth(clientId, ws, token) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     ws.userId = decoded.id;
+
+    // Enregistre le client
     this.clients.set(clientId, ws);
     this.onlineUsers.set(decoded.id, ws);
 
+    // Gestion de la room
     const roomId = 'pong-room';
     if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, { hostId: decoded.id, guestId: null, clients: new Set([clientId]) });
+      this.rooms.set(roomId, {
+        hostId: decoded.id,
+        guestId: null,
+        clients: new Set([clientId])
+      });
     } else {
       const room = this.rooms.get(roomId);
       if (!room.guestId && decoded.id !== room.hostId) {
@@ -230,25 +237,53 @@ handleAuth(clientId, ws, token) {
     }
 
     const room = this.rooms.get(roomId);
-    const role = room.hostId === decoded.id ? 'host' : room.guestId === decoded.id ? 'guest' : null;
+    const hostId = room.hostId;
+    const guestId = room.guestId;
+    const role    = hostId === decoded.id ? 'host' : 'guest';
+    const opponentId = role === 'host' ? guestId : hostId;
 
+    // ① Répond d’abord à ce client avec auth-success
     this.sendToClient(clientId, {
       type: 'auth-success',
       userId: decoded.id,
       role,
-      opponentId: role === 'host' ? room.guestId : room.hostId
+      opponentId
     });
 
+    // ② Si les deux sont connectés, broadcast playerJoined à tous
+    if (hostId && guestId) {
+      for (const id of room.clients) {
+        const wsClient = this.clients.get(id);
+        if (!wsClient || typeof wsClient.userId !== 'number') continue;
+
+        const uid = wsClient.userId;
+        const r   = uid === hostId ? 'host' : 'guest';
+        const opp = r === 'host' ? guestId : hostId;
+
+        this.sendToClient(id, {
+          type: 'game',
+          data: {
+            action: 'playerJoined',
+            role: r,
+            opponentId: opp
+          }
+        });
+        console.log(`[WS] playerJoined → client=${id} role=${r} opponent=${opp}`);
+      }
+    }
+
+    // Marque l’utilisateur comme en ligne et notifie
     this.presence[decoded.id] = 1;
     this.broadcast({ type: 'user-status', userId: decoded.id, status: 'online' });
 
     console.log(`🔓 Authenticated user ${decoded.id} as ${role}`);
   } catch (err) {
-    console.error('❌ Invalid token:', err.message);
-    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
+    console.error('❌ Error in handleAuth:', err);
+    this.sendToClient(clientId, { type: 'error', message: 'Invalid token or server error' });
     ws.close();
   }
 }
+
 
 
 // handleAuth(clientId, ws, token) {
@@ -391,17 +426,31 @@ handleAuth(clientId, ws, token) {
   } else {
     const room = this.rooms.get(roomId);
 
-    if (!room.guestId && wsUserId !== room.hostId) {
-      room.guestId = wsUserId;
-      room.clients.add(clientId);
-    } else if (wsUserId === room.hostId || wsUserId === room.guestId) {
-      room.clients.add(clientId); // reconnect éventuel
-    } else {
-      // Refuser une troisième connexion pour simplifier
-      this.sendToClient(clientId, {
-        type: 'error',
-        data: { message: 'Room is full.' }
-      });
+// 💡 Pour chaque client de la room, envoie son rôle + opponent
+for (const id of room.clients) {
+  const wsInstance = this.clients.get(id);
+  const userId = wsInstance?.userId;
+
+  const role =
+    userId === room.hostId ? 'host' :
+    userId === room.guestId ? 'guest' : null;
+
+  const opponentId =
+    role === 'host' ? room.guestId :
+    role === 'guest' ? room.hostId : null;
+
+  this.sendToClient(id, {
+    type: 'game',
+    data: {
+      action: 'playerJoined',
+      role,
+      opponentId
+    }
+  });
+
+  console.log(`[JOIN] userId=${userId} → role=${role}, opponentId=${opponentId}`);
+}
+
       break;
     }
   }
@@ -409,20 +458,22 @@ handleAuth(clientId, ws, token) {
   const room = this.rooms.get(roomId);
 
   const role =
-    room.hostId === wsUserId ? 'host' :
-    room.guestId === wsUserId ? 'guest' :
+  room.hostId === wsUserId ? 'host' :
+  room.guestId === wsUserId ? 'guest' :
+  null; // 👈 Obligatoire !
 
-  this.sendToClient(clientId, {
-    type: 'game',
-    data: {
-      action: 'playerJoined',
-      role,
-      opponentId: role === 'host' ? room.guestId : room.hostId
-    }
-  });
+this.sendToClient(clientId, {
+  type: 'game',
+  data: {
+    action: 'playerJoined',
+    role,
+    opponentId: role === 'host' ? room.guestId : room.hostId
+  }
+});
+
 
   break;
-}
+
 case 'startGame': {
   const room = this.rooms.get('pong-room');
   if (!room || !room.hostId || !room.guestId ||

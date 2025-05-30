@@ -33,9 +33,19 @@ class GameView extends HTMLElement {
     window.addEventListener('resize', this.handleResize);
   }
 
-  connectedCallback() {
-    this.render();
-  }
+connectedCallback() {
+  this.render();
+
+  this.canvas = this.querySelector('canvas');
+  this.ctx = this.canvas?.getContext('2d') || null;
+
+  this.initGame(); // ⚠️ doit être appelé après l’accès canvas
+  this.setupEventListeners();
+  this.initWebSocket();
+
+  this.draw();
+  window.addEventListener('resize', this.handleResize);
+}
 
   private render() {
     this.innerHTML = `
@@ -88,11 +98,12 @@ class GameView extends HTMLElement {
     this.updateGameSettings();
   };
 
-  private handleResize = () => {
-    if (this.isGameStarted) return;
-    this.initGame();
-    this.draw();
-  };
+private handleResize = () => {
+  if (this.isGameStarted) return; // évite les glitchs en plein jeu
+  this.initGame();
+  this.draw();
+};
+
 
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
@@ -128,28 +139,40 @@ class GameView extends HTMLElement {
     this.ball.dy = this.settings.ballSpeed;
   }
 
-  private initGame() {
-    const container = this.canvas.parentElement!;
-    let width = container.clientWidth;
-    let height = width / CANVAS_ASPECT_RATIO;
-    if (height > container.clientHeight) {
-      height = container.clientHeight;
-      width = height * CANVAS_ASPECT_RATIO;
-    }
-    this.canvas.width = width;
-    this.canvas.height = height;
+ private initGame() {
+  if (!this.canvas || !this.ctx) return;
 
-    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
-    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
-    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+  const container = this.canvas.parentElement!;
+  let width = container.clientWidth;
+  let height = width / 16 * 9;
 
-    this.resetBall();
-    this.gameLoop = false;
-    this.isGameStarted = false;
-    this.isBallActive = false;
-    this.updateGameSettings();
+  if (height > container.clientHeight) {
+    height = container.clientHeight;
+    width = height * (16 / 9);
   }
+
+  this.canvas.width = width;
+  this.canvas.height = height;
+
+  // Repositionne les paddles
+  this.paddle1.x = this.canvas.width * 0.02;
+  this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+
+  this.paddle2.x = this.canvas.width * 0.98 - this.paddle2.width;
+  this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+
+  this.targetPaddle1Y = this.paddle1.y;
+  this.targetPaddle2Y = this.paddle2.y;
+
+  this.resetBall(); // ← laisse la logique actuelle ici
+
+  this.gameLoop = false;
+  this.isGameStarted = false;
+  this.isBallActive = false;
+
+  this.updateGameSettings();
+}
+
 
   private resetBall() {
     this.ball.x = this.canvas.width / 2;
