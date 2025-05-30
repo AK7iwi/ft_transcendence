@@ -8,7 +8,7 @@ class JwtService {
                 username: user.username
             },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: process.env.JWT_EXPIRES_IN}
         );
     }
 

@@ -31,7 +31,7 @@ fastify.register(cors, {
 // Register websocket
 fastify.register(websocket);
 
-// Configure axios
+//Configure axios
 const axiosInstance = axios.create({
     timeout: 5000, // 5 seconds timeout
     headers: {
@@ -61,7 +61,6 @@ fastify.register(userRoutes, { prefix: '/user' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
-    // Validation error (schema)
     if (error.statusCode) {
         return reply.status(error.statusCode).send({
             success: false,

@@ -42,6 +42,12 @@ curl -k -X PUT \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"currentUsername": "test", "newUsername": "test2"}' \
   "https://localhost:3000/user/username"
+
+  curl -k -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"username": "test", "newPassword": "NewTest123@"}' \
+  "https://localhost:3000/user/password"
   
 SQL injection: 
 
