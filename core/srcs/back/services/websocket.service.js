@@ -11,7 +11,9 @@ class WebSocketService {
     });
 
     this.clients = new Map();       // clientId → ws
-    this.onlineUsers = new Map();   // userId → ws
+    // userId → Set<ws>
+this.onlineUsers = new Map();
+
 this.rooms = new Map(); // roomId → { hostId, guestId, clients: Set }
     this.presence = Array(20).fill(0);
 
@@ -214,47 +216,68 @@ handleAuth(clientId, ws, token) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    ws.userId = decoded.id;
+    const userId = decoded.id;
+    ws.userId = userId;
 
-    // Enregistre le client
+    // 1) Enregistre client → ws
     this.clients.set(clientId, ws);
-    this.onlineUsers.set(decoded.id, ws);
 
-    // Gestion de la room
+    // 2) Gère onlineUsers : userId → Set<ws>
+    let sockets = this.onlineUsers.get(userId);
+    if (!sockets) {
+      sockets = new Set();
+      this.onlineUsers.set(userId, sockets);
+    }
+    sockets.add(ws);
+
+    // … reste de la logique de rooms, rôle, broadcast, etc.
+
+  } catch (err) {
+    console.error('❌ Error in handleAuth:', err);
+    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
+    ws.close();
+  }
+
+
+
+
+    // 3) Création / mise à jour de la room
     const roomId = 'pong-room';
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, {
-        hostId: decoded.id,
-        guestId: null,
-        clients: new Set([clientId])
+        hostId:   userId,
+        guestId:  null,
+        clients:  new Set([clientId])
       });
     } else {
       const room = this.rooms.get(roomId);
-      if (!room.guestId && decoded.id !== room.hostId) {
-        room.guestId = decoded.id;
+      // si pas encore de guest et que ce n’est pas l’host
+      if (!room.guestId && room.hostId !== userId) {
+        room.guestId = userId;
       }
       room.clients.add(clientId);
     }
 
     const room = this.rooms.get(roomId);
-    const hostId = room.hostId;
-    const guestId = room.guestId;
-    const role    = hostId === decoded.id ? 'host' : 'guest';
+    const { hostId, guestId } = room;
+
+    // 4) Détermine le rôle et l’opposant pour CE client
+    const role       = hostId === userId ? 'host' : 'guest';
     const opponentId = role === 'host' ? guestId : hostId;
 
-    // ① Répond d’abord à ce client avec auth-success
+    // 📨 Répond d’abord à CE client
     this.sendToClient(clientId, {
       type: 'auth-success',
-      userId: decoded.id,
+      userId,
       role,
       opponentId
     });
 
-    // ② Si les deux sont connectés, broadcast playerJoined à tous
+    // 5) Si les deux joueurs sont là, broadcast playerJoined à tous
     if (hostId && guestId) {
-      for (const id of room.clients) {
+      room.clients.forEach(id => {
         const wsClient = this.clients.get(id);
-        if (!wsClient || typeof wsClient.userId !== 'number') continue;
+        if (!wsClient || typeof wsClient.userId !== 'number') return;
 
         const uid = wsClient.userId;
         const r   = uid === hostId ? 'host' : 'guest';
@@ -263,102 +286,42 @@ handleAuth(clientId, ws, token) {
         this.sendToClient(id, {
           type: 'game',
           data: {
-            action: 'playerJoined',
-            role: r,
+            action:     'playerJoined',
+            role:       r,
             opponentId: opp
           }
         });
         console.log(`[WS] playerJoined → client=${id} role=${r} opponent=${opp}`);
-      }
+      });
     }
 
-    // Marque l’utilisateur comme en ligne et notifie
-    this.presence[decoded.id] = 1;
-    this.broadcast({ type: 'user-status', userId: decoded.id, status: 'online' });
+    // Marque l’utilisateur en ligne et notifie
+    this.presence[userId] = 1;
+    this.broadcast({
+      type:   'user-status',
+      userId,
+      status: 'online'
+    });
 
-    console.log(`🔓 Authenticated user ${decoded.id} as ${role}`);
-  } catch (err) {
+    console.log(`🔓 Authenticated user ${userId} as ${role}`);
+  }
+   catch (err) {
     console.error('❌ Error in handleAuth:', err);
-    this.sendToClient(clientId, { type: 'error', message: 'Invalid token or server error' });
+    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
     ws.close();
   }
 }
 
-
-
-// handleAuth(clientId, ws, token) {
-//   if (!token) {
-//     return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
-//   }
-
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     ws.userId = decoded.id;
-//     this.clients.set(clientId, ws); // ✅ FIX CRUCIAL
-//     this.onlineUsers.set(decoded.id, ws);
-
-//     console.log(`🔓 Authenticated user ${decoded.id}`);
-//     let role;
-//     if (this.roles.hostId === decoded.id || !this.roles.hostId) {
-//       this.roles.hostId = decoded.id;
-//       role = 'host';
-//     } else if (this.roles.guestId === decoded.id || !this.roles.guestId) {
-//       this.roles.guestId = decoded.id;
-//       role = 'guest';
-//     } else {
-//       role = 'noob';
-//       console.warn(`🚫 Room full: host=${this.roles.hostId} guest=${this.roles.guestId}`);
-//     }
-//     // this.broadcast({ type: 'game', data: { action : 'playerJoined', by: `${decoded.id}`}});
-//     if (decoded.id < this.presence.length) {
-//       this.presence[decoded.id] = 1;
-//       console.log(`✅ User ${decoded.id} is online`);
-//     }
-//     this.sendToClient(clientId, {
-//       type: 'auth-success',
-//       userId: decoded.id
-//     });
-
-//     this.broadcast({
-//       type: 'user-status',
-//       userId: decoded.id,
-//       status: 'online'
-//     });
-//   } catch (err) {
-//     console.error('❌ Invalid token:', err.message);
-//     this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
-//     ws.close();
-//   }
-// }
-  // handleRemoteDc(userId)
-  // {
-  //   if (this.roles.hostId === userId) {
-  //     this.roles.hostId = null;
-  //     console.log(`hostId: ${this.roles.hostId} and ${userId}`);
-  //     return;
-  //   }
-  //   else if (this.roles.guestId === userId) {
-  //     this.roles.guestId = null;
-  //     console.log(`Guest: ${this.roles.guestId} and ${userId}`);
-  //     return;
-  //   }
-  // }
-
-  // handleDisconnect(clientId, ws) {
-  //   this.presence[ws.userId] = 0;
-  //   console.log(`❌ User ${ws.userId} is offline`);
-  //   console.log(`❌ Client disconnected: ${clientId}`);
-  //   this.clients.delete(clientId);
-  //   if (ws.userId && this.onlineUsers.has(ws.userId)) {
-  //     this.onlineUsers.delete(ws.userId);
-  //     this.broadcast({
-  //       type: 'user-status',
-  //       userId: ws.userId,
-  //       status: 'offline'
-  //     });
-  //   }
-  // }
   handleDisconnect(clientId, ws) {
+    const sockets = this.onlineUsers.get(wsUserId);
+if (sockets) {
+  sockets.delete(ws);
+  if (sockets.size === 0) {
+    this.onlineUsers.delete(wsUserId);
+    // on broadcast “offline” ici seulement
+    this.broadcast({ type: 'user-status', userId: wsUserId, status: 'offline' });
+  }
+}
   const wsUserId = ws.userId;
   const roomId = 'pong-room';
 
@@ -403,57 +366,72 @@ handleAuth(clientId, ws, token) {
   }
 
   handleGameMessage(clientId, payload) {
-    console.log('going through handle game message');
-    const { action, userId, ...rest } = payload || {};
-    switch (action) {
-      case 'pause':
-        this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
-        break;
+  const { action, userId, gameId, ...rest } = payload;
+  const roomKey = `pong-room-${gameId}`;
+
+  switch (action) {
+    case 'join': {
+  // 1) Récupère la room (ici une seule room "pong-room")
+  const roomId = 'pong-room';
+  let room = this.rooms.get(roomId);
+
+  // 2) Si pas de room, le premier devient host
+  if (!room) {
+    room = { hostId: userId, guestId: null, clients: new Set() };
+    this.rooms.set(roomId, room);
+  }
+  // 3) Sinon, si pas de guest et pas lui-même l’host, devient guest
+  else if (!room.guestId && room.hostId !== userId) {
+    room.guestId = userId;
+  }
+  // 4) Ajoute toujours le client à la liste
+  room.clients.add(clientId);
+
+  // 5) Si deux joueurs présents, on notifie tout le monde une seule fois
+  if (room.hostId && room.guestId) {
+    for (const id of room.clients) {
+      const wsClient = this.clients.get(id);
+      if (!wsClient || typeof wsClient.userId !== 'number') continue;
+      const uid = wsClient.userId;
+      const role = uid === room.hostId ? 'host' : 'guest';
+      const opp  = role === 'host' ? room.guestId : room.hostId;
+      this.sendToClient(id, {
+        type: 'game',
+        data: { action: 'playerJoined', role, opponentId: opp }
+      });
+    }
+  }
+  break;
+}
+case 'leaveGame': {
+  const roomId = 'pong-room';
+  const room = this.rooms.get(roomId);
+  if (!room) break;
+
+  // 1) Retire le client
+  room.clients.delete(clientId);
+  // 2) Réinitialise host/guest si besoin
+  if (room.hostId === userId)  room.hostId  = null;
+  if (room.guestId === userId) room.guestId = null;
+  // 3) Si plus personne, on détruit la room
+  if (room.clients.size === 0) {
+    this.rooms.delete(roomId);
+  } else {
+    // 4) Informe l’adversaire qu’on a quitté
+    for (const otherId of room.clients) {
+      this.sendToClient(otherId, {
+        type: 'game',
+        data: { action: 'playerLeft' }
+      });
+    }
+  }
+  break;
+}
+
       case 'scoreUpdate':
         this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
         break;
-      case 'join': {
-  const wsUserId = this.clients.get(clientId)?.userId;
-  const roomId = 'pong-room';
-
-  if (!this.rooms.has(roomId)) {
-    // Premier utilisateur devient hôte
-    this.rooms.set(roomId, {
-      hostId: wsUserId,
-      guestId: null,
-      clients: new Set([clientId])
-    });
-  } else {
-    const room = this.rooms.get(roomId);
-
-// 💡 Pour chaque client de la room, envoie son rôle + opponent
-for (const id of room.clients) {
-  const wsInstance = this.clients.get(id);
-  const userId = wsInstance?.userId;
-
-  const role =
-    userId === room.hostId ? 'host' :
-    userId === room.guestId ? 'guest' : null;
-
-  const opponentId =
-    role === 'host' ? room.guestId :
-    role === 'guest' ? room.hostId : null;
-
-  this.sendToClient(id, {
-    type: 'game',
-    data: {
-      action: 'playerJoined',
-      role,
-      opponentId
-    }
-  });
-
-  console.log(`[JOIN] userId=${userId} → role=${role}, opponentId=${opponentId}`);
-}
-
-      break;
-    }
-  }
+    
 
   const room = this.rooms.get(roomId);
 
@@ -471,7 +449,19 @@ this.sendToClient(clientId, {
   }
 });
 
-
+case 'leaveGame':
+      // retire ce client de la room
+      room.clients.delete(clientId);
+      if (room.hostId === userId) room.hostId = null;
+      if (room.guestId=== userId) room.guestId= null;
+      // informe l’adversaire
+      for (const id of room.clients) {
+        this.sendToClient(id, {
+          type: 'game',
+          data: { action: 'playerLeft' }
+        });
+      }
+      break;
   break;
 
 case 'startGame': {
@@ -573,11 +563,13 @@ case 'startGame': {
   }
 
 sendToGameClient(userId, message) {
-  const ws = this.onlineUsers.get(userId);
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(message));
+  const sockets = this.onlineUsers.get(toUserId) || new Set();
+for (const sock of sockets) {
+  if (sock.readyState === WebSocket.OPEN) {
+    sock.send(msg);
   }
 }
+
   getOnlineUserIds() {
     return Array.from(this.onlineUsers.keys());
   }
