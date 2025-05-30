@@ -12,7 +12,13 @@ class AuthService {
                 username: username,
                 hashedPassword: hashedPassword
             });
-            return result.lastInsertRowid;
+            return {
+                success: true,
+                message: 'Registration successful',
+                data: {
+                    username: username
+                }
+            };
         } catch (error) {
             if (error.code === 'SQLITE_CONSTRAINT') {
                 throw new Error('Username already exists');

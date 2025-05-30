@@ -28,15 +28,12 @@ app.register(internalRoutes, { prefix: '/auth' });
 
 // Test endpoint
 app.get('/', async (request, reply) => {
-    reply.code(200).send({ message: 'Server is running' });
+    reply.code(200).send({ success: true, message: 'Server is running' });
 });
 
 // Health check endpoint
 app.get('/health', async (request, reply) => {
-    reply.code(200).send({ 
-        status: 'healthy',
-        message: 'Server is healthy'
-    });
+    reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
 // Start server

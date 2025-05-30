@@ -5,15 +5,24 @@ class AuthController {
     async register(request, reply) {
         try {
             const { username, password } = request.body;
-            const userId = await AuthService.registerUser(username, password, request.server.axios);   
+            const user = await AuthService.registerUser(username, password);
 
             return reply.code(200).send({
                 success: true,
-                message: 'User registered successfully',
-                data: { username: username, userId: userId }
+                message: 'Registration successful',
+                data: {
+                    user: {
+                        username: user.username
+                    }
+                }
             });
         } catch (error) {
-            request.log.error(error);
+            if (error.message === 'Username already exists') {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'Username already exists'
+                });
+            }
             return reply.code(400).send({
                 success: false,
                 message: error.message
@@ -25,7 +34,12 @@ class AuthController {
         try {
             const { username, password } = request.body;
             const user = await AuthService.loginUser(username, password);
-      
+            
+            const token = JWTService.generateToken({
+                id: user.id,
+                username: user.username
+            });
+            
             // If 2FA is enabled, return a special response (without token)
             if (user.twoFactorEnabled) {
                 return reply.code(200).send({
@@ -35,16 +49,15 @@ class AuthController {
                 });
             }
       
-            // Otherwise, classic login with JWT token
-            const token = JWTService.generateToken({
-                id: user.id,
-                username: user.username
-            });
-      
             return reply.code(200).send({
                 success: true,
                 message: 'Login successful',
-                data: { user: { username: user.username }, token: token }
+                data: {
+                    user: {
+                        username: user.username
+                    },
+                    token: token
+                }
             });
       
         } catch (error) {

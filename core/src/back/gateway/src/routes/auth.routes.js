@@ -18,7 +18,7 @@ module.exports = async function (fastify, opts) {
                 const statusCode = error.response?.status || 400;
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: error.message || 'Internal Server Error'
                 });
             }
         }
@@ -40,7 +40,7 @@ module.exports = async function (fastify, opts) {
                 const statusCode = error.response?.status || 401;
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message || 'Internal Server Error'
+                    message: error.message || 'Internal Server Error'
                 });
             }
         }
@@ -62,7 +62,7 @@ module.exports = async function (fastify, opts) {
                 const statusCode = error.response?.status || 400;
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: error.message || 'Internal Server Error'
                 });
             }
         }
@@ -83,7 +83,7 @@ module.exports = async function (fastify, opts) {
                 const statusCode = error.response?.status || 400;
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: error.message || 'Internal Server Error'
                 });
             }
         }

@@ -44,12 +44,12 @@ fastify.decorate('axios', axiosInstance);
 
 // Basic route
 fastify.get('/', async (request, reply) => {
-    reply.code(200).send({ message: 'Server is running' });
+    reply.code(200).send({ success: true, message: 'Server is running' });
 });
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
-    reply.code(200).send( { message: 'Server is healthy' });
+    reply.code(200).send( { success: true, message: 'Server is healthy' });
 });
 
 // Register routes
