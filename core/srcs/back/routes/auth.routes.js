@@ -395,6 +395,31 @@ console.log(`[BLOCK] ${blockerId} → ${blockedId}`);
   }
 });
 
+fastify.post('/auth/unblock', { preValidation: [fastify.authenticate] }, async (request, reply) => {
+  const { unblockId } = request.body;
+  const currentUserId = request.user.id;
+
+  try {
+    const stmt = fastify.db.prepare(`
+      DELETE FROM blocks 
+      WHERE blocker_id = ? AND blocked_id = ?
+    `);
+
+    const result = stmt.run(currentUserId, unblockId);
+
+    if (result.changes === 0) {
+      return reply.status(404).send({ message: 'Relation de blocage introuvable' });
+    }
+
+    reply.status(200).send({ message: 'Utilisateur débloqué avec succès' });
+
+  } catch (error) {
+    fastify.log.error(error);
+    reply.status(500).send({ message: 'Erreur serveur lors du déblocage.' });
+  }
+});
+
+
 fastify.delete('/friends/remove', {
   preHandler: [authenticate],
   handler: async (req, reply) => {

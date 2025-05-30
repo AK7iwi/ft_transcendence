@@ -6,6 +6,8 @@ export interface GameSettings {
   paddleSpeed: number;
   soundEnabled: boolean;
   musicEnabled: boolean;
+  player1Id?: number;
+  player2Id?: number;
 }
 
 export class SettingsService {

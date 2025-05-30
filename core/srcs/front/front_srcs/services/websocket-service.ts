@@ -102,13 +102,17 @@ export class WebSocketService {
     }
   }
 
-  public send(type: string, data: any) {
-    const message = JSON.stringify({ type, payload: data });
+public send(type: string, data: any) {
+  const message = JSON.stringify({ type, payload: data });
 
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(message);
-    }
+  if (this.ws?.readyState === WebSocket.OPEN) {
+    this.ws.send(message);
+  } else {
+    console.warn('[WS] Not connected, queuing message:', { type, data });
+    this.messageQueue.push({ type, data });
   }
+}
+
 
   public disconnect() {
     if (this.ws) {

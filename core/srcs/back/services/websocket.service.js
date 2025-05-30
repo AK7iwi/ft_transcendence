@@ -12,7 +12,7 @@ class WebSocketService {
 
     this.clients = new Map();       // clientId → ws
     this.onlineUsers = new Map();   // userId → ws
-    this.roles = { hostId: null, guestId: null };         // roles → { hostId: string, guestId: string }
+this.rooms = new Map(); // roomId → { hostId, guestId, clients: Set }
     this.presence = Array(20).fill(0);
 
     this.setupWebSocket();
@@ -47,11 +47,29 @@ class WebSocketService {
       });
 
       ws.on('close', () => {
-        console.log(`on close : hostId: ${this.roles.hostId} | guestId: ${this.roles.guestId} and ws.userId: ${ws.userId} `);
-        // if (ws.userId)
-        //   this.handleRemoteDc(ws.userId);
-        this.handleDisconnect(clientId, ws); // N
-      });
+  const clientInfo = this.clients.get(clientId);
+  const wsUserId = clientInfo?.userId;
+  const roomId = 'pong-room';
+
+  if (this.rooms.has(roomId)) {
+    const room = this.rooms.get(roomId);
+    room.clients.delete(clientId);
+
+    if (room.hostId === wsUserId) {
+      room.hostId = null;
+    } else if (room.guestId === wsUserId) {
+      room.guestId = null;
+    }
+
+    if (room.clients.size === 0) {
+      this.rooms.delete(roomId); // nettoyage complet si vide
+    }
+  }
+
+  this.clients.delete(clientId);
+});
+
+
 
       ws.on('pong', () => {
         console.log('here? \'pong\'');
@@ -197,42 +215,86 @@ handleAuth(clientId, ws, token) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     ws.userId = decoded.id;
-    this.clients.set(clientId, ws); // ✅ FIX CRUCIAL
+    this.clients.set(clientId, ws);
     this.onlineUsers.set(decoded.id, ws);
 
-    console.log(`🔓 Authenticated user ${decoded.id}`);
-    let role;
-    if (this.roles.hostId === decoded.id || !this.roles.hostId) {
-      this.roles.hostId = decoded.id;
-      role = 'host';
-    } else if (this.roles.guestId === decoded.id || !this.roles.guestId) {
-      this.roles.guestId = decoded.id;
-      role = 'guest';
+    const roomId = 'pong-room';
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, { hostId: decoded.id, guestId: null, clients: new Set([clientId]) });
     } else {
-      role = 'noob';
-      console.warn(`🚫 Room full: host=${this.roles.hostId} guest=${this.roles.guestId}`);
+      const room = this.rooms.get(roomId);
+      if (!room.guestId && decoded.id !== room.hostId) {
+        room.guestId = decoded.id;
+      }
+      room.clients.add(clientId);
     }
-    // this.broadcast({ type: 'game', data: { action : 'playerJoined', by: `${decoded.id}`}});
-    if (decoded.id < this.presence.length) {
-      this.presence[decoded.id] = 1;
-      console.log(`✅ User ${decoded.id} is online`);
-    }
+
+    const room = this.rooms.get(roomId);
+    const role = room.hostId === decoded.id ? 'host' : room.guestId === decoded.id ? 'guest' : null;
+
     this.sendToClient(clientId, {
       type: 'auth-success',
-      userId: decoded.id
+      userId: decoded.id,
+      role,
+      opponentId: role === 'host' ? room.guestId : room.hostId
     });
 
-    this.broadcast({
-      type: 'user-status',
-      userId: decoded.id,
-      status: 'online'
-    });
+    this.presence[decoded.id] = 1;
+    this.broadcast({ type: 'user-status', userId: decoded.id, status: 'online' });
+
+    console.log(`🔓 Authenticated user ${decoded.id} as ${role}`);
   } catch (err) {
     console.error('❌ Invalid token:', err.message);
     this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
     ws.close();
   }
 }
+
+
+// handleAuth(clientId, ws, token) {
+//   if (!token) {
+//     return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     ws.userId = decoded.id;
+//     this.clients.set(clientId, ws); // ✅ FIX CRUCIAL
+//     this.onlineUsers.set(decoded.id, ws);
+
+//     console.log(`🔓 Authenticated user ${decoded.id}`);
+//     let role;
+//     if (this.roles.hostId === decoded.id || !this.roles.hostId) {
+//       this.roles.hostId = decoded.id;
+//       role = 'host';
+//     } else if (this.roles.guestId === decoded.id || !this.roles.guestId) {
+//       this.roles.guestId = decoded.id;
+//       role = 'guest';
+//     } else {
+//       role = 'noob';
+//       console.warn(`🚫 Room full: host=${this.roles.hostId} guest=${this.roles.guestId}`);
+//     }
+//     // this.broadcast({ type: 'game', data: { action : 'playerJoined', by: `${decoded.id}`}});
+//     if (decoded.id < this.presence.length) {
+//       this.presence[decoded.id] = 1;
+//       console.log(`✅ User ${decoded.id} is online`);
+//     }
+//     this.sendToClient(clientId, {
+//       type: 'auth-success',
+//       userId: decoded.id
+//     });
+
+//     this.broadcast({
+//       type: 'user-status',
+//       userId: decoded.id,
+//       status: 'online'
+//     });
+//   } catch (err) {
+//     console.error('❌ Invalid token:', err.message);
+//     this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
+//     ws.close();
+//   }
+// }
   // handleRemoteDc(userId)
   // {
   //   if (this.roles.hostId === userId) {
@@ -247,20 +309,42 @@ handleAuth(clientId, ws, token) {
   //   }
   // }
 
+  // handleDisconnect(clientId, ws) {
+  //   this.presence[ws.userId] = 0;
+  //   console.log(`❌ User ${ws.userId} is offline`);
+  //   console.log(`❌ Client disconnected: ${clientId}`);
+  //   this.clients.delete(clientId);
+  //   if (ws.userId && this.onlineUsers.has(ws.userId)) {
+  //     this.onlineUsers.delete(ws.userId);
+  //     this.broadcast({
+  //       type: 'user-status',
+  //       userId: ws.userId,
+  //       status: 'offline'
+  //     });
+  //   }
+  // }
   handleDisconnect(clientId, ws) {
-    this.presence[ws.userId] = 0;
-    console.log(`❌ User ${ws.userId} is offline`);
-    console.log(`❌ Client disconnected: ${clientId}`);
-    this.clients.delete(clientId);
-    if (ws.userId && this.onlineUsers.has(ws.userId)) {
-      this.onlineUsers.delete(ws.userId);
-      this.broadcast({
-        type: 'user-status',
-        userId: ws.userId,
-        status: 'offline'
-      });
-    }
+  const wsUserId = ws.userId;
+  const roomId = 'pong-room';
+
+  if (this.rooms.has(roomId)) {
+    const room = this.rooms.get(roomId);
+    room.clients.delete(clientId);
+    if (room.hostId === wsUserId) room.hostId = null;
+    if (room.guestId === wsUserId) room.guestId = null;
+    if (room.clients.size === 0) this.rooms.delete(roomId);
   }
+
+  if (wsUserId && this.onlineUsers.has(wsUserId)) {
+    this.presence[wsUserId] = 0;
+    this.onlineUsers.delete(wsUserId);
+    this.broadcast({ type: 'user-status', userId: wsUserId, status: 'offline' });
+  }
+
+  this.clients.delete(clientId);
+  console.log(`❌ User ${wsUserId} disconnected`);
+}
+
 
   handleChatMessage(clientId, payload) {
     if (!payload || typeof payload.text !== 'string' || !payload.text.trim()) {
@@ -294,42 +378,74 @@ handleAuth(clientId, ws, token) {
         this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
         break;
       case 'join': {
-        const wsUserId = this.clients.get(clientId)?.userId;
-        if (wsUserId) {
-          this.handlePlayerJoin(wsUserId);
-          console.log('sending to handlePlayerJoin for userId:', wsUserId);
-        } else {
-          console.warn(`⚠️ Cannot join: missing userId for client ${clientId}`);
-        }
-        break;
-      }
-      case 'startGame':
-        const hostId = this.roles.hostId;
-        const guestId = this.roles.guestId;
+  const wsUserId = this.clients.get(clientId)?.userId;
+  const roomId = 'pong-room';
 
-        if (
-          hostId === null || guestId === null ||
-          this.presence[hostId] !== 1 || this.presence[guestId] !== 1
-        ) {
-          console.warn(`🚫 Cannot start game: missing or offline player`);
-          this.sendToClient(clientId, {
-            type: 'error',
-            message: 'Both players must be connected to start the game.'
-          });
-          return;
-        }
+  if (!this.rooms.has(roomId)) {
+    // Premier utilisateur devient hôte
+    this.rooms.set(roomId, {
+      hostId: wsUserId,
+      guestId: null,
+      clients: new Set([clientId])
+    });
+  } else {
+    const room = this.rooms.get(roomId);
 
-        // ✅ Continue with broadcast
-        this.broadcast({
-          type: 'game',
-          data: {
-            action: 'startGame',
-            settings: rest.settings,
-            startAt: rest.startAt,
-            by: clientId
-          }
-        });
-        break;
+    if (!room.guestId && wsUserId !== room.hostId) {
+      room.guestId = wsUserId;
+      room.clients.add(clientId);
+    } else if (wsUserId === room.hostId || wsUserId === room.guestId) {
+      room.clients.add(clientId); // reconnect éventuel
+    } else {
+      // Refuser une troisième connexion pour simplifier
+      this.sendToClient(clientId, {
+        type: 'error',
+        data: { message: 'Room is full.' }
+      });
+      break;
+    }
+  }
+
+  const room = this.rooms.get(roomId);
+
+  const role =
+    room.hostId === wsUserId ? 'host' :
+    room.guestId === wsUserId ? 'guest' :
+
+  this.sendToClient(clientId, {
+    type: 'game',
+    data: {
+      action: 'playerJoined',
+      role,
+      opponentId: role === 'host' ? room.guestId : room.hostId
+    }
+  });
+
+  break;
+}
+case 'startGame': {
+  const room = this.rooms.get('pong-room');
+  if (!room || !room.hostId || !room.guestId ||
+      this.presence[room.hostId] !== 1 || this.presence[room.guestId] !== 1) {
+    this.sendToClient(clientId, {
+      type: 'error',
+      message: 'Both players must be connected to start the game.'
+    });
+    return;
+  }
+
+  this.broadcast({
+    type: 'game',
+    data: {
+      action: 'startGame',
+      settings: rest.settings,
+      startAt: rest.startAt,
+      hostId: room.hostId,
+      guestId: room.guestId,
+    }
+  });
+  break;
+}
       case 'endGame':
         this.broadcast({
           type: 'game',

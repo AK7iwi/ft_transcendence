@@ -18,6 +18,25 @@ static async blockUser(blockedId: number) {
   return res.json();
 }
 
+static async unblockUser(unblockId: number) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE_URL}/auth/unblock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ unblockId })
+  });
+
+  if (!res.ok) {
+    const errorMessage = await res.text();
+    console.error('Backend error:', res.status, errorMessage);
+    throw new Error(`Échec du déblocage utilisateur: ${errorMessage}`);
+  }
+  
+  return res.json();
+}
 
 
     private static readonly MAX_RETRIES = 3;
