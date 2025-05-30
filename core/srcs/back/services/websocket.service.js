@@ -1,5 +1,7 @@
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
+const { getUsernameById } = require('../db.js'); // adjust path as needed
+
 
 class WebSocketService {
   constructor(server) {
@@ -8,20 +10,24 @@ class WebSocketService {
       path: '/ws'
     });
 
-    this.clients = new Map();        // clientId → ws
-    this.onlineUsers = new Map();    // userId → ws
-this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, clients: Set<clientId> }
+    this.clients = new Map();       // clientId → ws
+    this.onlineUsers = new Map();   // userId → ws
+    this.roles = { hostId: null, guestId: null };         // roles → { hostId: string, guestId: string }
+    this.presence = Array(20).fill(0);
 
     this.setupWebSocket();
   }
 
   setupWebSocket() {
+    console.log('[WS SERVER] WebSocket server initialized with path /ws');
+    this.sendToGameClient('hello');
     this.wss.on('connection', (ws) => {
+      console.log('here? \'connection\'');
       const clientId = this.generateClientId();
       this.clients.set(clientId, ws);
 
       console.log(`✅ Client connected: ${clientId}`);
-
+      
       ws.send(JSON.stringify({
         type: 'connection',
         clientId,
@@ -29,7 +35,9 @@ this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, cl
       }));
 
       ws.on('message', (rawMessage) => {
+        console.log('here? \'message\'');
         try {
+          console.log('[SERVER] Received raw message string:', rawMessage);
           const data = JSON.parse(rawMessage);
           this.handleMessage(clientId, ws, data);
         } catch (err) {
@@ -39,13 +47,17 @@ this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, cl
       });
 
       ws.on('close', () => {
-        this.handleDisconnect(clientId, ws);
+        console.log(`on close : hostId: ${this.roles.hostId} | guestId: ${this.roles.guestId} and ws.userId: ${ws.userId} `);
+        // if (ws.userId)
+        //   this.handleRemoteDc(ws.userId);
+        this.handleDisconnect(clientId, ws); // N
       });
 
       ws.on('pong', () => {
+        console.log('here? \'pong\'');
         ws.isAlive = true;
       });
-
+      console.log('here?');
       ws.isAlive = true;
     });
 
@@ -68,29 +80,54 @@ this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, cl
     return Math.random().toString(36).substring(2, 15);
   }
 
+  handlePlayerJoin(userId) {
+    let role;
+    console.log(`in handleplayerJoin: userId = ${userId}`);
+    if (this.roles.hostId === userId || !this.roles.hostId) {
+      this.roles.hostId = userId;
+      role = 'host';
+      console.log('------------- HOST');
+    } else if (this.roles.guestId === userId || !this.roles.guestId) {
+      this.roles.guestId = userId;
+      role = 'guest';
+      console.log('------------- GUEST');
+    } else {
+      role = 'noob';
+      console.warn(`🔴 Room full. Host: ${this.roles.hostId} | Guest: ${this.roles.guestId}`);
+      console.log('------------- NOOB');
+    }
+
+    console.log('------------- SENDTOCLIENT');
+    this.sendToGameClient(userId, {
+      type: 'game',
+      data: { action: 'playerJoined', role }
+    });
+  }
+
+
   handleMessage(clientId, ws, data) {
-     console.log('[WS SERVER] Message brut reçu :', data);
+    console.log(`[SERVER] Parsed message:`, data);
+    console.log('[WS SERVER] Message brut reçu :', data);
     switch (data.type) {
       case 'auth':
-  this.handleAuth(clientId, ws, data.payload.token);
-  break;
-
+        this.handleAuth(clientId, ws, data.payload.token);
+        break;
       case 'chat':
         this.handleChatMessage(clientId, data.payload);
         break;
       case 'game':
         this.handleGameMessage(clientId, data.payload);
+        console.log('sending to handle game message');
         break;
       case 'tournament':
         this.handleTournamentMessage(clientId, data.payload);
         break;
-        case 'dm':
-  this.handleDirectMessage(clientId, data.payload);
-  break;
-  case 'invite-pong':
-  this.handlePongInvite(clientId, data.payload);
-  break;
-
+      case 'dm':
+        this.handleDirectMessage(clientId, data.payload);
+        break;
+        case 'invite-pong':
+        this.handlePongInvite(clientId, data.payload);
+        break;
       default:
         console.warn(`⚠️ Unknown message type: ${data.type}`);
         this.sendToClient(clientId, {
@@ -101,14 +138,14 @@ this.rooms = new Map(); // roomId (hostId) → { host: userId, guest: userId, cl
   }
 
   handlePongInvite(clientId, { toUserId }) {
-  const toWs = this.onlineUsers.get(toUserId);
-  if (!toWs) return;
+    const toWs = this.onlineUsers.get(toUserId);
+    if (!toWs) return;
 
-  toWs.send(JSON.stringify({
-    type: 'pong-invite',
-    from: this.clients.get(clientId).userId
-  }));
-}
+    toWs.send(JSON.stringify({
+      type: 'pong-invite',
+      from: this.clients.get(clientId).userId
+    }));
+  }
 
 
 handleDirectMessage(clientId, payload) {
@@ -164,7 +201,22 @@ handleAuth(clientId, ws, token) {
     this.onlineUsers.set(decoded.id, ws);
 
     console.log(`🔓 Authenticated user ${decoded.id}`);
-
+    let role;
+    if (this.roles.hostId === decoded.id || !this.roles.hostId) {
+      this.roles.hostId = decoded.id;
+      role = 'host';
+    } else if (this.roles.guestId === decoded.id || !this.roles.guestId) {
+      this.roles.guestId = decoded.id;
+      role = 'guest';
+    } else {
+      role = 'noob';
+      console.warn(`🚫 Room full: host=${this.roles.hostId} guest=${this.roles.guestId}`);
+    }
+    // this.broadcast({ type: 'game', data: { action : 'playerJoined', by: `${decoded.id}`}});
+    if (decoded.id < this.presence.length) {
+      this.presence[decoded.id] = 1;
+      console.log(`✅ User ${decoded.id} is online`);
+    }
     this.sendToClient(clientId, {
       type: 'auth-success',
       userId: decoded.id
@@ -181,12 +233,25 @@ handleAuth(clientId, ws, token) {
     ws.close();
   }
 }
-
+  // handleRemoteDc(userId)
+  // {
+  //   if (this.roles.hostId === userId) {
+  //     this.roles.hostId = null;
+  //     console.log(`hostId: ${this.roles.hostId} and ${userId}`);
+  //     return;
+  //   }
+  //   else if (this.roles.guestId === userId) {
+  //     this.roles.guestId = null;
+  //     console.log(`Guest: ${this.roles.guestId} and ${userId}`);
+  //     return;
+  //   }
+  // }
 
   handleDisconnect(clientId, ws) {
+    this.presence[ws.userId] = 0;
+    console.log(`❌ User ${ws.userId} is offline`);
     console.log(`❌ Client disconnected: ${clientId}`);
     this.clients.delete(clientId);
-
     if (ws.userId && this.onlineUsers.has(ws.userId)) {
       this.onlineUsers.delete(ws.userId);
       this.broadcast({
@@ -217,103 +282,104 @@ handleAuth(clientId, ws, token) {
     console.log(`[Chat] ${clientId}: ${payload.text.trim()}`);
     this.broadcast(chatMessage);
   }
-handleJoinGame(clientId, { userId, role }) {
-  if (!userId || !role) return;
 
-  const ws = this.clients.get(clientId);
-  if (!ws) return;
+  handleGameMessage(clientId, payload) {
+    console.log('going through handle game message');
+    const { action, userId, ...rest } = payload || {};
+    switch (action) {
+      case 'pause':
+        this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
+        break;
+      case 'scoreUpdate':
+        this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
+        break;
+      case 'join': {
+        const wsUserId = this.clients.get(clientId)?.userId;
+        if (wsUserId) {
+          this.handlePlayerJoin(wsUserId);
+          console.log('sending to handlePlayerJoin for userId:', wsUserId);
+        } else {
+          console.warn(`⚠️ Cannot join: missing userId for client ${clientId}`);
+        }
+        break;
+      }
+      case 'startGame':
+        const hostId = this.roles.hostId;
+        const guestId = this.roles.guestId;
 
-  const roomId = role === 'host' ? userId : ws.roomId;
-  if (!roomId) return;
+        if (
+          hostId === null || guestId === null ||
+          this.presence[hostId] !== 1 || this.presence[guestId] !== 1
+        ) {
+          console.warn(`🚫 Cannot start game: missing or offline player`);
+          this.sendToClient(clientId, {
+            type: 'error',
+            message: 'Both players must be connected to start the game.'
+          });
+          return;
+        }
 
-  // Si host, crée la room
-  if (role === 'host') {
-    this.rooms.set(userId, {
-      host: userId,
-      guest: null,
-      clients: new Set([clientId])
-    });
-    ws.roomId = userId;
-  } else if (role === 'guest') {
-    const room = this.rooms.get(roomId);
-    if (room) {
-      room.guest = userId;
-      room.clients.add(clientId);
-      ws.roomId = roomId;
-
-      // Notifie les deux joueurs
-      for (const client of room.clients) {
-        this.sendToClient(client, {
+        // ✅ Continue with broadcast
+        this.broadcast({
           type: 'game',
           data: {
-            action: 'playerJoined',
-            role: client === clientId ? 'guest' : 'host'
+            action: 'startGame',
+            settings: rest.settings,
+            startAt: rest.startAt,
+            by: clientId
           }
         });
-      }
-
-      console.log(`[GAME] Guest ${userId} joined room ${roomId}`);
-    } else {
-      this.sendToClient(clientId, {
-        type: 'error',
-        message: 'Room not found'
-      });
+        break;
+      case 'endGame':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'endGame',
+            winner: rest.winner,
+            by: clientId
+          }
+        });
+        break;
+      case 'resetGame':
+        this.broadcast({
+          type: 'game',
+          data: { action: 'resetGame', by: clientId }
+        });
+        break;
+      case 'ballUpdate':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'ballUpdate',
+            ...rest,
+            clientId
+          }
+        });
+        break;
+      case 'ballReset':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'ballReset',
+            ...rest,
+            clientId
+          }
+        });
+        break;
+      case 'movePaddle':
+        this.broadcast({
+          type: 'game',
+          data: {
+            action: 'movePaddle',
+            y: rest.y,
+            clientId
+          }
+        });
+        break;
+      default:
+        console.warn(`[WS] Unknown game action:`, action);
     }
   }
-}
-
-handleRejoinGame(clientId, { userId, role }) {
-  const roomId = role === 'host' ? userId : this.findRoomByUser(userId);
-  if (!roomId) return;
-
-  const ws = this.clients.get(clientId);
-  const room = this.rooms.get(roomId);
-  if (!room) return;
-
-  ws.roomId = roomId;
-  room.clients.add(clientId);
-
-  this.sendToClient(clientId, {
-    type: 'game',
-    data: {
-      action: 'playerJoined',
-      role
-    }
-  });
-
-  console.log(`[GAME] ${role} ${userId} rejoined room ${roomId}`);
-}
-
-findRoomByUser(userId) {
-  for (const [roomId, room] of this.rooms.entries()) {
-    if (room.host === userId || room.guest === userId) {
-      return roomId;
-    }
-  }
-  return null;
-}
-
-
-handleGameMessage(clientId, payload) {
-  const { action, ...rest } = payload || {};
-  switch (action) {
-    case 'pause':
-      this.broadcast({ type: 'game', data: { action: 'pause', by: clientId } });
-      break;
-    case 'scoreUpdate':
-      this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
-      break;
-    case 'join':
-      this.handleJoinGame(clientId, payload);
-      break;
-    case 'rejoin':
-      this.handleRejoinGame(clientId, payload);
-      break;
-    default:
-      console.warn(`[WS] Unknown game action:`, action);
-  }
-}
-
 
   handleTournamentMessage(clientId, payload) {
     this.broadcast({
@@ -339,6 +405,12 @@ handleGameMessage(clientId, payload) {
     }
   }
 
+sendToGameClient(userId, message) {
+  const ws = this.onlineUsers.get(userId);
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(message));
+  }
+}
   getOnlineUserIds() {
     return Array.from(this.onlineUsers.keys());
   }
