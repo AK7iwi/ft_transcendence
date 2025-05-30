@@ -44,7 +44,7 @@ class AuthController {
             return reply.code(200).send({
                 success: true,
                 message: 'Login successful',
-                data: { user: { username: user.username }}
+                data: { user: { username: user.username }, token: token }
             });
       
         } catch (error) {

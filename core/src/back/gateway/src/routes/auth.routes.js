@@ -1,6 +1,5 @@
 const authSchema  = require('../schemas/auth.schema');
 const SanitizeService = require('../../security/middleware/sanitize.service');
-const JwtAuth = require('../../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Register route

@@ -15,7 +15,17 @@ curl -k -X POST \
   -d '{"username": "test", "password": "Test123@"}' \
   "https://localhost:3000/auth/register"
 
+curl -k -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username": "test", "password": "Test123@"}' \
+  "https://localhost:3000/auth/login"
 
+curl -k -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"currentUsername": "test", "newUsername": "test2"}' \
+  "https://localhost:3000/user/username"
+  
 SQL injection: 
 
 curl -k -v -X POST \
