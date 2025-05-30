@@ -14,19 +14,17 @@ class AuthService {
                 hashedPassword: hashedPassword
             });
             return {
-                success: true,
-                message: 'Registration successful',
-                data: {
-                    username: username
-                }
+                username: username
             };
         } catch (error) {
-            if (error.code === 'SQLITE_CONSTRAINT') {
+            if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
                 throw new Error('Username already exists');
             }
+            
             if (error.code === 'SQLITE_ERROR') {
                 throw new Error('Database error occurred');
             }
+            
             throw new Error('Registration failed');
         }
     }

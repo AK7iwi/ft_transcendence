@@ -16,16 +16,17 @@ class AuthController {
                     }
                 }
             });
-        } catch (error) {
+        } catch (error) {            
             if (error.message === 'Username already exists') {
                 return reply.code(400).send({
                     success: false,
                     message: 'Username already exists'
                 });
             }
+            
             return reply.code(400).send({
                 success: false,
-                message: error.message
+                message: error.message || 'Registration failed'
             });
         }
     }
