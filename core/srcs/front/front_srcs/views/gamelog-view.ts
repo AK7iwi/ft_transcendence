@@ -105,22 +105,25 @@ const playerName = this.user.username || 'Player 1';
 
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
-      window.addEventListener(event, (e) => {
-        if (['w', 's', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
-        this.keysPressed[e.key] = event === 'keydown';
-        if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
-      })
-    );
+  window.addEventListener(event, (e: Event) => {
+    const keyEvent = e as KeyboardEvent;
+    this.keysPressed[keyEvent.key] = event === 'keydown';
+
+    if (event === 'keydown') this.handleKeyDown(keyEvent);
+  })
+);
+
+
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
-    } else if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
+    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
       this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-    } else if (e.key === ' ' && this.isGameOver) {
+    } else if (e.key === 'Enter' && this.isGameOver) {
       this.resetGame();
     }
   }
@@ -204,8 +207,8 @@ const playerName = this.user.username || 'Player 1';
   private updateGame() {
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['ArrowUp']) this.paddle2.y -= this.paddle2.speed;
-    if (this.keysPressed['ArrowDown']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
@@ -279,12 +282,12 @@ const playerName = this.user.username || 'Player 1';
 
     if (this.isGameOver) {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
-      this.drawCenteredText('Press SPACE to Play Again', 24, this.canvas.height / 2 + 30);
+      this.drawCenteredText('Press ENTER to Play Again', 24, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
       this.drawCenteredText('Paused', 48, this.canvas.height / 2 - 30);
     } else if (!this.isGameStarted) {
       this.drawCenteredText(
-        this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
+        this.isInitialCountdown ? this.countdown.toString() : 'Press ENTER to Start',
         this.isInitialCountdown ? 72 : 48,
         this.canvas.height / 2
       );

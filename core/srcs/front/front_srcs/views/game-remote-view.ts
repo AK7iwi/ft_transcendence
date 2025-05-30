@@ -325,12 +325,12 @@ private initWebSocket() {
     console.log("🔑 Key pressed:", e.key, "Role:", this.playerRole);
     // if (!this.isGameStarted || this.isGameOver || this.isPaused) return;
     // pause
-    if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.sendMessage('pause');
       return;
     }
     // start
-    if (e.key === ' ' && !this.isGameStarted && !this.isGameOver && this.playerRole === 'host') {
+    if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver && this.playerRole === 'host') {
       const startAt = Date.now() + 3000;
       this.sendMessage('startGame', {
         settings: this.settings,
@@ -338,7 +338,7 @@ private initWebSocket() {
       });
       return;
     }
-    if (e.key === ' ' && this.isGameOver && this.playerRole === 'host') {
+    if (e.key === 'Enter' && this.isGameOver && this.playerRole === 'host') {
       this.sendMessage('resetGame');
 
       // 👇 Host re-broadcasts startGame trigger
@@ -350,7 +350,7 @@ private initWebSocket() {
 
       return;
     }
-    if (e.key === ' ' && this.isGameOver && this.playerRole !== 'host') {
+    if (e.key === 'Enter' && this.isGameOver && this.playerRole !== 'host') {
       // ❌ Guest should not start anything on space
       return;
     }
@@ -366,9 +366,9 @@ private initWebSocket() {
 
     // GUEST CONTROLS PADDLE 2
     if (this.playerRole === 'guest') {
-      if (e.key === 'ArrowUp') {
+      if (e.key === 'o') {
         this.paddle2.dy = -this.paddle2.speed;
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === 'k') {
         this.paddle2.dy = this.paddle2.speed;
       }
     }
@@ -377,24 +377,9 @@ private initWebSocket() {
   private handleKeyUp(e: KeyboardEvent) {
     if (this.playerRole === 'host' && (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's'))
       this.paddle1.dy = 0;
-    if (this.playerRole === 'guest' && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))
+    if (this.playerRole === 'guest' && (e.key === 'o' || e.key === 'k'))
       this.paddle2.dy = 0;
   }
-
-  // private startInitialCountdown() {
-  //   this.countdown = 3;
-  //   const countdownInterval = setInterval(() => {
-  //     this.countdown--;
-  //     if (this.countdown <= 0) {
-  //       clearInterval(countdownInterval);
-  //       this.isGameStarted = true;
-  //       this.gameLoop = true;
-  //       this.isBallActive = true;
-  //       this.isInitialCountdown = false;
-  //       this.startGameLoop();
-  //     }
-  //   }, 1000);
-  // }
 
   private startBallCountdown() {
     this.countdown = 3;
@@ -581,7 +566,7 @@ private updateGame() {
       const message = `${this.winner} Wins!`;
       this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2 - 30);
       this.ctx.font = 'bold 24px Arial';
-      this.ctx.fillText('Press SPACE to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
+      this.ctx.fillText('Press ENTER to Play Again', this.canvas.width / 2, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
       this.ctx.font = 'bold 48px Arial';
       this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2 - 30);
@@ -593,7 +578,7 @@ private updateGame() {
         this.ctx.fillText(this.countdown.toString(), this.canvas.width / 2, this.canvas.height / 2);
       } else {
         this.ctx.font = 'bold 48px Arial';
-        this.ctx.fillText('Press SPACE to Start', this.canvas.width / 2, this.canvas.height / 2);
+        this.ctx.fillText('Press ENTER to Start', this.canvas.width / 2, this.canvas.height / 2);
       }
     } else if (!this.isBallActive && this.countdown > 0) {
       this.ctx.font = 'bold 72px Arial';
@@ -641,7 +626,7 @@ private updateGame() {
         </div>
         <canvas class="responsive-canvas"></canvas>
         <div class="controls-info">
-          Player 1: W/S keys | Player 2: ↑/↓ arrows | P to Pause
+          Player 1: W/S keys | Player 2: O/K keys | G to Pause
         </div>
       </div>
     `;
