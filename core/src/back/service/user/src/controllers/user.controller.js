@@ -3,15 +3,15 @@ const UserService = require('../services/user.service');
 class UserController {
     async getMe(request, reply) {
         try {
-            const id = request.query.id;
-            if (!id) {
+            const userId = request.user.id;
+            if (!userId) {
                 return reply.code(400).send({
                     success: false,
                     message: 'User ID is required'
                 });
             }
 
-            const user = await UserService.getUser(id);
+            const user = await UserService.getUser(userId);
             if (!user) {
                 return reply.code(404).send({
                     success: false,

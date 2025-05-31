@@ -47,9 +47,9 @@ class DbModel {
         return stmt.run(userId, username, hashedPassword);
     }
 
-    static async getUser(id) {
-        const stmt = db.prepare('SELECT id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE id = ?');
-        return stmt.get(id);
+    static async getUser(userId) {
+        const stmt = db.prepare('SELECT id, user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
+        return stmt.get(userId);
     }
 }
 
