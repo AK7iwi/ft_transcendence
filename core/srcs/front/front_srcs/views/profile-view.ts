@@ -108,11 +108,11 @@ render() {
               </div>
               <p class="text-sm text-gray-300">Change your avatar</p>
               <label class="px-3 py-1 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition cursor-pointer">
-                <i class="fa-solid fa-image"></i> Choose File
+                Choose File
                 <input type="file" accept="image/*" class="hidden" />
               </label>
               <button id="logout-button" class="px-3 py-1 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full transition hover:opacity-90">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                Logout
               </button>
               ${this.successMessage ? `<div class="text-green-500 font-bold">${this.successMessage}</div>` : ''}
               ${this.errorMessage ? `<div class="text-red-500 font-bold">${this.errorMessage}</div>` : ''}
@@ -133,7 +133,7 @@ render() {
           </div>
 
           <h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            <i class="fa-solid fa-chart-simple"></i> Multiplayer Statistics
+            Multiplayer Statistics
           </h3>
 
           <dl class="mt-6 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">

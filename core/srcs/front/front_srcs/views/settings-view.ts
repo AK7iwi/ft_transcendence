@@ -196,7 +196,7 @@ class SettingsView extends HTMLElement {
       <div>
         <button type="button" onclick="document.querySelector('settings-view').setup2FA()"
           class="w-full px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full">
-          <i class="fa-solid fa-shield-halved"></i> Enable 2FA
+          Enable 2FA
         </button>
         ${this.renderMessage('twoFASuccessMessage', 'twoFAErrorMessage')}
       </div>
@@ -533,7 +533,7 @@ customElements.define('settings-view', SettingsView);
 //   <div>
 //     <button type="button" onclick="document.querySelector('settings-view').setup2FA()"
 //       class="w-full px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition text-center inline-block">
-//       <i class="fa-solid fa-shield-halved"></i> Enable 2FA
+//       Enable 2FA
 //     </button>
 //     ${this.renderTwoFAMessage()}
 //   </div>

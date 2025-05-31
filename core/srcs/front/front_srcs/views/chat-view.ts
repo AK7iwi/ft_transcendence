@@ -1,3 +1,5 @@
+
+
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { Router } from '@vaadin/router';
@@ -9,289 +11,518 @@ interface Conversation {
   avatar: string;
 }
 
+interface Message {
+  author: string;
+  text: string;
+  me: boolean;
+}
+
 class ChatView extends HTMLElement {
   private websocket: WebSocket | null = null;
   private conversations: Conversation[] = [];
-  private selectedConversationId = '';
-  private inputText = '';
-  private messages: { author: string; text: string; me: boolean }[] = [];
-  private flashMessage = '';
+  private selectedConversationId: string = '';
+  private inputText: string = '';
+  private messages: Message[] = [];
+  private flashMessage: string = '';
   private flashType: 'success' | 'error' | '' = '';
-private currentUserId = 0;
+  private currentUserId: number = 0;
+
   constructor() {
     super();
   }
 
   connectedCallback() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-  this.currentUserId = user?.id || 0;
-  this.loadConversations();
-  this.setupWebSocket();
-  this.bindEvents();
+    const userJson = localStorage.getItem('user') || '{}';
+    const user = JSON.parse(userJson);
+    this.currentUserId = user?.id ?? 0;
+    // Si user.id n’est pas défini, currentUserId vaut 0.
+
+    this.loadConversations()
+      .then(() => {
+        // On rend après avoir récupéré la liste d’amis
+        this.render();
+      })
+      .catch(err => {
+        console.error('[Init] loadConversations failed:', err);
+      });
+
+    this.setupWebSocket();
+    this.bindEvents();
+
+    // Pour gérer la navigation vers "Invite to play" si on clique sur un bouton
     document.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('invite-play-btn')) {
+        const route = target.getAttribute('data-link');
+        if (route) {
+          e.preventDefault();
+          Router.go(route);
+        }
+      }
+    });
+  }
 
-  if (target.classList.contains('invite-play-btn')) {
-    const route = target.getAttribute('data-link');
-    if (route) {
-      e.preventDefault();
-
-      // Navigation SPA (si tu as un Router)
-
-      Router.go(route);
+  disconnectedCallback() {
+    // Quand l’élément est retiré du DOM, on ferme le WS
+    if (this.websocket) {
+      this.websocket.close();
+      this.websocket = null;
     }
   }
-});
 
-  }
-
-  bindEvents() {
+  private bindEvents() {
+    // Clicks sur les éléments à l’intérieur du composant
     this.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      if (target.closest('.conversation-item')) {
-        const id = (target.closest('.conversation-item') as HTMLElement).dataset.id;
-        if (id) this.loadMessages(id);
-      }
-      if (target.closest('#invite-button')) {
-  this.inviteToPlay(this.selectedConversationId);
+
+      // 1) Sélection d’une conversation
+      // 1) Sélection d’une conversation
+const convItem = target.closest('.conversation-item') as HTMLElement | null;
+if (convItem) {
+  const id = convItem.dataset.id;
+  if (!id || id === this.selectedConversationId) {
+    return; // pas de changement nécessaire
+  }
+
+  // → On met à jour immédiatement la conversation sélectionnée
+  this.selectedConversationId = id;
+  this.messages = [];      // optionnel : vider l’ancien chat
+  this.render();           // on affiche tout de suite la nouvelle fenêtre (vide)
+
+  // → Puis on charge l’historique en arrière‐plan
+  this.loadMessages(id)
+    .catch(err => {
+      console.error('[loadMessages] failed:', err);
+    })
+    .then(() => {
+      // Une fois l’historique reçu, on re‐render pour afficher les anciens messages
+      this.render();
+    });
+
+  return;
 }
 
-      if (target.closest('#block-button')) this.handleBlockUser();
-      if (target.closest('#unblock-button')) this.handleUnblockUser();
-      if (target.closest('#profile-button')) this.viewFriendProfile(this.selectedConversationId);
+
+      // 2) Invite to play
+      if (target.closest('#invite-button')) {
+        this.inviteToPlay(this.selectedConversationId);
+        return;
+      }
+
+      // 3) Block / Unblock / Voir profil
+      if (target.closest('#block-button')) {
+        this.handleBlockUser();
+        return;
+      }
+      if (target.closest('#unblock-button')) {
+        this.handleUnblockUser();
+        return;
+      }
+      if (target.closest('#profile-button')) {
+        this.viewFriendProfile(this.selectedConversationId);
+        return;
+      }
     });
 
+    // Mise à jour de inputText au fur et à mesure qu’on tape
     this.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
-      if (target.id === 'input-message') this.inputText = target.value;
+      if (target.id === 'input-message') {
+        this.inputText = target.value;
+      }
     });
 
+    // Soumission du formulaire d’envoi de message
     this.addEventListener('submit', (e) => {
-      if ((e.target as HTMLFormElement).id === 'form-message') {
+      const form = e.target as HTMLFormElement;
+      if (form.id === 'form-message') {
         e.preventDefault();
         this.sendMessage();
       }
     });
   }
 
-  async handleUnblockUser() {
-  const unblockId = Number(this.selectedConversationId);
-  try {
-    await ApiService.unblockUser(unblockId);
-    this.flashMessage = 'User successfully unblocked.';
-    this.flashType = 'success';
-    setTimeout(() => {
-      this.flashMessage = '';
-      this.flashType = '';
-      this.render();
-    }, 3000);
-    this.render();
-  } catch (err) {
-    console.error('Failed to unblock user:', err);
-    this.flashMessage = 'Failed to unblock user.';
-    this.flashType = 'error';
-    this.render();
-  }
-}
-
-
-  async loadConversations() {
-    const result = await ApiService.getFriends();
-    this.conversations = result.map((friend: any) => ({
-      id: String(friend.id),
-      name: friend.username,
-      lastMessage: '',
-      avatar: `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`,
-    }));
-    this.render();
+  private async loadConversations() {
+    try {
+      const result = await ApiService.getFriends();
+      // On s’attend à un tableau d’amis avec { id, username, avatar }
+      this.conversations = result.map((friend: any) => ({
+        id: String(friend.id),
+        name: friend.username,
+        lastMessage: '', // Optionnel, tu peux le remplir si tu veux afficher l’aperçu
+        avatar: `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`,
+      }));
+      return;
+    } catch (err) {
+      console.error('[loadConversations] error:', err);
+      throw err;
+    }
   }
 
-  setupWebSocket() {
-    this.websocket = new WebSocket(`${API_BASE_URL.replace(/^http/, 'ws')}/ws`);
-    this.websocket.onopen = () => {
+  private setupWebSocket() {
+    const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + '/ws';
+    console.log('[WS] Connecting to:', wsUrl);
+    this.websocket = new WebSocket(wsUrl);
+
+    this.websocket.addEventListener('open', () => {
+      console.log('[WS] Connection ouverte');
       const token = localStorage.getItem('token');
       if (token) {
-        this.websocket!.send(JSON.stringify({ type: 'auth', payload: { token } }));
+        // On envoie un message d’authentification dès que c’est ouvert
+        const authMsg = { type: 'auth', payload: { token } };
+        this.websocket!.send(JSON.stringify(authMsg));
+        console.log('[WS] Sent auth:', authMsg);
       }
-    };
+    });
 
-    this.websocket.onmessage = (event: MessageEvent) => {
+    this.websocket.addEventListener('message', (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('[WS] Received:', data);
+
         if (data.type === 'dm') {
+          // Structure attendue du serveur : { type: 'dm', senderId, text, timestamp }
           const { senderId, text } = data;
+          // Si ce DM vient du user actuellement sélectionné
           if (String(senderId) === this.selectedConversationId) {
-            const senderName = this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown';
+            const senderName =
+              this.conversations.find(c => c.id === String(senderId))?.name || 'Inconnu';
             this.messages.push({ author: senderName, text, me: false });
             this.render();
+          } else {
+            // Tu peux, par exemple, mettre à jour lastMessage dans conversations,
+            // ou afficher une notification "nouveau message"
+            console.log(
+              `[WS] Nouveau DM de ${senderId}, mais conversation ${
+                this.selectedConversationId
+              } n’est pas ouverte`
+            );
           }
         }
+        // Tu peux gérer d’autres types si nécessaire
       } catch (err) {
-        console.error('WebSocket message error:', err);
+        console.error('[WS] Erreur en traitant le message:', err);
       }
-    };
+    });
+
+    this.websocket.addEventListener('close', () => {
+      console.warn('[WS] WebSocket fermé');
+      this.websocket = null;
+    });
+
+    this.websocket.addEventListener('error', (err) => {
+      console.error('[WS] WebSocket erreur:', err);
+    });
   }
 
-  async loadMessages(friendId: string) {
-    this.selectedConversationId = friendId;
+  private async loadMessages(friendId: string) {
     try {
+      console.log('[loadMessages] friendsId =', friendId);
       const result = await ApiService.getMessages(friendId);
+      // On s’attend à un tableau de { sender: { id, username }, content }
       this.messages = result.map((msg: any) => ({
         author: msg.sender?.username || '???',
         text: msg.content,
         me: msg.sender?.id === this.currentUserId,
       }));
-      this.render();
+      return;
     } catch (err) {
-      console.error('Failed to load messages:', err);
+      console.error('[loadMessages] error:', err);
+      throw err;
     }
   }
 
   private inviteToPlay(friendId?: string) {
-  console.log('[INVITE] Clicked Invite to Play →', friendId);
-  console.log('[INVITE] currentUserId =', this.currentUserId);
-  console.log('[INVITE] WebSocket is', this.websocket);
+    console.log('[INVITE] inviteToPlay friendId=', friendId);
 
-  if (!friendId || !this.currentUserId) return;
-  if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
-    console.warn('[INVITE] WebSocket not ready');
-    return;
+    if (!friendId) {
+      console.warn('[INVITE] Pas de friendId sélectionné');
+      return;
+    }
+    if (!this.currentUserId) {
+      console.warn('[INVITE] Pas d’utilisateur courant connu');
+      return;
+    }
+    if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+      console.warn('[INVITE] WebSocket non prêt ou non connecté');
+      return;
+    }
+
+    const gameUrl = `/game-remote?id=${this.currentUserId}`;
+    const invitationMessage = `
+      <div>
+        🎮 <strong>Invitation à jouer à Pong !</strong><br/>
+        <button
+          data-link="${gameUrl}"
+          class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
+          ▶ Jouer avec moi
+        </button>
+      </div>
+    `;
+
+    // Envoi côté serveur : type 'dm', payload : { toUserId, text }
+    const payload = {
+      type: 'dm',
+      payload: {
+        toUserId: Number(friendId),
+        text: invitationMessage.trim(),
+      },
+    };
+    this.websocket.send(JSON.stringify(payload));
+    console.log('[INVITE] envoyée sur WebSocket:', payload);
+
+    // On ajoute le message localement pour que l’utilisateur voit son propre message
+    this.messages.push({
+      author: 'Vous',
+      text: invitationMessage.trim(),
+      me: true,
+    });
+    this.render();
   }
 
-  const gameUrl = `/game-remote?id=${this.currentUserId}`;
-
-const invitationMessage = `
-  <div>
-    🎮 <strong>Invitation to play Pong!</strong><br/>
-    <button 
-  		data-link="${gameUrl}" 
-  		class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
-  		▶ Play with me
-	</button>
-
-  </div>
-`;
-
-
-  this.websocket.send(JSON.stringify({
-    type: 'dm',
-    payload: {
-      toUserId: Number(friendId),
-      text: invitationMessage
-    }
-  }));
-
-  console.log('[INVITE] Message sent over WebSocket:', invitationMessage);
-
-  this.messages = [...this.messages, {
-    author: 'You',
-    text: invitationMessage,
-    me: true
-  }];
-  this.render()
-}
-
-
-  async sendMessage() {
-    if (!this.inputText.trim()) return;
-    const toUserId = Number(this.selectedConversationId);
+  private async sendMessage() {
     const text = this.inputText.trim();
+    if (!text) {
+      return; // Rien à envoyer si c’est vide
+    }
+    const toUserId = Number(this.selectedConversationId);
+    if (!toUserId) {
+      console.warn('[sendMessage] Pas de conversation sélectionnée');
+      return;
+    }
+
     try {
+      // 1) Envoi via l’API REST pour conserver en base de données
       await ApiService.sendMessage({ receiverId: toUserId, content: text });
-      this.websocket?.send(JSON.stringify({ type: 'dm', payload: { toUserId, text } }));
-      this.messages.push({ author: 'You', text, me: true });
-      this.inputText = '';
+      console.log('[sendMessage] REST API renvoyé OK');
+
+      // 2) Envoi via WebSocket pour la livraison en temps réel
+      const payload = {
+        type: 'dm',
+        payload: {
+          toUserId,
+          text,
+        },
+      };
+      if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        this.websocket.send(JSON.stringify(payload));
+        console.log('[sendMessage] Envoyé sur WebSocket:', payload);
+      } else {
+        console.warn('[sendMessage] WS non ouvert, impossible d’envoyer le DM');
+      }
+
+      // 3) Ajout local du message pour afficher instantanément
+      this.messages.push({ author: 'Vous', text, me: true });
+      this.inputText = ''; // On vide l’input
       this.render();
     } catch (err) {
-      console.error('Failed to send message:', err);
-    }
-  }
-
-  async handleBlockUser() {
-    const blockedId = Number(this.selectedConversationId);
-    try {
-      await ApiService.blockUser(blockedId);
-      this.flashMessage = 'User successfully blocked.';
-      this.flashType = 'success';
+      console.error('[sendMessage] Erreur envoi:', err);
+      this.flashMessage = 'Échec de l’envoi du message.';
+      this.flashType = 'error';
+      this.render();
       setTimeout(() => {
         this.flashMessage = '';
         this.flashType = '';
         this.render();
       }, 3000);
+    }
+  }
+
+  private async handleBlockUser() {
+    const blockedId = Number(this.selectedConversationId);
+    if (!blockedId) {
+      console.warn('[blockUser] Pas de conversation sélectionnée');
+      return;
+    }
+    try {
+      await ApiService.blockUser(blockedId);
+      this.flashMessage = 'Utilisateur bloqué avec succès.';
+      this.flashType = 'success';
       this.render();
+      setTimeout(() => {
+        this.flashMessage = '';
+        this.flashType = '';
+        this.render();
+      }, 3000);
     } catch (err) {
-      console.error('Failed to block user:', err);
-      this.flashMessage = 'Failed to block user.';
+      console.error('[blockUser] failed:', err);
+      this.flashMessage = 'Impossible de bloquer l’utilisateur.';
       this.flashType = 'error';
       this.render();
     }
   }
 
-  viewFriendProfile(friendId?: string) {
+  private async handleUnblockUser() {
+    const unblockId = Number(this.selectedConversationId);
+    if (!unblockId) {
+      console.warn('[unblockUser] Pas de conversation sélectionnée');
+      return;
+    }
+    try {
+      await ApiService.unblockUser(unblockId);
+      this.flashMessage = 'Utilisateur débloqué avec succès.';
+      this.flashType = 'success';
+      this.render();
+      setTimeout(() => {
+        this.flashMessage = '';
+        this.flashType = '';
+        this.render();
+      }, 3000);
+    } catch (err) {
+      console.error('[unblockUser] failed:', err);
+      this.flashMessage = 'Impossible de débloquer l’utilisateur.';
+      this.flashType = 'error';
+      this.render();
+    }
+  }
+
+  private viewFriendProfile(friendId?: string) {
     if (!friendId) return;
     window.location.href = `/friend-profile?id=${friendId}`;
   }
 
   render() {
+    // Note : On reconstruit entièrement le innerHTML à chaque fois, 
+    // donc on perd la sélection du caret dans l’input — ceci est juste pour la démo.
+    // Si tu veux plus performant, envisage un diff ou un shadow DOM + lit-html / lit-element.
+
     this.innerHTML = `
       <div class="flex h-[100vh] bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white overflow-hidden">
         <aside class="w-1/4 border-r border-gray-700 p-4 overflow-y-auto">
           <h2 class="text-lg font-semibold mb-4"><i class="fa-solid fa-comments"></i> Conversations</h2>
           <ul class="space-y-2">
-            ${this.conversations.map(c => `
-              <li class="${c.id === this.selectedConversationId ? 'p-[2px] rounded bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500' : ''}">
-                <div class="conversation-item bg-gray-800 p-3 rounded hover:bg-gray-700 cursor-pointer" data-id="${c.id}">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                      <i class="fa-solid fa-user-tie text-white"></i>
-                    </div>
-                    <div>
-                      <p class="font-semibold">${c.name}</p>
-                    </div>
+            ${this.conversations
+              .map(
+                (c) => `
+              <li>
+                <div
+                  class="conversation-item bg-gray-800 p-3 rounded hover:bg-gray-700 cursor-pointer flex items-center space-x-3 ${
+                    c.id === this.selectedConversationId
+                      ? 'ring-2 ring-indigo-400'
+                      : ''
+                  }"
+                  data-id="${c.id}"
+                >
+                  <img
+                    src="${c.avatar}"
+                    alt="Avatar"
+                    class="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div class="flex-1">
+                    <p class="font-semibold">${c.name}</p>
+                    <p class="text-gray-400 text-sm">${c.lastMessage || ''}</p>
                   </div>
                 </div>
-              </li>`).join('')}
+              </li>
+            `
+              )
+              .join('')}
           </ul>
         </aside>
+
         <main class="flex-1 flex flex-col p-4 overflow-hidden">
-          ${this.flashMessage ? `<div class="mb-4 text-center font-semibold rounded p-2 ${this.flashType === 'success' ? 'bg-green-500' : 'bg-red-500'}">${this.flashMessage}</div>` : ''}
-          ${this.selectedConversationId ? `
+          ${this.flashMessage
+            ? `<div class="mb-4 text-center font-semibold rounded p-2 ${
+                this.flashType === 'success' ? 'bg-green-500' : 'bg-red-500'
+              }">${this.flashMessage}</div>`
+            : ''}
+
+          ${
+            this.selectedConversationId
+              ? `
             <div class="flex justify-between items-center border-b border-gray-700 pb-3">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center"
+                >
                   <i class="fa-solid fa-user-tie text-white"></i>
                 </div>
-                <h3 class="text-lg font-semibold">${this.conversations.find(c => c.id === this.selectedConversationId)?.name || ''}</h3>
+                <h3 class="text-lg font-semibold">${
+                  this.conversations.find((c) => c.id === this.selectedConversationId)
+                    ?.name || ''
+                }</h3>
               </div>
               <div class="space-x-2">
-                <button id="invite-button" class="px-3 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full transition hover:opacity-90">
-  <i class="fa-solid fa-gamepad"></i> Invite
-</button>
-
-                <button id="profile-button" class="px-3 py-1 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
-                  <i class="fa-solid fa-eye"></i> Profile
+                <button
+                  id="invite-button"
+                  class="px-3 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 transition"
+                >
+                  <i class="fa-solid fa-gamepad"></i> Inviter
                 </button>
-                <button id="block-button" class="px-3 py-1 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full transition hover:opacity-90">
-  <i class="fa-solid fa-ban"></i> Block
-</button>
-
-<button id="unblock-button" class="px-3 py-1 bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white rounded-full transition hover:opacity-90">
-  <i class="fa-solid fa-check"></i> Unblock
-</button>
-
+                <button
+                  id="profile-button"
+                  class="px-3 py-1 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full hover:opacity-90 transition"
+                >
+                  <i class="fa-solid fa-eye"></i> Profil
+                </button>
+                <button
+                  id="block-button"
+                  class="px-3 py-1 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full hover:opacity-90 transition"
+                >
+                  <i class="fa-solid fa-ban"></i> Bloquer
+                </button>
+                <button
+                  id="unblock-button"
+                  class="px-3 py-1 bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white rounded-full hover:opacity-90 transition"
+                >
+                  <i class="fa-solid fa-check"></i> Débloquer
+                </button>
               </div>
             </div>
-            <div class="flex-1 overflow-y-auto py-4 space-y-2 flex flex-col" style="min-height: 0;">
-              ${this.messages.length === 0 ? `<div class="flex-1 flex items-center justify-center text-gray-400 italic">No messages yet</div>` : this.messages.map(msg => `
-  <div class="${msg.me ? 'self-end text-right' : 'self-start'} ${msg.me ? 'bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500' : 'bg-gray-700'} px-4 py-2 rounded max-w-xs break-words">${msg.text}</div>
-`).join('')}
+
+            <div
+              class="flex-1 overflow-y-auto py-4 space-y-2 flex flex-col"
+              style="min-height: 0;"
+            >
+              ${
+                this.messages.length === 0
+                  ? `<div class="flex-1 flex items-center justify-center text-gray-400 italic">
+                      Pas de messages
+                    </div>`
+                  : this.messages
+                      .map(
+                        (msg) => `
+                  <div
+                    class="${
+                      msg.me ? 'self-end text-right' : 'self-start'
+                    } ${
+                          msg.me
+                            ? 'bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500'
+                            : 'bg-gray-700'
+                        } px-4 py-2 rounded max-w-xs break-words"
+                  >
+                    ${msg.text}
+                  </div>
+                `
+                      )
+                      .join('')
+              }
             </div>
+
             <form id="form-message" class="flex mt-4 pt-2 border-t border-gray-700">
-              <input id="input-message" type="text" placeholder="Type your message..." class="flex-1 px-4 py-2 rounded-l bg-white text-black focus:outline-none" value="${this.inputText}" />
-              <button id="send-button" type="submit" class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r transition hover:opacity-90">
-                <i class="fa-solid fa-paper-plane"></i> Send
+              <input
+                id="input-message"
+                type="text"
+                placeholder="Tapez votre message..."
+                class="flex-1 px-4 py-2 rounded-l bg-white text-black focus:outline-none"
+                value="${this.inputText}"
+                autocomplete="off"
+              />
+              <button
+                id="send-button"
+                type="submit"
+                class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r hover:opacity-90 transition"
+              >
+                <i class="fa-solid fa-paper-plane"></i> Envoyer
               </button>
-            </form>` : `<p class="text-center mt-20">Select a conversation to begin</p>`}
+            </form>
+          `
+              : `
+            <div class="flex-1 flex items-center justify-center text-gray-400 italic">
+              Sélectionne une conversation pour démarrer
+            </div>
+          `
+          }
         </main>
       </div>
     `;
@@ -299,3 +530,4 @@ const invitationMessage = `
 }
 
 customElements.define('chat-view', ChatView);
+

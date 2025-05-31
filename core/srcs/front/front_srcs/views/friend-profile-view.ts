@@ -57,7 +57,6 @@ class FriendProfileView {
       : 'from-green-400 via-green-500 to-green-600';
 
     this.container.innerHTML = `
-      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
       <div class="bg-gray-900 py-12">
         <div class="mx-auto max-w-4xl px-6 lg:px-8">
           <div class="relative rounded-3xl p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg overflow-hidden">
@@ -134,6 +133,9 @@ class FriendProfileElement extends HTMLElement {
 }
 
 customElements.define('friend-profile-view', FriendProfileElement);
+
+// On peut delete en dessous ?
+
 // import { LitElement, html, css } from 'lit';
 // import { customElement, state } from 'lit/decorators.js';
 // import ApiService from '../services/api.service';

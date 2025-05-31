@@ -5,100 +5,102 @@ const { getUsernameById } = require('../db.js'); // adjust path as needed
 
 class WebSocketService {
   constructor(server) {
-    this.wss = new WebSocket.Server({
-      server,
-      path: '/ws'
-    });
-
+    this.wss = new WebSocket.Server({ server, path: '/ws' });
     this.clients = new Map();       // clientId → ws
-    // userId → Set<ws>
-this.onlineUsers = new Map();
-
-this.rooms = new Map(); // roomId → { hostId, guestId, clients: Set }
+    this.onlineUsers = new Map();   
+    this.rooms = new Map();         // roomId → { hostId, guestId, clients: Set }
     this.presence = Array(20).fill(0);
 
     this.setupWebSocket();
   }
 
+  
   setupWebSocket() {
-    console.log('[WS SERVER] WebSocket server initialized with path /ws');
-    this.sendToGameClient('hello');
-    this.wss.on('connection', (ws) => {
-      console.log('here? \'connection\'');
-      const clientId = this.generateClientId();
-      this.clients.set(clientId, ws);
+  console.log('[WS SERVER] WebSocket server initialized with path /ws');
 
-      console.log(`✅ Client connected: ${clientId}`);
-      
-      ws.send(JSON.stringify({
-        type: 'connection',
-        clientId,
-        message: 'Connected to secure WebSocket server'
-      }));
+  this.wss.on('connection', (ws) => {
+    console.log('here? \'connection\'');
+    const clientId = this.generateClientId();
+    this.clients.set(clientId, ws);
 
-      ws.on('message', (rawMessage) => {
-        console.log('here? \'message\'');
-        try {
-          console.log('[SERVER] Received raw message string:', rawMessage);
-          const data = JSON.parse(rawMessage);
-          this.handleMessage(clientId, ws, data);
-        } catch (err) {
-          console.error('❌ Invalid JSON message:', err);
-          ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+    console.log(`✅ Client connected: ${clientId}`);
+
+    // Envoi immédiat d'un message de connection au client
+    ws.send(JSON.stringify({
+      type: 'connection',
+      clientId,
+      message: 'Connected to secure WebSocket server'
+    }));
+
+    // Réception d'un message
+    ws.on('message', (rawMessage) => {
+      console.log('here? \'message\'');
+      try {
+        console.log('[SERVER] Received raw message string:', rawMessage);
+        const data = JSON.parse(rawMessage);
+        this.handleMessage(clientId, ws, data);
+      } catch (err) {
+        console.error('❌ Invalid JSON message:', err);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid JSON'
+        }));
+      }
+    });
+
+    // Fermeture de la connexion
+    ws.on('close', () => {
+      const clientInfo = this.clients.get(clientId);
+      const wsUserId = clientInfo?.userId;
+      const roomId = 'pong-room';
+
+      if (this.rooms.has(roomId)) {
+        const room = this.rooms.get(roomId);
+        room.clients.delete(clientId);
+
+        if (room.hostId === wsUserId) {
+          room.hostId = null;
+        } else if (room.guestId === wsUserId) {
+          room.guestId = null;
         }
-      });
 
-      ws.on('close', () => {
-  const clientInfo = this.clients.get(clientId);
-  const wsUserId = clientInfo?.userId;
-  const roomId = 'pong-room';
+        if (room.clients.size === 0) {
+          this.rooms.delete(roomId); // suppression complète de la room si vide
+        }
+      }
 
-  if (this.rooms.has(roomId)) {
-    const room = this.rooms.get(roomId);
-    room.clients.delete(clientId);
+      this.clients.delete(clientId);
+    });
 
-    if (room.hostId === wsUserId) {
-      room.hostId = null;
-    } else if (room.guestId === wsUserId) {
-      room.guestId = null;
-    }
-
-    if (room.clients.size === 0) {
-      this.rooms.delete(roomId); // nettoyage complet si vide
-    }
-  }
-
-  this.clients.delete(clientId);
-});
-
-
-
-      ws.on('pong', () => {
-        console.log('here? \'pong\'');
-        ws.isAlive = true;
-      });
-      console.log('here?');
+    // Réponse au ping (heartbeat)
+    ws.on('pong', () => {
+      console.log('here? \'pong\'');
       ws.isAlive = true;
     });
 
-    // Heartbeat
-    setInterval(() => {
-      for (const [clientId, ws] of this.clients.entries()) {
-        if (!ws.isAlive) {
-          console.log(`⚠️ Terminating stale client: ${clientId}`);
-          ws.terminate();
-          this.handleDisconnect(clientId, ws);
-        } else {
-          ws.isAlive = false;
-          ws.ping();
-        }
+    // Marquer la socket comme “vivante” dès qu'elle se connecte
+    ws.isAlive = true;
+  });
+
+  // Heartbeat: ping toutes les 30s pour détecter les connexions mortes
+  setInterval(() => {
+    for (const [clientId, ws] of this.clients.entries()) {
+      if (!ws.isAlive) {
+        console.log(`⚠️ Terminating stale client: ${clientId}`);
+        ws.terminate();
+        this.handleDisconnect(clientId, ws);
+      } else {
+        ws.isAlive = false;
+        ws.ping();
       }
-    }, 30000);
-  }
+    }
+  }, 30000);
+}
+
 
   generateClientId() {
-    return Math.random().toString(36).substring(2, 15);
-  }
+    return Array.from(this.onlineUsers.keys());
+    }
 
   handlePlayerJoin(userId) {
     let role;
@@ -219,10 +221,10 @@ handleAuth(clientId, ws, token) {
     const userId = decoded.id;
     ws.userId = userId;
 
-    // 1) Enregistre client → ws
-    this.clients.set(clientId, ws);
-
-    // 2) Gère onlineUsers : userId → Set<ws>
+    // 1) ...
+this.clients.set(clientId, ws);
+// 2) enregistrez directement un seul ws pour cet userId :
+this.onlineUsers.set(userId, ws);
     let sockets = this.onlineUsers.get(userId);
     if (!sockets) {
       sockets = new Set();
@@ -303,9 +305,10 @@ handleAuth(clientId, ws, token) {
       status: 'online'
     });
 
+
     console.log(`🔓 Authenticated user ${userId} as ${role}`);
   }
-}
+
 
   handleDisconnect(clientId, ws) {
     const sockets = this.onlineUsers.get(wsUserId);
@@ -557,18 +560,23 @@ case 'startGame': {
     }
   }
 
-sendToGameClient(userId, message) {
+sendToGameClient(toUserId, message) {
   const sockets = this.onlineUsers.get(toUserId) || new Set();
-for (const sock of sockets) {
-  if (sock.readyState === WebSocket.OPEN) {
-    sock.send(msg);
+  const payload = JSON.stringify(message);
+
+  for (const sock of sockets) {
+    if (sock.readyState === WebSocket.OPEN) {
+      sock.send(payload);
+    }
   }
 }
+
 
   getOnlineUserIds() {
     return Array.from(this.onlineUsers.keys());
   }
 }
+
 
 module.exports = WebSocketService;
 
