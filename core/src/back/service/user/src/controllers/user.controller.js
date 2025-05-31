@@ -26,7 +26,7 @@ class UserController {
                     user: {
                         id: user.user_id,
                         username: user.username,
-                        avatar: user.avatar || '/avatars/default.png' || NULL,
+                        avatar: user.avatar || '/avatars/default.png',
                         twoFactorEnabled: !!user.two_factor_enabled,
                         wins: user.wins,
                         losses: user.losses
@@ -35,7 +35,7 @@ class UserController {
             });
 
         } catch (error) {
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message
             });

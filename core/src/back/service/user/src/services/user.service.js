@@ -6,7 +6,7 @@ class UserService {
             const user = await DbModel.getUser(id);
 
             return {
-                id: user.id,
+                id: user.user_id,
                 username: user.username,
                 avatar: user.avatar,
                 twoFactorEnabled: user.two_factor_enabled,
