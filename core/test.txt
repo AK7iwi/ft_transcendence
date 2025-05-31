@@ -1,3 +1,11 @@
+
+
+TEST:
+
+Login sans etre register
+Register X 2
+
+
 DB COMMAND:
 
 # Connect to user service container
@@ -14,13 +22,6 @@ SELECT * FROM user_profiles;
 
 # Exit container
 exit
-
-HTTP:
-
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"username": "testuser1", "password": "Test123@"}' \
-  "http://localhost:3000/auth/register"
 
 
 -------------------------------------------------------------------------------

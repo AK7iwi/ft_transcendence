@@ -16,9 +16,10 @@ module.exports = async function (fastify, opts) {
             } catch (error) {
                 request.log.error(error);
                 const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.message || 'Internal Server Error'
+                    message: errorMessage
                 });
             }
         }
@@ -38,9 +39,10 @@ module.exports = async function (fastify, opts) {
             } catch (error) {
                 request.log.error(error);
                 const statusCode = error.response?.status || 401;
+                const errorMessage = error.response?.data?.message || error.message || 'Login failed';
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.message || 'Internal Server Error'
+                    message: errorMessage
                 });
             }
         }

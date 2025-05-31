@@ -48,7 +48,7 @@ class DbModel {
     }
 
     static async getUser(id) {
-        const stmt = db.prepare('SELECT user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
+        const stmt = db.prepare('SELECT id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE id = ?');
         return stmt.get(id);
     }
 }

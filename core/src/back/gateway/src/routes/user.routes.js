@@ -10,15 +10,16 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.get(
-                    `${process.env.USER_SERVICE_URL}/user/me`
+                    `${process.env.USER_SERVICE_URL}/user/me?id=${request.user.id}`
                 );
                 return reply.code(200).send(response.data);
             } catch (error) {
                 request.log.error(error);
                 const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || 'Get user profile failed';
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: errorMessage
                 });
             }
         }
@@ -38,9 +39,10 @@ module.exports = async function (fastify, opts) {
             } catch (error) {
                 request.log.error(error);
                 const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || 'Update username failed';
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: errorMessage
                 });
             }
         }
@@ -60,9 +62,10 @@ module.exports = async function (fastify, opts) {
             } catch (error) {
                 request.log.error(error);
                 const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || 'Update password failed';
                 return reply.code(statusCode).send({
                     success: false,
-                    message: error.response?.data?.message || error.message
+                    message: errorMessage
                 });
             }
         }

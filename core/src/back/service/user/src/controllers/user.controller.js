@@ -3,8 +3,21 @@ const UserService = require('../services/user.service');
 class UserController {
     async getMe(request, reply) {
         try {
-            const id = request.user.id;
+            const id = request.query.id;
+            if (!id) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'User ID is required'
+                });
+            }
+
             const user = await UserService.getUser(id);
+            if (!user) {
+                return reply.code(404).send({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
 
             return reply.code(200).send({
                 success: true,
@@ -13,7 +26,7 @@ class UserController {
                     user: {
                         id: user.user_id,
                         username: user.username,
-                        avatar: user.avatar || '/avatars/default.png',
+                        avatar: user.avatar || '/avatars/default.png' || NULL,
                         twoFactorEnabled: !!user.two_factor_enabled,
                         wins: user.wins,
                         losses: user.losses
