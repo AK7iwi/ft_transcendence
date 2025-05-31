@@ -45,48 +45,4 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
-
-    //Internal routes
-    fastify.put('/internal/updateUsername', {
-        schema: authSchema.updateUsername,
-        preHandler: [SanitizeService.sanitize],
-        handler: async (request, reply) => {
-            try {
-                const response = await fastify.axios.put(
-                    `${process.env.AUTH_SERVICE_URL}/auth/internal/updateUsername`,
-                    request.body
-                );
-                return reply.code(200).send(response.data);
-            } catch (error) {
-                request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                return reply.code(statusCode).send({
-                    success: false,
-                    message: error.message || 'Internal Server Error'
-                });
-            }
-        }
-    });
-
-    fastify.put('/internal/updatePassword', {
-        schema: authSchema.updatePassword,
-        preHandler: [SanitizeService.sanitize],
-        handler: async (request, reply) => {
-            try {
-                const response = await fastify.axios.put(
-                    `${process.env.AUTH_SERVICE_URL}/auth/internal/updatePassword`,
-                    request.body
-                );
-                return reply.code(200).send(response.data);
-            } catch (error) {
-                request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                return reply.code(statusCode).send({
-                    success: false,
-                    message: error.message || 'Internal Server Error'
-                });
-            }
-        }
-    });
-
 };

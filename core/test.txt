@@ -49,6 +49,12 @@ curl -k -X PUT \
   -d '{"username": "test", "newPassword": "NewTest123@"}' \
   "https://localhost:3000/user/password"
   
+
+curl -k -X GET \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  "https://localhost:3000/user/me"
+
+  
 SQL injection: 
 
 curl -k -v -X POST \

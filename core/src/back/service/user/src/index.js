@@ -2,6 +2,7 @@ const fastify = require('fastify');
 const axios = require('axios');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
+const userRoutes = require('./routes/user.routes');
 const updateRoutes = require('./routes/update.routes');
 const internalRoutes = require('./routes/internal.routes');
 
@@ -23,6 +24,7 @@ app.decorate('axios', axiosInstance);
 initializeDatabase();
 
 // Register routes
+app.register(userRoutes, { prefix: '/user' });
 app.register(updateRoutes, { prefix: '/user' });
 app.register(internalRoutes, { prefix: '/user' });
 

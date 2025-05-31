@@ -8,6 +8,11 @@ class DbModel {
                 user_id INTEGER NOT NULL,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,
+                avatar TEXT,
+                two_factor_secret TEXT,
+                two_factor_enabled BOOLEAN DEFAULT 0,
+                wins INTEGER DEFAULT 0,
+                losses INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -40,6 +45,11 @@ class DbModel {
             INSERT INTO user_profiles (user_id, username, password) 
             VALUES (?, ?, ?)`);
         return stmt.run(userId, username, hashedPassword);
+    }
+
+    static async getUser(id) {
+        const stmt = db.prepare('SELECT user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
+        return stmt.get(id);
     }
 }
 

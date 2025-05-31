@@ -3,6 +3,27 @@ const SanitizeService = require('../../security/middleware/sanitize.service');
 const JwtAuth = require('../../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
+    // Get user profile route
+    fastify.get('/me', {
+        schema: userSchema.getMe,
+        preHandler: [JwtAuth.verifyToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.get(
+                    `${process.env.USER_SERVICE_URL}/user/me`
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: error.response?.data?.message || error.message
+                });
+            }
+        }
+    });
+
     // Update username route
     fastify.put('/username', {
         schema: userSchema.updateUsername,
@@ -43,28 +64,6 @@ module.exports = async function (fastify, opts) {
                     success: false,
                     message: error.response?.data?.message || error.message
                 });
-            }
-        }
-    });
-    
-    //Internal routes
-    fastify.post('/internal/createUser', {
-        schema: userSchema.createUser,
-        preHandler: [SanitizeService.sanitize],
-        handler: async (request, reply) => {
-            try {
-                const response = await fastify.axios.post(
-                    `${process.env.USER_SERVICE_URL}/user/internal/createUser`,
-                    request.body
-                );
-                return reply.code(200).send(response.data);
-            } catch (error) {
-                request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                return reply.code(statusCode).send({
-                    success: false,
-                    message: error.response?.data?.message || error.message
-                }); 
             }
         }
     });
