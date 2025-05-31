@@ -52,6 +52,37 @@ class DbModel {
         `);
         return stmt.run(hashedPassword, username);
     }
+
+    static async update2FASecret(userId, secret) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET two_factor_secret = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        return stmt.run(secret, userId);
+    }
+
+    static async enable2FA(userId) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET two_factor_enabled = 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        return stmt.run(userId);
+    }
+
+    static async disable2FA(userId) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET two_factor_enabled = 0,
+                two_factor_secret = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        return stmt.run(userId);
+    }
 }
 
 module.exports = DbModel; 

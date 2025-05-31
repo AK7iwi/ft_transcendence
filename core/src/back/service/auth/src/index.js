@@ -3,6 +3,7 @@ const axios = require('axios');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
 const authRoutes = require('./routes/auth.routes');
+const twoFactorRoutes = require('./routes/two-factor.routes');
 const internalRoutes = require('./routes/internal.routes');
 
 // Create Fastify instance
@@ -24,6 +25,7 @@ initializeDatabase();
 
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });
+app.register(twoFactorRoutes, { prefix: '/auth' });
 app.register(internalRoutes, { prefix: '/auth' });
 
 // Test endpoint
