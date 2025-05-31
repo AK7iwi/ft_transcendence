@@ -1,5 +1,6 @@
 import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
+import { API_BASE_URL } from '../config'; // adjust path as needed
 import type { GameSettings } from '../services/settings-service';
 
   const COUNTDOWN_START = 3;
@@ -12,8 +13,19 @@ class TournamentView extends HTMLElement {
   private nickname = '';
   private message = '';
   private messageType: 'success' | 'error' | '' = '';
-  private players: { username: string; nickname: string }[] = [];
+  private isTournamentOver = false;
+  private tournamentWinner = '';
+  // private players: { username: string; nickname: string }[] = [];
+  private players: Array<{
+    username: string;
+    nickname: string;
+    avatar?: string;
+    tournamentsWon?: number;
+    winRatio?: number;
+  }> = [];
+
   private bracket: { round: string; players: string[]; winner?: string }[] = [];
+  private matchScores: Array<{ p1: number; p2: number }> = [];
   private currentMatchIndex = 0;
   private currentMatchPlayers: string[] = [];
 
@@ -40,6 +52,7 @@ class TournamentView extends HTMLElement {
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
 
+
   constructor() {
     super();
     window.addEventListener('settingsChanged', this.handleSettingsChanged);
@@ -50,183 +63,378 @@ class TournamentView extends HTMLElement {
     this.render();
   }
 
-  async handleJoin(e: Event) {
-    e.preventDefault();
-    this.message = '';
-    this.messageType = '';
+async handleJoin(e: Event) {
+  e.preventDefault();
+  this.message = '';
+  this.messageType = '';
 
-    const username = this.username.trim();
-    const nickname = this.nickname.trim();
+  const username = this.username.trim();
+  const nickname = this.nickname.trim();
 
-    if (!username || !nickname) {
-      this.message = 'Username and nickname are required';
-      this.messageType = 'error';
-      return this.render();
-    }
-
-    if (this.players.some(p => p.username === username)) {
-      this.message = 'This user is already registered';
-      this.messageType = 'error';
-      return this.render();
-    }
-
-    try {
-      const data = await ApiService.validateUsername(username);
-
-      if (!data.valid) {
-        this.message = data.message || 'User not found';
-        this.messageType = 'error';
-        return this.render();
-      }
-
-      this.players.push({ username, nickname });
-      this.username = '';
-      this.nickname = '';
-      this.message = 'Player registered';
-      this.messageType = 'success';
-      this.render();
-    } catch (err) {
-      this.message = 'Failed to validate user';
-      this.messageType = 'error';
-      this.render();
-    }
+  if (!username || !nickname) {
+    this.message = 'Username and nickname are required';
+    this.messageType = 'error';
+    return this.render();
   }
 
+  if (this.players.some(p => p.username === username)) {
+    this.message = 'This user is already registered';
+    this.messageType = 'error';
+    return this.render();
+  }
+
+  try {
+    const data = await ApiService.validateUsername(username) as {
+      valid: boolean;
+      message?: string;
+      avatar?: string;
+    };
+
+    if (!data.valid) {
+      this.message = data.message || 'User not found';
+      this.messageType = 'error';
+      return this.render();
+    }
+
+    this.players.push({
+      username,
+      nickname,
+      avatar: data.avatar?.startsWith('/')
+        ? `${API_BASE_URL}${data.avatar}`
+        : (data.avatar || 'https://placehold.co/96x96?text=Avatar'),
+      tournamentsWon: Math.floor(Math.random() * 10),
+      winRatio: Math.random()
+    });
+
+    this.username = '';
+    this.nickname = '';
+    this.message = 'Player registered';
+    this.messageType = 'success';
+    this.render();
+  } catch (err) {
+    console.error('[handleJoin] Error:', err);
+    this.message = 'Failed to validate user';
+    this.messageType = 'error';
+    this.render();
+  }
+}
+  
   startTournament() {
     if (this.players.length !== 4) {
       this.message = 'Exactly 4 players required to start';
       this.messageType = 'error';
       return this.render();
     }
-
+    
     this.bracket = [
       { round: 'Semi-Final 1', players: [this.players[0].nickname, this.players[1].nickname] },
       { round: 'Semi-Final 2', players: [this.players[2].nickname, this.players[3].nickname] },
       { round: 'Final', players: [] }
+    ];
+
+    this.matchScores = [
+      { p1: 0, p2: 0 },
+      { p1: 0, p2: 0 },
+      { p1: 0, p2: 0 }
     ];
     this.message = 'Tournament started!';
     this.messageType = 'success';
     this.render();
   }
 
+  private resetTournament() {
+    this.players = [];
+    this.bracket = [];
+    this.currentMatchIndex = 0;
+    this.currentMatchPlayers = [];
+    this.message = '';
+    this.messageType = '';
+    this.score = { player1: 0, player2: 0 };
+    this.isGameStarted = false;
+    this.isGameOver = false;
+    this.isBallActive = false;
+    this.isInitialCountdown = false;
+    this.gameLoop = false;
+    this.isPaused = false;
+    this.isTournamentOver = false;
+    this.tournamentWinner = '';
+    this.render();
+  }
+
   handleInput(field: 'username' | 'nickname', e: Event) {
     this[field] = (e.target as HTMLInputElement).value;
   }
-
-private renderNextMatch() {
-  if (this.bracket.length === 0 || this.currentMatchIndex >= this.bracket.length) return '';
-
-  const match = this.bracket[this.currentMatchIndex];
-  if (match.players.length < 2) return ''; // no button if less than 2 players
-
-  this.currentMatchPlayers = match.players;
-
-  return `
-    <div class="mt-8 p-4 bg-gray-700 rounded" id="match-section">
-      <h3 class="text-xl font-bold mb-2">🎮 Next Match</h3>
-      <p class="mb-2">${match.round}: ${match.players.join(' vs ')}</p>
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded play-match-button">
-        Play Match
-      </button>
-    </div>
-  `;
-}
-
+  
   private recordMatchWinner(winner: string) {
     // Set winner nickname in bracket for current match
     const currentMatch = this.bracket[this.currentMatchIndex];
     currentMatch.winner = winner;
-
+    
+      // Capture final score
+    const currentScore = {
+      p1: this.score.player1,
+      p2: this.score.player2
+    };
+    this.matchScores[this.currentMatchIndex] = currentScore;
     if (this.currentMatchIndex < 2) {
       // Advance winner to Final
       this.bracket[2].players.push(winner);
     }
-
+    
     this.currentMatchIndex++;
     this.currentMatchPlayers = this.bracket[this.currentMatchIndex]?.players || [];
-
+    
     this.message = `${winner} won ${currentMatch.round}!`;
     this.messageType = 'success';
-    console.log('Final match players:', this.bracket[2].players);
-    console.log('Current match index:', this.currentMatchIndex);
+    console.log('Updated matchScores:', this.matchScores);
+    this.resetGame();
+    this.render();
+  }
+  
+  private renderNextMatch() {
+    if (this.bracket.length === 0 || this.currentMatchIndex >= this.bracket.length) return '';
+
+    const match = this.bracket[this.currentMatchIndex];
+    if (match.players.length < 2) return ''; // no button if less than 2 players
+
+    this.currentMatchPlayers = match.players;
+
+    return `
+      <div class="mt-8 p-6 bg-gray-900 rounded max-w-md mx-auto text-center">
+        <h3 class="text-xl font-bold mb-4 text-white">🎮 Next Match</h3>
+        <p class="mb-4 font-bold text-white">${match.players.join(' vs ')}</p>
+        <button
+          class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition play-match-button"
+        >
+          Play Match
+        </button>
+      </div>
+    `;
   }
 
-  render() {
-    this.innerHTML = `
-      <main class="p-8 max-w-xl mx-auto text-white">
+  private renderEndScreen() {
+    if (!this.isTournamentOver || !this.tournamentWinner) return '';
 
-        <div id="tournament-ui">
-          <h2 class="text-3xl font-bold mb-4 text-center">Tournament</h2>
-          <form class="flex gap-2 mb-4" onsubmit="return false;">
-            <input type="text" placeholder="Username" value="${this.username}" class="flex-1 px-4 py-2 rounded bg-gray-700" name="username" />
-            <input type="text" placeholder="Nickname" value="${this.nickname}" class="flex-1 px-4 py-2 rounded bg-gray-700" name="nickname" />
-            <button class="px-4 py-2 rounded bg-blue-600 text-white font-semibold">Join</button>
-          </form>
-          ${this.message ? `<div class="mb-4 font-semibold text-center ${this.messageType === 'error' ? 'text-red-500' : 'text-green-400'}">${this.message}</div>` : ''}
-    
-          <ul class="mb-6">
-            ${this.players.map(p => `<li class="mb-1">${p.username} (${p.nickname})</li>`).join('')}
-          </ul>
-    
-          <button class="w-full py-2 bg-purple-600 rounded text-white font-bold mb-4">Start Tournament</button>
-    
-          ${this.bracket.length > 0 ? `
-            <div class="mt-6">
-              <h3 class="text-xl font-bold mb-2">Matchups</h3>
-              <ul>
-                ${this.bracket.map(m => `<li class="mb-1">${m.round}: ${m.players.join(' vs ') || 'TBD'}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-    
-          ${this.renderNextMatch()}
-        </div>
-    
-        <div id="game-ui" style="display:none;">
-          <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
-            <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
-              <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
-                ${this.currentMatchPlayers[0] || 'Player 1'}
-              </span>
-              <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20" id="score">0 - 0</span>
-              <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
-                ${this.currentMatchPlayers[1] || 'Player 2'}
-              </span>
-            </div>
-            <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-              <div class="bg-white rounded-xl overflow-hidden">
-                <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
+    const winner = this.players.find(p => p.nickname === this.tournamentWinner);
+
+    return `
+      <div class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-80px)] p-8 text-white space-y-6">
+        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          🏆 Tournament Champion!
+        </h2>
+        <img
+          src="${winner?.avatar || 'https://placehold.co/128x128?text=Avatar'}"
+          alt="${this.tournamentWinner}'s avatar"
+          class="w-32 h-32 rounded-full border-4 border-white"
+        />
+        <h3 class="text-2xl font-semibold">${this.tournamentWinner}</h3>x
+        <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
+          New Tournament
+        </button>
+      </div>
+    `;
+  }
+
+  private renderBracket() {
+    if (this.bracket.length === 0) return '';
+
+    return `
+      <div class="max-w-xl mx-auto p-6">
+        <h2 class="text-2xl font-bold mb-6 text-center text-white">Tournament Bracket</h2>
+        <div class="flex justify-center items-center space-x-8 text-white font-semibold">
+
+          <!-- Semi-Finals -->
+          <div class="flex flex-col justify-between h-48 space-y-4">
+            ${this.bracket.slice(0, 2).map((match, i) => {
+              const isWinnerTop = match.players[0]?.trim() === match.winner?.trim();
+              const isWinnerBottom = match.players[1]?.trim() === match.winner?.trim();
+              const scores = this.matchScores[i] || { p1: 0, p2: 0 };
+
+              return `
+                <div class="rounded-lg p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 w-48">
+                  <div class="bg-gray-900 rounded-lg flex flex-col overflow-hidden">
+                    <div
+                      class="flex justify-between px-4 py-2 text-center"
+                      style="${isWinnerTop ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-bottom: calc(0.5rem + 4px);' : ''}"
+                    >
+                      <span>${match.players[0] || 'TBD'}</span>
+                      <span>${scores.p1}</span>
+                    </div>
+
+                    <div class="relative w-full border-t-2 border-gray-900 my-1">
+                      <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 px-2 text-xs text-gray-300 font-bold rounded border border-gray-300">
+                        vs
+                      </span>
+                    </div>
+
+                    <div
+                      class="flex justify-between px-4 py-2 text-center"
+                      style="${isWinnerBottom ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-top: calc(0.5rem + 2px);' : ''}"
+                    >
+                      <span>${match.players[1] || 'TBD'}</span>
+                      <span>${scores.p2}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Spacer -->
+          <div class="border-l-2 border-gray-500 h-70"></div>
+
+          <!-- Final -->
+          <div class="rounded-lg p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 w-48">
+            <div class="bg-gray-900 rounded-lg flex flex-col overflow-hidden">
+              <div class="flex justify-between px-4 py-2 text-center">
+                <span>${this.bracket[2]?.players[0] || 'TBD'}</span>
+                <span>${this.matchScores[2]?.p1 ?? 0}</span>
+              </div>
+
+              <div class="relative w-full border-t border-gray-300 my-1">
+                <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 px-2 text-xs text-gray-300 font-bold">vs</span>
+              </div>
+
+              <div class="flex justify-between px-4 py-2 text-center">
+                <span>${this.bracket[2]?.players[1] || 'TBD'}</span>
+                <span>${this.matchScores[2]?.p2 ?? 0}</span>
               </div>
             </div>
-            <div class="flex flex-wrap justify-center gap-4 mt-6">
-              <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
-                ${this.currentMatchPlayers[0] || 'Player 1'}
-                <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
-                <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
-              </span>
-              <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
-                Pause:
-                <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
-              </span>
-              <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
-                ${this.currentMatchPlayers[1] || 'Player 2'}
-                <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↑</span>
-                <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↓</span>
-              </span>
+          </div>
+
+        </div>
+      </div>
+    `;
+  }
+
+
+  render() {
+    if (this.isTournamentOver) {
+      this.innerHTML = this.renderEndScreen();
+      this.querySelector('.new-tournament-btn')?.addEventListener('click', this.resetTournament.bind(this));
+      return;
+    }
+    this.innerHTML = `
+      <main class="w-full mx-auto p-8">
+
+        <!-- Limited width for inputs and join -->
+        <div class="max-w-xl mx-auto p-8 space-y-6" id="form-wrapper" style="display: ${this.bracket.length > 0 ? 'none' : 'block'};">
+          <div id="tournament-ui">
+            <h2 class="text-3xl font-bold text-center">Tournament</h2>
+
+            <form class="flex gap-2 mb-4" onsubmit="return false;">
+              <input
+                type="text"
+                placeholder="Username"
+                value="${this.username}"
+                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+                name="username"
+              />
+              <input
+                type="text"
+                placeholder="Nickname"
+                value="${this.nickname}"
+                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+                name="nickname"
+              />
+              <button
+                type="submit"
+                class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
+              >
+                Join
+              </button>
+            </form>
+
+            ${this.message ? `
+              <div class="text-center font-semibold ${this.messageType === 'error' ? 'text-red-500' : 'text-green-400'}">
+                ${this.message}
+              </div>` : ''}
+          </div> <!-- tournament-ui -->
+        </div> <!-- form-wrapper -->
+
+        <!-- Full width player cards -->
+        <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
+          ${this.players.map(player => `
+            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+                <img
+                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+                  alt="Avatar of ${player.nickname}"
+                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+                />
+                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+                <div class="text-white text-sm space-y-1 w-full">
+                  <p><strong>🏆 Tournaments Won:</strong> ${player.tournamentsWon || 0}</p>
+                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${this.bracket.length === 0 ? `
+          <button
+            class="block max-w-xl w-full mx-auto rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 py-3 text-white font-bold hover:opacity-90 transition"
+          >
+            Start Tournament
+          </button>` : ''}
+
+        ${this.renderBracket()}
+        ${this.renderNextMatch()}
+      </div>
+
+      <div id="game-ui" class="hidden">
+        <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-4 relative">
+          <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-6">
+            <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+              ${this.currentMatchPlayers[0] || 'Player 1'}
+            </span>
+            <span id="score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
+              0 - 0
+            </span>
+            <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+              ${this.currentMatchPlayers[1] || 'Player 2'}
+            </span>
+          </div>
+
+          <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+            <div class="bg-white rounded-xl overflow-hidden">
+              <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
             </div>
           </div>
-        </div>
-      </main>
-    `;
 
-    this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
-    this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
-    this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
-    this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
-    this.querySelector('.play-match-button')?.addEventListener('click', () => {
-      this.toggleGameUI(true);
-    });
-  }
+          <div class="flex flex-wrap justify-center gap-4 mt-6 text-white text-sm">
+            <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+              ${this.currentMatchPlayers[0] || 'Player 1'}
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
+            </span>
+            <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+              Pause:
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
+            </span>
+            <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+              ${this.currentMatchPlayers[1] || 'Player 2'}
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↑</span>
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↓</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  `;
+
+  // Attach event listeners after setting innerHTML
+  this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
+  this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
+  this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
+  this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
+  this.querySelector('.play-match-button')?.addEventListener('click', () => {
+    this.toggleGameUI(true);
+  });
+}
 
   private toggleGameUI(showGame: boolean) {
     const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
@@ -291,10 +499,16 @@ private renderNextMatch() {
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
     } else if (e.key === ' ' && this.isGameOver) {
-      this.toggleGameUI(false);
-      this.resetGame();
-      this.render();
-    }
+        if (this.currentMatchIndex >= this.bracket.length) {
+          this.isTournamentOver = true;
+          this.tournamentWinner = this.winner;
+          this.render(); // Shows end screens
+        } else {
+          this.toggleGameUI(false);
+          this.render();
+          this.resetGame();
+        }
+      }
   }
 
   private updateGameSettings() {

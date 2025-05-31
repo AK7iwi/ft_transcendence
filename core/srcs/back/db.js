@@ -136,7 +136,13 @@ try {
         console.error('Erreur en ajoutant la colonne losses :', err.message);
     }
 }
-
+try {
+  db.prepare(`ALTER TABLE users ADD COLUMN trophy_count INTEGER DEFAULT 0`).run();
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    console.error('Erreur en ajoutant la colonne trophy_count :', err.message);
+  }
+}
 
 
         // Ajout sécurisé de la colonne "status"
@@ -198,6 +204,10 @@ function getUserByUsernameforMat(username) {
   const user = stmt.get(username);
   console.log('[DB] Found:', user); // 🔍 log result
   return user; 
+}
+
+function incrementTrophyCount(userId) {
+  db.prepare(`UPDATE users SET trophy_count = trophy_count + 1 WHERE id = ?`).run(userId);
 }
 
 async function createUser({ username, password }) {
@@ -266,6 +276,7 @@ module.exports = {
     initializeDatabase,
     getUserByUsername,
     getUserByUsernameforMat,
+    incrementTrophyCount,
     createUser,
     updateUser,
     updatePassword,

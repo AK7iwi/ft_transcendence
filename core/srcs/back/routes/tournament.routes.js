@@ -6,7 +6,6 @@ async function tournamentRoutes(fastify, options) {
       console.log('[ROUTE] /tournament/validate-username hit');
       const username = (request.body.username || '').trim();
 
-
       if (!username || typeof username !== 'string') {
         return reply.code(400).send({ valid: false, message: 'Username is required' });
       }
@@ -15,8 +14,12 @@ async function tournamentRoutes(fastify, options) {
         const user = getUserByUsernameforMat(username);
         console.log('[CHECK] looking up username:', username, '→ found:', !!user);
         console.log('[CHECK] Result from DB for', username, ':', user);
-        if (user) { 
-          return reply.send({ valid: true });
+
+        if (user) {
+          return reply.send({
+            valid: true,
+            avatar: user.avatar || null // Make sure your DB returns an avatar field
+          });
         } else {
           return reply.send({ valid: false, message: 'Username not found' });
         }
@@ -27,5 +30,6 @@ async function tournamentRoutes(fastify, options) {
     }
   });
 }
+
 
 module.exports = tournamentRoutes;
