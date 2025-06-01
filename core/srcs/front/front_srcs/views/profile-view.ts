@@ -76,23 +76,31 @@ private async handleAvatarUpload(event: Event) {
   if (!file) return;
 
   try {
-    const avatar = await ApiService.uploadAvatar(file);
-    // On met à jour immédiatement l’URL locale
-    this.avatarUrl = avatar.startsWith('/')
-      ? `${API_BASE_URL}${avatar}`
-      : avatar;
-    this.user.avatar = avatar;
+    // 1) On upload l’image et on reçoit un chemin relatif, par ex. "/avatars/user123.png"
+    const avatarPath = await ApiService.uploadAvatar(file);
 
-    // On déclenche un nouveau render tout de suite pour que l’image change
-    this.render();
+    // 2) On stocke ce chemin pour usage futur
+    this.user.avatar = avatarPath;
 
-    // Puis on affiche le message de succès
+    // 3) On construit une URL cache-bustée
+    const newUrl = avatarPath.startsWith('/')
+      ? `${API_BASE_URL}${avatarPath}?t=${Date.now()}`
+      : `${avatarPath}?t=${Date.now()}`;
+    this.avatarUrl = newUrl;
+
+    // 4) Au lieu d’appeler `this.render()` (qui reconstruit tout),
+    //    on cible directement la balise <img> et on met à jour son src.
+    const imgEl = this.querySelector<HTMLImageElement>('img[user-avatar]');
+    if (imgEl) {
+      imgEl.src = this.avatarUrl;
+    }
+
+    // 5) Enfin, on affiche le message de succès
     this.showMessage('success', 'Avatar mis à jour !');
   } catch (err) {
     this.showMessage('error', 'Échec du téléchargement de l’avatar');
   }
 }
-
 
 
   // private async handleAvatarUpload(event: Event) {
@@ -173,7 +181,8 @@ private async handleAvatarUpload(event: Event) {
               <h2 class="text-4xl font-bold text-white">${this.user.username}</h2>
               <div class="w-24 h-24 rounded-full p-[2px] bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
                 <div class="w-full h-full rounded-full bg-gray-900">
-                  <img src="${this.avatarUrl}" alt="User Avatar" class="w-full h-full rounded-full object-cover" />
+                  <img user-avatar src="${this.avatarUrl}" alt="User Avatar" class="w-full h-full rounded-full object-cover" />
+
                 </div>
               </div>
               <p class="text-sm text-gray-300">Change your avatar</p>
