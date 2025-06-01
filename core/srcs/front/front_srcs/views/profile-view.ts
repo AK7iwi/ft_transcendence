@@ -133,7 +133,7 @@ render() {
           </div>
 
           <h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Multiplayer Statistics
+            Local Game Statistics
           </h3>
 
           <dl class="mt-6 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">

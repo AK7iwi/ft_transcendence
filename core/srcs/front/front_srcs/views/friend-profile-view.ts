@@ -79,7 +79,8 @@ class FriendProfileView {
       <div class="bg-gray-900 pb-24">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Multiplayer Statistics
+          Local Game Statistics
+
           </h3>
 
           <div class="mt-6 p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
