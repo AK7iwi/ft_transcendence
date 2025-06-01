@@ -145,7 +145,7 @@ const authSchema = {
             }
         }
     },
-    verify2FA: {
+    enable2FA: {
         body: {
             type: 'object',
             required: ['token'],
@@ -168,6 +168,44 @@ const authSchema = {
                                     username: { type: 'string' }
                                 }
                             }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
+    },
+    verify2FA: {
+        body: {
+            type: 'object',
+            required: ['token'],
+            properties: {
+                token: { type: 'string', minLength: 6, maxLength: 6 }
+            }
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: { 
+                                type: 'object', 
+                                properties: {
+                                    id: { type: 'string' },
+                                    username: { type: 'string' }
+                                }
+                            },
+                            token: { type: 'string' }
                         }
                     }
                 }

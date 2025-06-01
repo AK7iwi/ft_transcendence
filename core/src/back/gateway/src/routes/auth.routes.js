@@ -1,6 +1,6 @@
 const authSchema  = require('../schemas/auth.schema');
 const SanitizeService = require('../../security/middleware/sanitize.service');
-const JwtAuth = require('../../security/middleware/jwt/jwt.auth');
+const JWTAuthentication = require('../../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Register route
@@ -72,14 +72,36 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-    fastify.post('/2fa/verify', {
-        schema: authSchema.verify2FA,
+    fastify.post('/2fa/enable', {
+        schema: authSchema.enable2FA,
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify`,
+                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/enable`,
                     request.body
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || '2FA enable failed';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                }); 
+            }
+        }
+    });
+
+    fastify.post('/2fa/verify', {
+        schema: authSchema.verify2FA,
+        preHandler: [SanitizeService.sanitize],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.post(
+                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify`,
+                    request.body    
                 );
                 return reply.code(200).send(response.data);
             } catch (error) {
@@ -89,7 +111,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
-                }); 
+                });
             }
         }
     });

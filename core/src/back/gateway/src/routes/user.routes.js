@@ -1,6 +1,6 @@
 const userSchema = require('../schemas/user.schema');
 const SanitizeService = require('../../security/middleware/sanitize.service');
-const JwtAuth = require('../../security/middleware/jwt/jwt.auth');
+const JWTAuthentication = require('../../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Get user profile route

@@ -8,6 +8,12 @@ module.exports = async function (fastify, opts) {
         handler: TwoFactorController.setup2FA
     });
 
+    // Enable 2FA
+    fastify.post('/2fa/enable', {
+        schema: twoFactorSchema.enable2FA,
+        handler: TwoFactorController.enable2FA
+    });
+
     // Verify 2FA
     fastify.post('/2fa/verify', {
         schema: twoFactorSchema.verify2FA,
