@@ -16,7 +16,7 @@ class TwoFactorController {
             const secret = await TwoFactorService.generateSecret(request.user.username);
             
             // Store secret temporarily (don't enable 2FA yet)
-            await AuthService.store2FASecret(userId, secret.base32);
+            await TwoFactorService.store2FASecret(userId, secret.base32);
 
             // Generate QR code
             const qrCode = await TwoFactorService.generateQRCode(secret);
@@ -39,9 +39,18 @@ class TwoFactorController {
 
     async verify2FA(request, reply) {
         try {
-            const { userId, token } = request.body;
+            //2fa token
+            const { token } = request.body;
+            if (!token) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'Token is required'
+                });
+            }
+
+            const userId = request.user.id;
+
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
-            
             if (!secret) {
                 return reply.code(400).send({
                     success: false,
@@ -49,7 +58,7 @@ class TwoFactorController {
                 });
             }
 
-            const isValid = await TwoFactorService.verifyToken(secret, token);
+            const isValid = await TwoFactorService.verify2FAToken(secret, token);
             if (!isValid) {
                 return reply.code(400).send({
                     success: false,
@@ -61,12 +70,6 @@ class TwoFactorController {
             if (request.body.setup) {
                 await TwoFactorService.enable2FA(userId);
             }
-
-            // Generate JWT token
-            const jwtToken = JWTService.generateToken({
-                id: user.id,
-                username: user.username
-            });
 
             return reply.code(200).send({
                 success: true,

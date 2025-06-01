@@ -52,7 +52,7 @@ module.exports = async function (fastify, opts) {
     // 2FA routes
     fastify.post('/2fa/setup', {
         schema: authSchema.setup2FA,
-        preHandler: [JwtAuth.verifyToken],
+        preHandler: [JWTAuthentication.verifyJWTToken],   
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(
@@ -74,7 +74,7 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/verify', {
         schema: authSchema.verify2FA,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(
@@ -96,7 +96,7 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/disable', {
         schema: authSchema.disable2FA,
-        preHandler: [JwtAuth.verifyToken],
+        preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.post(

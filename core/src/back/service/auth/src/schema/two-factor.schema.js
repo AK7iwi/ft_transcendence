@@ -9,9 +9,8 @@ const twoFactorSchema = {
     verify2FA: {
         body: {
             type: 'object',
-            required: ['userId', 'token'],
+            required: ['token'],
             properties: {
-                userId: { type: 'number' },
                 token: { type: 'string', minLength: 6, maxLength: 6 }
             }
         }

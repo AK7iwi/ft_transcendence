@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-class JwtService {
-    static generateToken(user) {
+class JWTService {
+    static generateJWTToken(user) {
         return jwt.sign(
             { 
                 id: user.id,
@@ -12,7 +12,7 @@ class JwtService {
         );
     }
 
-    static verifyToken(token) {
+    static verifyJWTToken(token) {
         try {
             return jwt.verify(token, process.env.JWT_SECRET);
         } catch (error) {
@@ -21,4 +21,4 @@ class JwtService {
     }
 }
 
-module.exports = JwtService;
+module.exports = JWTService;

@@ -25,7 +25,7 @@ class TwoFactorService {
         }
     }
 
-    static async verifyToken(secret, token) {
+    static async verify2FAToken(secret, token) {
         try {
             return speakeasy.totp.verify({
                 secret: secret,

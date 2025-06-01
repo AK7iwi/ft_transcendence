@@ -148,9 +148,8 @@ const authSchema = {
     verify2FA: {
         body: {
             type: 'object',
-            required: ['userId', 'token'],
+            required: ['token'],
             properties: {
-                userId: { type: 'number' },
                 token: { type: 'string', minLength: 6, maxLength: 6 }
             }
         },
@@ -166,8 +165,7 @@ const authSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    username: { type: 'string' },
-                                    token: { type: 'string' }
+                                    username: { type: 'string' }
                                 }
                             }
                         }

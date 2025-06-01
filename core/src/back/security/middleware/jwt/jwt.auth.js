@@ -1,7 +1,7 @@
-const JwtService = require('./jwt.service');
+const JWTService = require('./jwt.service');
 
-class JwtAuth {
-    static async verifyToken(request, reply) {
+class JWTAuthentication {
+    static async verifyJWTToken(request, reply) {
         try {
             // Get token from header
             const token = request.headers.authorization?.split(' ')[1];
@@ -10,7 +10,7 @@ class JwtAuth {
             }
 
             // Verify token
-            const decoded = JwtService.verifyToken(token);
+            const decoded = JWTService.verifyJWTToken(token);
             
             // Add user info to request
             request.user = decoded;
@@ -23,4 +23,4 @@ class JwtAuth {
     }
 }
 
-module.exports = JwtAuth;
+module.exports = JWTAuthentication;

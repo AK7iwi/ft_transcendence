@@ -43,7 +43,7 @@ class AuthService {
             return {
                 id: user.id,
                 username: user.username,
-                twoFactorEnabled: user.two_factor_enabled
+                twoFactorEnabled: !!user.two_factor_enabled
             };
         } catch (error) {
             if (error.message === 'User not found' || error.message === 'Invalid password') {

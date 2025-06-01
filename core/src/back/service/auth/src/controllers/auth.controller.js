@@ -29,7 +29,7 @@ class AuthController {
             const { username, password } = request.body;
             const user = await AuthService.loginUser(username, password, request.server.axios);
             
-            const token = JWTService.generateToken({
+            const token = JWTService.generateJwtToken({
                 id: user.id,
                 username: user.username
             });

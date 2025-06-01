@@ -6,7 +6,7 @@ module.exports = async function (fastify, opts) {
     // Get user profile route
     fastify.get('/me', {
         schema: userSchema.getMe,
-        preHandler: [JwtAuth.verifyToken],
+        preHandler: [JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.get(
@@ -28,7 +28,7 @@ module.exports = async function (fastify, opts) {
     // Update username route
     fastify.put('/username', {
         schema: userSchema.updateUsername,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.put(
@@ -51,7 +51,7 @@ module.exports = async function (fastify, opts) {
     // Update password route
     fastify.put('/password', {
         schema: userSchema.updatePassword,
-        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.put(
