@@ -122,7 +122,7 @@ const authSchema = {
                                 type: 'object',
                                 properties: {
                                     username: { type: 'string' },
-                                    token: { type: 'string' }
+                                    qrCode: { type: 'string' }
                                 }
                             }
                         }

@@ -31,11 +31,6 @@ HTTPS:
 curl -k -X POST \
   -H "Content-Type: application/json" \
   -d '{"username": "test", "password": "Test123@"}' \
-  "https://localhost:3000/auth/register"
-
-curl -k -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"username": "test", "password": "Test123@"}' \
   "https://localhost:3000/auth/login"
 
 curl -k -X PUT \

@@ -25,7 +25,7 @@ class TwoFactorController {
                 success: true,
                 message: '2FA setup initiated',
                 data: {
-                    secret: secret.base32,
+                    username: request.user.username,
                     qrCode: qrCode
                 }
             });
