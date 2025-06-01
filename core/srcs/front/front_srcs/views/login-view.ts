@@ -58,27 +58,25 @@ async handleSignIn(e: Event) {
 
   try {
     const response = await ApiService.login(this.signInForm.username, this.signInForm.password);
-
-    // Toujours stocker le token après un login réussi
     localStorage.setItem('token', response.token);
 
     if (response.twofa) {
       this.show2FAForm = true;
-      this.render();
+      this.render();  // on affiche le formulaire 2FA
       return;
     }
 
-    // Sinon on peut directement récupérer le profil
     const profile = await ApiService.getProfile();
-    console.log('✅ Profil récupéré depuis /auth/me:', profile);
     localStorage.setItem('user', JSON.stringify(profile));
-
     window.location.href = '/profile';
   } catch (error: any) {
     this.signInError = error.message || 'Login failed';
+    // on réaffiche immédiatement le message d’erreur, mais isLoading est toujours true pour l’instant
     this.render();
   } finally {
     this.isLoading = false;
+    // on réaffiche à nouveau pour désactiver le spinner / réactiver le bouton
+    this.render();
   }
 }
 
