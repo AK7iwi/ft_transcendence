@@ -15,6 +15,8 @@ const authRoutes = require('./routes/auth.routes');
 const avatarRoutes = require('./routes/avatar.routes');
 const authenticate = require('./middleware/authenticate');
 
+
+
 // Créer Fastify
 const fastify = fastifyModule({
   logger: true,
@@ -51,6 +53,10 @@ fastify.decorate('authenticate', authenticate);
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
 fastify.register(require('./routes/gamelog.routes'));
+fastify.register(require('./routes/tournament.routes'), { prefix: '/tournament' });
+fastify.register(require('./routes/profile.routes'));
+
+
 
 fastify.get('/chat/messages/:userId', {
   preHandler: authenticate,
@@ -131,15 +137,15 @@ fastify.get('/profile', async (request, reply) => {
   }
 });
 
-fastify.get('/2fa/setup', async (_, reply) => {
-  try {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
-    return { qrCodeDataURL, secret: secret.base32 };
-  } catch (err) {
-    reply.code(500).send({ error: 'Failed to generate QR code' });
-  }
-});
+// fastify.get('/2fa/setup', async (_, reply) => {
+//   try {
+//     const secret = speakeasy.generateSecret({ length: 20 });
+//     const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
+//     return { qrCodeDataURL, secret: secret.base32 };
+//   } catch (err) {
+//     reply.code(500).send({ error: 'Failed to generate QR code' });
+//   }
+// });
 
 fastify.get('/debug-static', (req, reply) => {
   const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');

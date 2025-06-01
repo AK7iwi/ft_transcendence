@@ -11,34 +11,48 @@ class ProfileView extends HTMLElement {
   private avatarUrl: string = '';
   private successMessage: string = '';
   private errorMessage: string = '';
-private wins: number = 0;
-private losses: number = 0;
+  private wins: number = 0;
+  private losses: number = 0;
 
- connectedCallback() {
-  const token = localStorage.getItem('token');
-  if (!token) return;
-console.log('🟢 Token:', token);
+  // Nouvelle propriété pour stocker l’historique
+  private matchHistory: Array<{
+    match_id: number;
+    played_at: string;
+    result: 'win' | 'loss';
+    opponent: string;
+    user_score: number | null;
+    opponent_score: number | null;
+  }> = [];
 
-  ApiService.getProfile()
-    .then(data => {
-      this.user = {
-        username: data.username,
-        avatar: data.avatar
-      };
-      this.avatarUrl = data.avatar
-        ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
-        : `${API_BASE_URL}/avatars/default.png`;
-      this.wins = data.wins;
-      this.losses = data.losses;
+  connectedCallback() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    console.log('🟢 Token:', token);
 
-      this.render(); // ✅ C’est ça qui déclenche l’affichage
-    })
-    .catch(err => {
-      console.error('Failed to load profile:', err);
-    });
-}
+    ApiService.getProfile()
+      .then(data => {
+        this.user = {
+          username: data.username,
+          avatar: data.avatar
+        };
+        this.avatarUrl = data.avatar
+          ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
+          : `${API_BASE_URL}/avatars/default.png`;
+        this.wins = data.wins;
+        this.losses = data.losses;
 
+        // On affiche d’abord le profil/statistiques existantes
+        this.render();
 
+        // Puis on charge l’historique et on réaffiche
+        this.loadMatchHistory().then(() => {
+          this.render();
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load profile:', err);
+      });
+  }
 
   private showMessage(type: 'success' | 'error', message: string) {
     if (type === 'success') {
@@ -51,6 +65,7 @@ console.log('🟢 Token:', token);
     setTimeout(() => {
       this.successMessage = '';
       this.errorMessage = '';
+      this.render();
     }, 3000);
   }
 
@@ -70,28 +85,57 @@ console.log('🟢 Token:', token);
   }
 
   private logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '/';
-}
-async loadUserStats() {
-  try {
-    const user = await ApiService.getProfile(); // Cette méthode utilise /auth/me
-    const statsContainer = this.querySelector('#user-stats');
-    if (statsContainer) {
-      statsContainer.innerHTML = `
-        <p><strong>Victoires :</strong> ${user.wins}</p>
-        <p><strong>Défaites :</strong> ${user.losses}</p>
-      `;
-    }
-  } catch (err) {
-    console.error('Erreur lors du chargement des stats :', err);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
   }
-}
 
+  // Nouvelle méthode pour récupérer l’historique
+  private async loadMatchHistory() {
+    try {
+      const data = await ApiService.getMatchHistory();
+      this.matchHistory = data;
+    } catch (err) {
+      console.error('Erreur lors du chargement de l’historique des matchs :', err);
+    }
+  }
 
+  render() {
+    // Fonction utilitaire pour formater la date
+    const formatDate = (iso: string) => {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
 
-render() {
+    // Construction des lignes du tableau d’historique
+    const historyRows = this.matchHistory
+      .map(m => {
+        const scoreText =
+          m.user_score == null || m.opponent_score == null
+            ? '—'
+            : `${m.user_score} – ${m.opponent_score}`;
+        const resultColor = m.result === 'win' ? 'text-green-400' : 'text-red-400';
+        return `
+          <tr class="border-b border-gray-700 hover:bg-gray-800">
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">
+              ${formatDate(m.played_at)}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${m.opponent}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold ${resultColor}">
+              ${m.result.toUpperCase()}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${scoreText}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
     this.innerHTML = `
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
       <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -133,7 +177,7 @@ render() {
           </div>
 
           <h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Local Game Statistics
+            Total Game Statistics
           </h3>
 
           <dl class="mt-6 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
@@ -160,17 +204,43 @@ render() {
           </dl>
         </div>
       </div>
-    `;
-const fileInput = this.querySelector('input[type="file"]');
-if (fileInput) {
-  fileInput.addEventListener('change', e => this.handleAvatarUpload(e));
-}
 
-const logoutBtn = this.querySelector('#logout-button');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', () => this.logout());
-}
-}
+      <div class="mx-auto max-w-7xl px-6 lg:px-8 my-12">
+        <h3 class="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          Match History
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-auto divide-y divide-gray-700">
+            <thead class="bg-gray-800">
+              <tr>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-300">Date</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-300">Opponent</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-300">Result</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-300">Score</th>
+              </tr>
+            </thead>
+            <tbody class="bg-gray-900 divide-y divide-gray-700">
+              ${historyRows ||
+                `<tr>
+                   <td colspan="4" class="px-4 py-3 text-center text-gray-500">No matches found.</td>
+                 </tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    // Liaison des écouteurs après rendu
+    const fileInput = this.querySelector('input[type="file"]');
+    if (fileInput) {
+      fileInput.addEventListener('change', e => this.handleAvatarUpload(e));
+    }
+
+    const logoutBtn = this.querySelector('#logout-button');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => this.logout());
+    }
+  }
 }
 
 customElements.define('profile-view', ProfileView);

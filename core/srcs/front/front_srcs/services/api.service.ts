@@ -256,7 +256,17 @@ static async verify2FA(code: string) {
 }
 
 
+// mat
+static async validateUsername(username: string): Promise<{ valid: boolean; message?: string }> {
+  const res = await fetch(`${this.baseUrl}/tournament/validate-username`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
 
+  if (!res.ok) throw new Error('Failed to validate username');
+  return await res.json();
+}
 
 
 static logout() {
@@ -383,5 +393,55 @@ static async getUserById(id: string) {
 }
 
 
+  private static getToken() {
+    return localStorage.getItem('token');
+  }
 
+
+
+  static async getMatchHistory() {
+    const token = ApiService.getToken();
+    const res = await fetch(`${API_BASE_URL}/profile/history`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Erreur ${res.status}`);
+    }
+    return (await res.json()) as Array<{
+      match_id: number;
+      played_at: string;
+      result: 'win' | 'loss';
+      opponent: string;
+      user_score: number | null;
+      opponent_score: number | null;
+    }>;
+  }
+
+
+
+
+static async getUserMatchHistory(userId: number) {
+    const token = this.getToken();
+    const res = await fetch(`${this.baseUrl}/auth/users/${userId}/history`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Erreur ${res.status} en récupérant l’historique utilisateur`);
+    }
+    return (await res.json()) as Array<{
+      match_id: number;
+      played_at: string;
+      result: 'win' | 'loss';
+      opponent: string;
+      user_score: number | null;
+      opponent_score: number | null;
+    }>;
+  }
 }
+

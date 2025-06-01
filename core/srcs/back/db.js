@@ -192,6 +192,14 @@ async function getUserByUsername(username) {
     return stmt.get(username);
 }
 
+function getUserByUsernameforMat(username) {
+  console.log('[DB] Looking up:', username); // 🔍 log input
+  const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+  const user = stmt.get(username);
+  console.log('[DB] Found:', user); // 🔍 log result
+  return user; 
+}
+
 async function createUser({ username, password }) {
     const password_hash = await bcrypt.hash(password, 10);
     const stmt = db.prepare(`
@@ -257,6 +265,7 @@ module.exports = {
     db,
     initializeDatabase,
     getUserByUsername,
+    getUserByUsernameforMat,
     createUser,
     updateUser,
     updatePassword,
