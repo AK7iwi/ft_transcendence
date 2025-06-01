@@ -92,6 +92,15 @@ class DbModel {
         `);
         return stmt.get(userId);
     }
+    
+    static async getTwoFactorSecret(userId) {
+        const stmt = db.prepare(`
+            SELECT two_factor_secret
+            FROM users
+            WHERE id = ?
+        `);
+        return stmt.get(userId);    
+    }
 }
 
-module.exports = DbModel; 
+module.exports = DbModel;

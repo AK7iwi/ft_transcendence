@@ -186,10 +186,8 @@ const authSchema = {
     disable2FA: {
         body: {
             type: 'object',
-            required: ['token'],
-            properties: {   
-                token: { type: 'string', minLength: 6, maxLength: 6 }
-            }
+            required: [],
+            properties: {}
         },
         response: {
             200: {
@@ -203,8 +201,7 @@ const authSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    username: { type: 'string' },
-                                    token: { type: 'string' }
+                                    username: { type: 'string' }
                                 }
                             }
                         }

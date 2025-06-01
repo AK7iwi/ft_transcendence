@@ -40,16 +40,16 @@ class TwoFactorController {
     async verify2FA(request, reply) {
         try {
             const { userId, token } = request.body;
-            const user = await AuthService.getUserById(userId);
+            const secret = await TwoFactorService.getTwoFactorSecret(userId);
             
-            if (!user.two_factor_secret) {
+            if (!secret) {
                 return reply.code(400).send({
                     success: false,
                     message: '2FA not set up'
                 });
             }
 
-            const isValid = await TwoFactorService.verifyToken(user.two_factor_secret, token);
+            const isValid = await TwoFactorService.verifyToken(secret, token);
             if (!isValid) {
                 return reply.code(400).send({
                     success: false,
@@ -59,7 +59,7 @@ class TwoFactorController {
 
             // If this is part of setup, enable 2FA
             if (request.body.setup) {
-                await AuthService.enable2FA(userId);
+                await TwoFactorService.enable2FA(userId);
             }
 
             // Generate JWT token
@@ -86,7 +86,7 @@ class TwoFactorController {
     async disable2FA(request, reply) {
         try {
             const userId = request.user.id;
-            await AuthService.disable2FA(userId);
+            await TwoFactorService.disable2FA(userId);
             
             return reply.code(200).send({
                 success: true,

@@ -69,6 +69,14 @@ class TwoFactorService {
             throw new Error('Failed to get 2FA enabled');
         }
     }
+
+    static async getTwoFactorSecret(userId) {
+        try {
+            return await DbModel.getTwoFactorSecret(userId);
+        } catch (error) {
+            throw new Error('Failed to get 2FA secret');
+        }
+    }
 }
 
 module.exports = TwoFactorService;

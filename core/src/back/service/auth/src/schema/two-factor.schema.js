@@ -19,10 +19,8 @@ const twoFactorSchema = {
     disable2FA: {
         body: {
             type: 'object',
-            required: ['token'],
-            properties: {
-                token: { type: 'string', minLength: 6, maxLength: 6 }
-            }
+            required: [],
+            properties: {}
         }
     }
 };
