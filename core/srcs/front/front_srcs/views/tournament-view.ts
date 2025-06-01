@@ -617,12 +617,12 @@ private async recordMatchWinner(winnerNickname: string) {
             </span>
             <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
               Pause:
-              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
             </span>
             <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
               ${this.currentMatchPlayers[1] || 'Player 2'}
-              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↑</span>
-              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">↓</span>
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span>
+              <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">K</span>
             </span>
           </div>
         </div>
@@ -689,7 +689,7 @@ private async recordMatchWinner(winnerNickname: string) {
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
       window.addEventListener(event, (e) => {
-        if (['w', 's', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
+        if (['w', 's', 'o', 'k', 'Enter'].includes(e.key)) e.preventDefault();
         this.keysPressed[e.key] = event === 'keydown';
         if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
       })
@@ -697,13 +697,13 @@ private async recordMatchWinner(winnerNickname: string) {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
-    } else if (e.key === ' ' && !this.isGameStarted && !this.isGameOver) {
+    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
       this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-    } else if (e.key === ' ' && this.isGameOver) {
+    } else if (e.key === 'Enter' && this.isGameOver) {
         if (this.currentMatchIndex >= this.bracket.length) {
           this.isTournamentOver = true;
           this.tournamentWinner = this.winner;
@@ -795,8 +795,8 @@ private async recordMatchWinner(winnerNickname: string) {
   private updateGame() {
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['ArrowUp']) this.paddle2.y -= this.paddle2.speed;
-    if (this.keysPressed['ArrowDown']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
@@ -870,12 +870,12 @@ private async recordMatchWinner(winnerNickname: string) {
 
     if (this.isGameOver) {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
-      this.drawCenteredText('Press SPACE to Continue', 24, this.canvas.height / 2 + 30);
+      this.drawCenteredText('Press ENTER to Continue', 24, this.canvas.height / 2 + 30);
     } else if (this.isPaused) {
       this.drawCenteredText('Paused', 48, this.canvas.height / 2 - 30);
     } else if (!this.isGameStarted) {
       this.drawCenteredText(
-        this.isInitialCountdown ? this.countdown.toString() : 'Press SPACE to Start',
+        this.isInitialCountdown ? this.countdown.toString() : 'Press ENTER to Start',
         this.isInitialCountdown ? 72 : 48,
         this.canvas.height / 2
       );

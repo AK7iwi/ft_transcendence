@@ -107,7 +107,7 @@ class GameRemoteView extends HTMLElement {
           </span>
           <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
             Pause:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">P</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
           </span>
           <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
             Player 2:
@@ -146,7 +146,7 @@ class GameRemoteView extends HTMLElement {
 
   private handleKeyDown = (e: KeyboardEvent) => {
     console.log('🔑 Key pressed:', e.key, 'Role:', this.playerRole);
-    if (e.key.toLowerCase() === 'p' && this.isGameStarted && !this.isGameOver) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.sendMessage('pause');
       return;
     }

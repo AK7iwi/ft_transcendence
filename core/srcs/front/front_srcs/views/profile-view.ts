@@ -69,20 +69,46 @@ class ProfileView extends HTMLElement {
     }, 3000);
   }
 
-  private async handleAvatarUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
 
-    try {
-      const avatar = await ApiService.uploadAvatar(file);
-      this.avatarUrl = avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : avatar;
-      this.user.avatar = avatar;
-      this.showMessage('success', 'Avatar mis à jour !');
-    } catch (err) {
-      this.showMessage('error', 'Échec du téléchargement de l’avatar');
-    }
+private async handleAvatarUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const avatar = await ApiService.uploadAvatar(file);
+    // On met à jour immédiatement l’URL locale
+    this.avatarUrl = avatar.startsWith('/')
+      ? `${API_BASE_URL}${avatar}`
+      : avatar;
+    this.user.avatar = avatar;
+
+    // On déclenche un nouveau render tout de suite pour que l’image change
+    this.render();
+
+    // Puis on affiche le message de succès
+    this.showMessage('success', 'Avatar mis à jour !');
+  } catch (err) {
+    this.showMessage('error', 'Échec du téléchargement de l’avatar');
   }
+}
+
+
+
+  // private async handleAvatarUpload(event: Event) {
+  //   const input = event.target as HTMLInputElement;
+  //   const file = input.files?.[0];
+  //   if (!file) return;
+
+  //   try {
+  //     const avatar = await ApiService.uploadAvatar(file);
+  //     this.avatarUrl = avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : avatar;
+  //     this.user.avatar = avatar;
+  //     this.showMessage('success', 'Avatar mis à jour !');
+  //   } catch (err) {
+  //     this.showMessage('error', 'Échec du téléchargement de l’avatar');
+  //   }
+  // }
 
   private logout() {
     localStorage.removeItem('token');
