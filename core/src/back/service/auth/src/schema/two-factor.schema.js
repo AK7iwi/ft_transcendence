@@ -1,6 +1,4 @@
-module.exports = {
-    // Existing schemas...
-    
+const twoFactorSchema = {
     setup2FA: {
         body: {
             type: 'object',
@@ -8,7 +6,6 @@ module.exports = {
             properties: {}
         }
     },
-    
     verify2FA: {
         body: {
             type: 'object',
@@ -19,7 +16,6 @@ module.exports = {
             }
         }
     },
-    
     disable2FA: {
         body: {
             type: 'object',
@@ -30,3 +26,5 @@ module.exports = {
         }
     }
 };
+
+module.exports = twoFactorSchema;

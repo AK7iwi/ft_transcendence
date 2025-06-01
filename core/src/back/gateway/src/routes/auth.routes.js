@@ -1,5 +1,6 @@
 const authSchema  = require('../schemas/auth.schema');
 const SanitizeService = require('../../security/middleware/sanitize.service');
+const JwtAuth = require('../../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Register route
@@ -47,4 +48,73 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    // 2FA routes
+    fastify.post('/2fa/setup', {
+        schema: authSchema.setup2FA,
+        preHandler: [JwtAuth.verifyToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.post(
+                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/setup`,
+                    request.body
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || '2FA setup failed';
+                return reply.code(statusCode).send({
+                    success: false, 
+                    message: errorMessage
+                });
+            }
+        }
+    });
+
+    fastify.post('/2fa/verify', {
+        schema: authSchema.verify2FA,
+        preHandler: [SanitizeService.sanitize, JwtAuth.verifyToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.post(
+                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify`,
+                    request.body
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || '2FA verification failed';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                }); 
+            }
+        }
+    });
+
+    fastify.post('/2fa/disable', {
+        schema: authSchema.disable2FA,
+        preHandler: [JwtAuth.verifyToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.axios.post(
+                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/disable`,
+                    request.body
+                );
+                return reply.code(200).send(response.data);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.response?.status || 400;
+                const errorMessage = error.response?.data?.message || error.message || '2FA disable failed';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
+    
+    
 };

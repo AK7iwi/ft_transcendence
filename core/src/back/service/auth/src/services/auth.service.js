@@ -1,7 +1,6 @@
 const PasswordService = require('../../security/password/password.service');
 const DbModel = require('../database/db.model');
 
-
 class AuthService {
     static async registerUser(username, password, axiosInstance) {
         try {

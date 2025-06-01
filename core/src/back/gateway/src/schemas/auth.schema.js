@@ -102,6 +102,123 @@ const authSchema = {
                 }
             }
         }
+    },
+    setup2FA: {
+        body: {
+            type: 'object',
+            required: [],
+            properties: {}
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' },
+                                    token: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
+    },
+    verify2FA: {
+        body: {
+            type: 'object',
+            required: ['userId', 'token'],
+            properties: {
+                userId: { type: 'number' },
+                token: { type: 'string', minLength: 6, maxLength: 6 }
+            }
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' },
+                                    token: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
+    },
+    disable2FA: {
+        body: {
+            type: 'object',
+            required: ['token'],
+            properties: {   
+                token: { type: 'string', minLength: 6, maxLength: 6 }
+            }
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' },
+                                    token: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

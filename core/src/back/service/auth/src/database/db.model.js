@@ -83,6 +83,15 @@ class DbModel {
         `);
         return stmt.run(userId);
     }
+
+    static async getTwoFactorEnabled(userId) {
+        const stmt = db.prepare(`
+            SELECT two_factor_enabled
+            FROM users
+            WHERE id = ?
+        `);
+        return stmt.get(userId);
+    }
 }
 
 module.exports = DbModel; 

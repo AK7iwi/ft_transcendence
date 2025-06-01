@@ -1,17 +1,26 @@
 const TwoFactorService = require('../services/two-factor.service');
 
-class AuthController {
-    // Existing methods...
-
+class TwoFactorController {
     async setup2FA(request, reply) {
         try {
             const userId = request.user.id;
-            const secret = await TwoFactorService.generateSecret();
-            const qrCode = await TwoFactorService.generateQRCode(secret);
+
+            //check if 2fa is already enabled
+            const twoFactorEnabled = await TwoFactorService.getTwoFactorEnabled(userId);
+            if (twoFactorEnabled) {
+                return reply.code(400).send({
+                    success: false,
+                    message: '2FA already setup'
+                });
+            }
+            const secret = await TwoFactorService.generateSecret(request.user.username);
             
             // Store secret temporarily (don't enable 2FA yet)
             await AuthService.store2FASecret(userId, secret.base32);
-            
+
+            // Generate QR code
+            const qrCode = await TwoFactorService.generateQRCode(secret);
+
             return reply.code(200).send({
                 success: true,
                 message: '2FA setup initiated',
@@ -91,3 +100,5 @@ class AuthController {
         }
     }
 }
+
+module.exports = new TwoFactorController();
