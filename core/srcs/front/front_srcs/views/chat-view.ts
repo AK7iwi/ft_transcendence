@@ -1,5 +1,3 @@
-
-
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { Router } from '@vaadin/router';
@@ -460,7 +458,7 @@ private async handleUnblockUser() {
     <div class="flex h-[80vh] bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white overflow-hidden">
       <aside class="w-1/4 border-r border-gray-700 p-4 overflow-y-auto">
         <h2 class="text-lg font-semibold mb-4">
-          <i class="fa-solid fa-comments"></i> Conversations
+          Conversations
         </h2>
         <ul class="space-y-2">
           ${this.conversations
@@ -507,13 +505,13 @@ private async handleUnblockUser() {
                        id="unblock-button"
                        class="px-3 py-1 bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white rounded-full hover:opacity-90 transition"
                      >
-                       <i class="fa-solid fa-check"></i> Débloquer
+                       Débloquer
                      </button>`
                   : `<button
                        id="block-button"
                        class="px-3 py-1 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full hover:opacity-90 transition"
                      >
-                       <i class="fa-solid fa-ban"></i> Bloquer
+                       Bloquer
                      </button>`;
 
                 return `
@@ -522,7 +520,7 @@ private async handleUnblockUser() {
                     <div
                       class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center"
                     >
-                      <i class="fa-solid fa-user-tie text-white"></i>
+                      
                     </div>
                     <h3 class="text-lg font-semibold">${conv.name}</h3>
                   </div>
@@ -531,13 +529,13 @@ private async handleUnblockUser() {
                       id="invite-button"
                       class="px-3 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 transition"
                     >
-                      <i class="fa-solid fa-gamepad"></i> Inviter
+                      Inviter
                     </button>
                     <button
                       id="profile-button"
                       class="px-3 py-1 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full hover:opacity-90 transition"
                     >
-                      <i class="fa-solid fa-eye"></i> Profil
+                      Profil
                     </button>
                     ${blockButtonHTML}
                   </div>
@@ -583,7 +581,7 @@ private async handleUnblockUser() {
                     type="submit"
                     class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r hover:opacity-90 transition"
                   >
-                    <i class="fa-solid fa-paper-plane"></i> Envoyer
+                    Envoyer
                   </button>
                 </form>
                 `;
@@ -607,4 +605,3 @@ private async handleUnblockUser() {
 }
 
 customElements.define('chat-view', ChatView);
-

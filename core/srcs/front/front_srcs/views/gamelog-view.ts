@@ -123,33 +123,24 @@ private ballCountdownTimer: number | null = null;
 
 private handleKeyDown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
-    // ─────────────────────────────────────────────────────────────────────────
-    // 1) Si c’est un "keydown" répété (maintien de la touche), on ignore d’emblée
-    if (e.repeat) {
+    if (e.repeat || this.initialCountdownTimer !== null || this.isInitialCountdown) {
       return;
     }
 
-    // 2) Si un countdown initial est déjà en cours, on ne relance rien
-    if (this.initialCountdownTimer !== null) {
-      return;
-    }
-
-    // 3) Si c’est Game Over, ENTER réinitialise la partie
     if (this.isGameOver) {
       this.resetGame();
       return;
     }
 
-    // 4) Sinon, si la partie n’a pas encore démarré, on lance le "3-2-1"
     if (!this.isGameStarted) {
-      this.isInitialCountdown = true;
+      // ⛔️ Supprime la ligne ci-dessous, car elle empêche le lancement :
+      // this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
     }
     return;
   }
 
-  // Touche 'G' = pause / reprise
   if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
     this.togglePause();
   }
@@ -188,69 +179,78 @@ private handleKeyDown(e: KeyboardEvent) {
     this.updateGameSettings();
   }
 
-  private resetBall() {
-    this.ball.x = this.canvas.width / 2;
-    this.ball.y = this.canvas.height / 2;
-    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    this.isBallActive = false;
+private resetBall(withCountdown = true) {
+  this.ball.x = this.canvas.width / 2;
+  this.ball.y = this.canvas.height / 2;
+  const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+  const direction = Math.random() > 0.5 ? 1 : -1;
+  this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+  this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+  this.isBallActive = false;
 
-    // Recentrage des paddles
-    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
-    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
-    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+  // recentrage paddles
+  this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+  this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    // Arrêter tout ancien ballCountdown avant d’en créer un nouveau
-    if (this.ballCountdownTimer !== null) {
-      clearInterval(this.ballCountdownTimer);
-    }
-    this.startBallCountdown();
+  if (this.ballCountdownTimer !== null) {
+    clearInterval(this.ballCountdownTimer);
+    this.ballCountdownTimer = null;
   }
+
+  if (withCountdown) {
+    this.startBallCountdown();
+  } else {
+    this.isBallActive = true;
+  }
+}
 
 private startInitialCountdown() {
-  // Si un ancien timer existe (au cas où), on le stoppe
   if (this.initialCountdownTimer !== null) {
     clearInterval(this.initialCountdownTimer);
+    this.initialCountdownTimer = null;
   }
 
+  if (this.isInitialCountdown) return;
+
+  this.isInitialCountdown = true;
   this.countdown = COUNTDOWN_START;
-  // on assigne le timer à `initialCountdownTimer` pour pouvoir le bloquer plus bas
+
   this.initialCountdownTimer = window.setInterval(() => {
     this.countdown--;
     this.draw();
 
     if (this.countdown <= 0) {
-      // Quand le décompte est terminé, on arrête ce timer
       clearInterval(this.initialCountdownTimer!);
-      this.initialCountdownTimer = null;   // <- remet “ENTER” disponible
+      this.initialCountdownTimer = null;
       this.isInitialCountdown = false;
 
-      // Là, la partie démarre vraiment
       this.isGameStarted = true;
       this.gameLoop = true;
-      this.resetBall();
+      
+      this.resetBall(false);  // ✅ "false" ici empêche le second décompte
+      this.isBallActive = true;  // Active immédiatement la balle au premier lancement
+      
       this.startGameLoop();
     }
   }, 1000);
 }
 
 
-  private startBallCountdown() {
-    this.countdown = COUNTDOWN_START;
-    this.ballCountdownTimer = window.setInterval(() => {
-      this.countdown--;
-      this.draw();
+private startBallCountdown() {
+  this.countdown = COUNTDOWN_START;
 
-      if (this.countdown <= 0) {
-        clearInterval(this.ballCountdownTimer!);
-        this.ballCountdownTimer = null;
-        this.isBallActive = true;
-      }
-    }, 1000);
-  }
+  this.ballCountdownTimer = window.setInterval(() => {
+    this.countdown--;
+    this.draw();
+
+    if (this.countdown <= 0) {
+      clearInterval(this.ballCountdownTimer!);
+      this.ballCountdownTimer = null;
+      this.isBallActive = true;
+    }
+  }, 1000);
+}
+
 
   private startGameLoop() {
     if (!this.gameLoop || this.isPaused) return;
@@ -302,18 +302,24 @@ private startInitialCountdown() {
       }
 
       if (this.ball.x <= 0) {
-        this.score.player2++;
-        this.score.player2 >= this.settings.endScore
-          ? this.endGame('Player 2')
-          : this.resetBall();
-        this.updateScoreDisplay();
-      } else if (this.ball.x >= this.canvas.width) {
-        this.score.player1++;
-        this.score.player1 >= this.settings.endScore
-          ? this.endGame('Player 1')
-          : this.resetBall();
-        this.updateScoreDisplay();
-      }
+  this.score.player2++;
+  if (this.score.player2 >= this.settings.endScore) {
+    this.endGame('Player 2');
+  } else {
+    this.resetBall(true); // ✅ décompte après point
+  }
+  this.updateScoreDisplay();
+} else if (this.ball.x >= this.canvas.width) {
+  this.score.player1++;
+  if (this.score.player1 >= this.settings.endScore) {
+    this.endGame('Player 1');
+  } else {
+    this.resetBall(true); // ✅ décompte après point
+  }
+  this.updateScoreDisplay();
+}
+
+
     }
   }
 
