@@ -23,8 +23,7 @@ class GamelogView extends HTMLElement {
   private animationFrameId = 0;
   private gameLoop = false;
   private settingsService = SettingsService.getInstance();
-  private settings: GameSettings = this.settingsService.getSettings();
-
+private settings: GameSettings = JSON.parse(JSON.stringify(SettingsService.getInstance().getSettings()));
 private initialCountdownTimer: number | null = null;
 private ballCountdownTimer: number | null = null;
 
@@ -36,13 +35,36 @@ private ballCountdownTimer: number | null = null;
 
   constructor() {
     super();
-    window.addEventListener('settingsChanged', this.handleSettingsChanged);
+    // window.addEventListener('settingsChanged', this.handleSettingsChanged);
     window.addEventListener('resize', this.handleResize);
   }
 
   connectedCallback() {
     this.render();
   }
+
+  disconnectedCallback() {
+  // Reset les scores et l'état du jeu quand on quitte la page
+  this.score = { player1: 0, player2: 0 };
+  this.isGameStarted = false;
+  this.isGameOver = false;
+  this.isBallActive = false;
+
+
+  // Nettoie les timers si besoin
+  if (this.initialCountdownTimer !== null) {
+    clearInterval(this.initialCountdownTimer);
+    this.initialCountdownTimer = null;
+  }
+  if (this.ballCountdownTimer !== null) {
+    clearInterval(this.ballCountdownTimer);
+    this.ballCountdownTimer = null;
+  }
+  window.removeEventListener('resize', this.handleResize); // 🔥 Ajoute cette ligne ici
+  // Stop animation
+  cancelAnimationFrame(this.animationFrameId);
+}
+
 
   private render() {
     this.user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -157,6 +179,8 @@ private handleKeyDown(e: KeyboardEvent) {
   }
 
   private initGame() {
+    this.settings = JSON.parse(JSON.stringify(this.settingsService.getSettings())); // deep copy
+
     const container = this.canvas.parentElement!;
     let width = container.clientWidth;
     let height = width / CANVAS_ASPECT_RATIO;
