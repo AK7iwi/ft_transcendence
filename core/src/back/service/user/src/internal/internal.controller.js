@@ -1,4 +1,4 @@
-const InternalService = require('../services/internal.service');
+const InternalService = require('./internal.service');
 
 class InternalController {
     async createUser(request, reply) {

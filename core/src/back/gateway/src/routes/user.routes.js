@@ -10,7 +10,8 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.axios.get(
-                    `${process.env.USER_SERVICE_URL}/user/me`
+                    `${process.env.USER_SERVICE_URL}/user/me`, 
+                    request.body
                 );
                 return reply.code(200).send(response.data);
             } catch (error) {

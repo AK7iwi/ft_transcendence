@@ -1,5 +1,5 @@
-const twoFactorSchema = require('../schema/two-factor.schema');
-const TwoFactorController = require('../controllers/two-factor.controller');
+const twoFactorSchema = require('./two-factor.schema');
+const TwoFactorController = require('./two-factor.controller');
 
 module.exports = async function (fastify, opts) {
     // Setup 2FA
@@ -9,15 +9,15 @@ module.exports = async function (fastify, opts) {
     });
 
     // Enable 2FA
-    fastify.post('/2fa/enable', {
-        schema: twoFactorSchema.enable2FA,
-        handler: TwoFactorController.enable2FA
+    fastify.post('/2fa/verify-setup', {
+        schema: twoFactorSchema.verify_setup2FA,
+        handler: TwoFactorController.verify_setup2FA
     });
 
     // Verify 2FA
-    fastify.post('/2fa/verify', {
-        schema: twoFactorSchema.verify2FA,
-        handler: TwoFactorController.verify2FA
+    fastify.post('/2fa/verify-login', {
+        schema: twoFactorSchema.verify_login2FA,
+        handler: TwoFactorController.verify_login2FA
     });
 
     // Disable 2FA

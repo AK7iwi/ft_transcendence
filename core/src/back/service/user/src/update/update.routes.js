@@ -1,5 +1,5 @@
-const updateSchema = require('../schema/update.schema');
-const UpdateController = require('../controllers/update.controller');
+const updateSchema = require('./update.schema');
+const UpdateController = require('./update.controller');
 
 module.exports = async function (fastify, opts) {
     // Update username

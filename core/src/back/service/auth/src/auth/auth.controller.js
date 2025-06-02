@@ -1,4 +1,4 @@
-const AuthService = require('../services/auth.service');
+const AuthService = require('./auth.service');
 const JWTService = require('../../security/middleware/jwt/jwt.service');
 
 class AuthController {
@@ -29,7 +29,7 @@ class AuthController {
             const { username, password } = request.body;
             const user = await AuthService.loginUser(username, password, request.server.axios);
             
-            const token = JWTService.generateJwtToken({
+            const token = JWTService.generateJWTToken({
                 id: user.id,
                 username: user.username
             });

@@ -1,4 +1,4 @@
-const UserController = require('../controllers/user.controller');
+const UserController = require('./user.controller');
 
 module.exports = async function (fastify, opts) {
     // Get user profile route

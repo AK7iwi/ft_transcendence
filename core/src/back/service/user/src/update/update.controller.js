@@ -1,4 +1,4 @@
-const UpdateService = require('../services/update.service');
+const UpdateService = require('./update.service');
 
 class UpdateController {
     async updateUsername(request, reply) {

@@ -1,4 +1,4 @@
-const TwoFactorService = require('../services/two-factor.service');
+const TwoFactorService = require('./two-factor.service');
 const JWTService = require('../../security/middleware/jwt/jwt.service');
 
 class TwoFactorController {
@@ -40,7 +40,7 @@ class TwoFactorController {
         }
     }
 
-    async enable2FA(request, reply) {
+    async verify_setup2FA(request, reply) {
         try {
             
             const userId = request.user.id;
@@ -91,9 +91,10 @@ class TwoFactorController {
         }
     }
 
-    async verify2FA(request, reply) {
+    async verify_login2FA(request, reply) {
         try {
             const userId = request.user.id;
+
             const { token } = request.body;
             if (!token) {
                 return reply.code(400).send({
@@ -147,6 +148,15 @@ class TwoFactorController {
     async disable2FA(request, reply) {
         try {
             const userId = request.user.id;
+
+            const { token } = request.body;
+            if (!token) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'Token is required'
+                });
+            }
+            
             await TwoFactorService.disable2FA(userId);
             
             return reply.code(200).send({

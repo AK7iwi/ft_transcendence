@@ -145,7 +145,7 @@ const authSchema = {
             }
         }
     },
-    enable2FA: {
+    verify_setup2FA: {
         body: {
             type: 'object',
             required: ['token'],
@@ -181,7 +181,7 @@ const authSchema = {
             }
         }
     },
-    verify2FA: {
+    verify_login2FA: {
         body: {
             type: 'object',
             required: ['token'],

@@ -1,5 +1,5 @@
-const authSchema = require('../schema/auth.schema');
-const AuthController = require('../controllers/auth.controller');
+const authSchema = require('./auth.schema');
+const AuthController = require('./auth.controller');
 
 module.exports = async function (fastify, opts) {
     // Register route
