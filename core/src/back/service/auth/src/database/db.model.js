@@ -33,26 +33,6 @@ class DbModel {
         return stmt.get(username);
     }
 
-    static async updateUsername(currentUsername, newUsername) {
-        const stmt = db.prepare(`
-            UPDATE users 
-            SET username = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE username = ?
-        `);
-        return stmt.run(newUsername, currentUsername);
-    }
-
-    static async updatePassword(username, hashedPassword) {
-        const stmt = db.prepare(`
-            UPDATE users 
-            SET password = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE username = ?
-        `);
-        return stmt.run(hashedPassword, username);
-    }
-
     static async update2FASecret(userId, secret) {
         const stmt = db.prepare(`
             UPDATE users 
@@ -100,6 +80,26 @@ class DbModel {
             WHERE id = ?
         `);
         return stmt.get(userId);    
+    }
+
+    static async updateUsername(currentUsername, newUsername) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET username = ?,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE username = ?
+        `);
+        return stmt.run(newUsername, currentUsername);
+    }
+
+    static async updatePassword(username, hashedPassword) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET password = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE username = ?
+        `);
+        return stmt.run(hashedPassword, username);
     }
 }
 

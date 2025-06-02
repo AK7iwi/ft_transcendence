@@ -11,6 +11,7 @@ class TwoFactorService {
             if (!secret.otpauth_url) {
                 throw new Error('Missing otpauth_url');
             }
+
             return secret;
         } catch (error) {
             throw new Error('Failed to generate secret');
@@ -40,6 +41,12 @@ class TwoFactorService {
 
     static async store2FASecret(userId, secret) {
         try {
+            //send secret to user
+            await axiosInstance.post(`${process.env.USER_SERVICE_URL}/user/internal/secret2FA`, {
+                userId: userId,
+                secret: secret
+            });
+
             return await DbModel.update2FASecret(userId, secret);
         } catch (error) {
             throw new Error('Failed to store 2FA secret');
@@ -48,14 +55,23 @@ class TwoFactorService {
 
     static async enable2FA(userId) {
         try {
+            //send enable 2fa to user
+            await axiosInstance.post(`${process.env.USER_SERVICE_URL}/user/internal/enable2FA`, {
+                userId: userId
+            }); 
+
             return await DbModel.enable2FA(userId);
         } catch (error) {
             throw new Error('Failed to enable 2FA');
         }
     }
-
     static async disable2FA(userId) {
         try {
+            //send disable 2fa to user
+            await axiosInstance.post(`${process.env.USER_SERVICE_URL}/user/internal/disable2FA`, {
+                userId: userId
+            });
+
             return await DbModel.disable2FA(userId);
         } catch (error) {
             throw new Error('Failed to disable 2FA');

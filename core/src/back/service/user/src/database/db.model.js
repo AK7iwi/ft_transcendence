@@ -40,6 +40,15 @@ class DbModel {
         return stmt.run(hashedPassword, username);
     }
 
+    static async getUser(userId) {
+        const stmt = db.prepare('SELECT id, user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
+        return stmt.get(userId);
+    }
+    
+
+
+    
+    // DB UPDATE 
     static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`
             INSERT INTO user_profiles (user_id, username, password) 
@@ -47,10 +56,30 @@ class DbModel {
         return stmt.run(userId, username, hashedPassword);
     }
 
-    static async getUser(userId) {
-        const stmt = db.prepare('SELECT id, user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
-        return stmt.get(userId);
+    static async secret2FA(userId, secret) {
+        const stmt = db.prepare(`
+            UPDATE user_profiles 
+            SET two_factor_secret = ?
+            WHERE user_id = ?
+        `);
+        return stmt.run(secret, userId);
     }
-}
 
+    static async enable2FA(userId) {
+        const stmt = db.prepare(`
+            UPDATE user_profiles 
+            SET two_factor_enabled = 1
+        `);
+        return stmt.run(userId);
+    }
+
+    static async disable2FA(userId) {
+        const stmt = db.prepare(`
+            UPDATE user_profiles 
+            SET two_factor_enabled = 0,
+                two_factor_secret = NULL
+        `);
+        return stmt.run(userId);
+    }   
+}
 module.exports = DbModel; 
