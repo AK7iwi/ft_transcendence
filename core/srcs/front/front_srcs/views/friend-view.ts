@@ -27,15 +27,16 @@ class FriendView extends HTMLElement {
       }
     };
     socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'user-status') {
-          this.handleUserStatus(data);
-        }
-      } catch (err) {
-        console.error('Invalid WebSocket message', err);
-      }
-    };
+  try {
+    const data = JSON.parse(event.data);
+    if (data.type === 'user-status') {
+      this.handleUserStatus(data.payload); // ✅ Corrige ici !
+    }
+  } catch (err) {
+    console.error('Invalid WebSocket message', err);
+  }
+};
+
   }
 
   handleUserStatus(data: { userId: number; status: 'online' | 'offline' }) {

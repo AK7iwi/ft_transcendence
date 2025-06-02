@@ -1,3 +1,4 @@
+
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { Router } from '@vaadin/router';
@@ -517,11 +518,7 @@ private async handleUnblockUser() {
                 return `
                 <div class="flex justify-between items-center border-b border-gray-700 pb-3">
                   <div class="flex items-center space-x-3">
-                    <div
-                      class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center"
-                    >
-                      
-                    </div>
+                    
                     <h3 class="text-lg font-semibold">${conv.name}</h3>
                   </div>
                   <div class="space-x-2">

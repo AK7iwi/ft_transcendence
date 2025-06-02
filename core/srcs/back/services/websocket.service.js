@@ -45,18 +45,38 @@ class WebSocketService {
       });
 
       ws.on('close', () => {
-        console.log(`❌ Client disconnected: ${clientId}`);
-        console.log('❌ Client disconnected: user', [...this.gamePlayers.entries()]);
-        console.log('❌ Client disconnected. Online users:', [...this.onlineUsers.keys()]);
-        this.clients.delete(clientId);
-        this.broadcastUserDisconnected(clientId);
-      });
+  console.log(`❌ Client disconnected: ${clientId}`);
+  
+  const disconnectedWs = this.clients.get(clientId);
+  const userId = disconnectedWs?.userId;
 
-      ws.on('pong', () => {
-        ws.isAlive = true;
-      });
+  if (userId) {
+    this.onlineUsers.delete(userId);
+    // 🔥 Diffuse le statut hors ligne
+    this.broadcastUserStatus(userId, 'offline');
+  }
+
+  this.clients.delete(clientId);
+  this.broadcastUserDisconnected(clientId);
+});
+
     });
   }
+
+broadcastUserStatus(userId, status) {
+  const message = JSON.stringify({
+    type: 'user-status',
+    payload: { userId, status }  // ✅ Important: payload structuré
+  });
+
+  for (const ws of this.clients.values()) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(message);
+    }
+  }
+}
+
+
 
   generateClientId() {
     return Math.random().toString(36).substr(2, 9);
@@ -84,50 +104,97 @@ class WebSocketService {
         });
     }
   }
-      
+
   handleAuth(clientId, payload) {
-    const token = payload?.token;
-
-    if (!token) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'Missing token'
-      });
-    }
-
-    let userId;
-    try {
-      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
-      userId = decoded.id;
-    } catch (err) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'Invalid token'
-      });
-    }
-
-    const ws = this.clients.get(clientId);
-    if (!ws) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'WebSocket client not found'
-      });
-    }
-
-    // ✅ Associate both clientId and userId with the socket
-    ws.userId = userId;
-    ws.clientId = clientId;
-
-    this.onlineUsers.set(userId, ws);           // ✅ Map userId to socket
-    this.clients.set(clientId, ws);             // ✅ Keep clientId → ws mapping
-
-    this.sendToClient(clientId, {
-      type: 'auth-success',
-      userId
+  const token = payload?.token;
+  if (!token) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'Missing token'
     });
-
-    console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
   }
+
+  let userId;
+  try {
+    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+  } catch (err) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'Invalid token'
+    });
+  }
+
+  const ws = this.clients.get(clientId);
+  if (!ws) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'WebSocket client not found'
+    });
+  }
+
+  ws.userId = userId;
+  ws.clientId = clientId;
+
+  this.onlineUsers.set(userId, ws);
+  this.clients.set(clientId, ws);
+
+  this.sendToClient(clientId, {
+    type: 'auth-success',
+    userId
+  });
+
+  console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
+
+  // 🔥 Nouvelle ligne : diffuse aux autres utilisateurs qu’il est en ligne
+  this.broadcastUserStatus(userId, 'online');
+}
+
+
+
+  // handleAuth(clientId, payload) {
+  //   const token = payload?.token;
+
+  //   if (!token) {
+  //     return this.sendToClient(clientId, {
+  //       type: 'error',
+  //       message: 'Missing token'
+  //     });
+  //   }
+
+  //   let userId;
+  //   try {
+  //     const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+  //     userId = decoded.id;
+  //   } catch (err) {
+  //     return this.sendToClient(clientId, {
+  //       type: 'error',
+  //       message: 'Invalid token'
+  //     });
+  //   }
+
+  //   const ws = this.clients.get(clientId);
+  //   if (!ws) {
+  //     return this.sendToClient(clientId, {
+  //       type: 'error',
+  //       message: 'WebSocket client not found'
+  //     });
+  //   }
+
+  //   // ✅ Associate both clientId and userId with the socket
+  //   ws.userId = userId;
+  //   ws.clientId = clientId;
+
+  //   this.onlineUsers.set(userId, ws);           // ✅ Map userId to socket
+  //   this.clients.set(clientId, ws);             // ✅ Keep clientId → ws mapping
+
+  //   this.sendToClient(clientId, {
+  //     type: 'auth-success',
+  //     userId
+  //   });
+
+  //   console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
+  // }
 
   handleGameMessage(clientId, payload) {
     const { action, direction, playerId, sessionId } = payload;
