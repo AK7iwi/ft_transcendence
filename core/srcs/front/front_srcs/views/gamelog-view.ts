@@ -1,4 +1,4 @@
-//gamelog-view.ts
+// gamelog-view.ts
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
 import { API_BASE_URL } from '../config';
@@ -25,10 +25,12 @@ class GamelogView extends HTMLElement {
   private settingsService = SettingsService.getInstance();
   private settings: GameSettings = this.settingsService.getSettings();
 
+private initialCountdownTimer: number | null = null;
+private ballCountdownTimer: number | null = null;
+
   private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
-
 
   private user: { id: number; username: string } = { id: 0, username: '' };
 
@@ -44,15 +46,20 @@ class GamelogView extends HTMLElement {
 
   private render() {
     this.user = JSON.parse(localStorage.getItem('user') || '{}');
-const playerName = this.user.username || 'Player 1';
-
+    const playerName = this.user.username || 'Player 1';
 
     this.innerHTML = `
       <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
         <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
-<span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">${playerName}</span>
-          <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20" id="score">0 - 0</span>
-          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">Player 2</span>
+          <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+            ${playerName}
+          </span>
+          <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20" id="score">
+            0 - 0
+          </span>
+          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+            Player 2
+          </span>
         </div>
         <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
           <div class="bg-white rounded-xl overflow-hidden">
@@ -105,28 +112,50 @@ const playerName = this.user.username || 'Player 1';
 
   private setupEventListeners() {
     ['keydown', 'keyup'].forEach((event) =>
-  window.addEventListener(event, (e: Event) => {
-    const keyEvent = e as KeyboardEvent;
-    this.keysPressed[keyEvent.key] = event === 'keydown';
+      window.addEventListener(event, (e: Event) => {
+        const keyEvent = e as KeyboardEvent;
+        this.keysPressed[keyEvent.key] = event === 'keydown';
 
-    if (event === 'keydown') this.handleKeyDown(keyEvent);
-  })
-);
-
-
+        if (event === 'keydown') this.handleKeyDown(keyEvent);
+      })
+    );
   }
 
-  private handleKeyDown(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
-      this.togglePause();
-    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
+private handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1) Si c’est un "keydown" répété (maintien de la touche), on ignore d’emblée
+    if (e.repeat) {
+      return;
+    }
+
+    // 2) Si un countdown initial est déjà en cours, on ne relance rien
+    if (this.initialCountdownTimer !== null) {
+      return;
+    }
+
+    // 3) Si c’est Game Over, ENTER réinitialise la partie
+    if (this.isGameOver) {
+      this.resetGame();
+      return;
+    }
+
+    // 4) Sinon, si la partie n’a pas encore démarré, on lance le "3-2-1"
+    if (!this.isGameStarted) {
       this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-    } else if (e.key === 'Enter' && this.isGameOver) {
-      this.resetGame();
     }
+    return;
   }
+
+  // Touche 'G' = pause / reprise
+  if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
+    this.togglePause();
+  }
+}
+
+
 
   private updateGameSettings() {
     this.paddle1.speed = this.settings.paddleSpeed;
@@ -152,7 +181,7 @@ const playerName = this.user.username || 'Player 1';
     this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    this.resetBall();
+    // On ne relance PAS resetBall() ici → pas de "ball countdown" au chargement
     this.gameLoop = false;
     this.isGameStarted = false;
     this.isBallActive = false;
@@ -167,33 +196,59 @@ const playerName = this.user.username || 'Player 1';
     this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
     this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
     this.isBallActive = false;
+
+    // Recentrage des paddles
+    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+
+    // Arrêter tout ancien ballCountdown avant d’en créer un nouveau
+    if (this.ballCountdownTimer !== null) {
+      clearInterval(this.ballCountdownTimer);
+    }
     this.startBallCountdown();
   }
 
-  private startInitialCountdown() {
-    const interval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(interval);
-        this.isGameStarted = true;
-        this.gameLoop = true;
-        this.isBallActive = true;
-        this.isInitialCountdown = false;
-        this.startGameLoop();
-      }
-      this.draw();
-    }, 1000);
+private startInitialCountdown() {
+  // Si un ancien timer existe (au cas où), on le stoppe
+  if (this.initialCountdownTimer !== null) {
+    clearInterval(this.initialCountdownTimer);
   }
+
+  this.countdown = COUNTDOWN_START;
+  // on assigne le timer à `initialCountdownTimer` pour pouvoir le bloquer plus bas
+  this.initialCountdownTimer = window.setInterval(() => {
+    this.countdown--;
+    this.draw();
+
+    if (this.countdown <= 0) {
+      // Quand le décompte est terminé, on arrête ce timer
+      clearInterval(this.initialCountdownTimer!);
+      this.initialCountdownTimer = null;   // <- remet “ENTER” disponible
+      this.isInitialCountdown = false;
+
+      // Là, la partie démarre vraiment
+      this.isGameStarted = true;
+      this.gameLoop = true;
+      this.resetBall();
+      this.startGameLoop();
+    }
+  }, 1000);
+}
+
 
   private startBallCountdown() {
     this.countdown = COUNTDOWN_START;
-    const interval = setInterval(() => {
+    this.ballCountdownTimer = window.setInterval(() => {
       this.countdown--;
+      this.draw();
+
       if (this.countdown <= 0) {
-        clearInterval(interval);
+        clearInterval(this.ballCountdownTimer!);
+        this.ballCountdownTimer = null;
         this.isBallActive = true;
       }
-      this.draw();
     }, 1000);
   }
 
@@ -205,6 +260,7 @@ const playerName = this.user.username || 'Player 1';
   }
 
   private updateGame() {
+    // Déplacement des paddles
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
@@ -216,11 +272,14 @@ const playerName = this.user.username || 'Player 1';
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
+    // Si la balle est active, on la déplace et on détecte collisions / but
     if (this.isBallActive && !this.isGameOver) {
       this.ball.x += this.ball.dx;
       this.ball.y += this.ball.dy;
 
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
+      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
+        this.ball.dy *= -1;
+      }
 
       const ballHitsPaddle = (p: any) =>
         this.ball.y + this.ball.size / 2 >= p.y &&
@@ -244,11 +303,15 @@ const playerName = this.user.username || 'Player 1';
 
       if (this.ball.x <= 0) {
         this.score.player2++;
-        this.score.player2 >= this.settings.endScore ? this.endGame('Player 2') : this.resetBall();
+        this.score.player2 >= this.settings.endScore
+          ? this.endGame('Player 2')
+          : this.resetBall();
         this.updateScoreDisplay();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
-        this.score.player1 >= this.settings.endScore ? this.endGame('Player 1') : this.resetBall();
+        this.score.player1 >= this.settings.endScore
+          ? this.endGame('Player 1')
+          : this.resetBall();
         this.updateScoreDisplay();
       }
     }
@@ -264,10 +327,12 @@ const playerName = this.user.username || 'Player 1';
   private draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    // Dessin des paddles
     this.ctx.fillStyle = this.settings.paddleColor;
     this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
     this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
 
+    // Dessin de la balle si active
     if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
       this.ctx.beginPath();
       this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
@@ -276,6 +341,7 @@ const playerName = this.user.username || 'Player 1';
       this.ctx.closePath();
     }
 
+    // Ligne centrale pointillée
     this.ctx.beginPath();
     this.ctx.setLineDash([5, 15]);
     this.ctx.moveTo(this.canvas.width / 2, 0);
@@ -284,6 +350,7 @@ const playerName = this.user.username || 'Player 1';
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
+    // Affichage des messages « game over » / « paused » / « press ENTER »
     if (this.isGameOver) {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
       this.drawCenteredText('Press ENTER to Play Again', 24, this.canvas.height / 2 + 30);
@@ -299,44 +366,45 @@ const playerName = this.user.username || 'Player 1';
       this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
 
-    if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
+    // Tant que la partie n'a pas démarré, on remet en boucle le draw()
+    if (!this.isGameStarted) {
+      requestAnimationFrame(() => this.draw());
+    }
   }
 
-private endGame(winner: string) {
-  this.isGameOver = true;
-  this.winner = winner;
-  this.gameLoop = false;
-  cancelAnimationFrame(this.animationFrameId);
+  private endGame(winner: string) {
+    this.isGameOver = true;
+    this.winner = winner;
+    this.gameLoop = false;
+    cancelAnimationFrame(this.animationFrameId);
 
-let result: { winnerId?: number; loserId?: number } = {};
+    let result: { winnerId?: number; loserId?: number } = {};
 
-if (winner === 'Player 1') {
-  result.winnerId = this.user.id;
-} else {
-  result.loserId = this.user.id;
-}
+    if (winner === 'Player 1') {
+      result.winnerId = this.user.id;
+    } else {
+      result.loserId = this.user.id;
+    }
 
-
-fetch(`${API_BASE_URL}/game/result`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  },
-  body: JSON.stringify(result)
-})
-
-
-.then(res => {
-    if (!res.ok) throw new Error('Erreur serveur');
-    return res.json();
-  }).then(data => {
-    console.log('✅ Résultat enregistré :', data);
-  }).catch(err => {
-    console.error('❌ Enregistrement échoué :', err.message);
-  });
-}
-
+    fetch(`${API_BASE_URL}/game/result`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(result)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Erreur serveur');
+        return res.json();
+      })
+      .then(data => {
+        console.log('✅ Résultat enregistré :', data);
+      })
+      .catch(err => {
+        console.error('❌ Enregistrement échoué :', err.message);
+      });
+  }
 
   private resetGame() {
     this.score = { player1: 0, player2: 0 };
@@ -346,8 +414,9 @@ fetch(`${API_BASE_URL}/game/result`, {
     this.isBallActive = false;
     this.isInitialCountdown = false;
     this.gameLoop = false;
+
     this.initGame();
-     this.updateScoreDisplay();
+    this.updateScoreDisplay();
     this.draw();
   }
 

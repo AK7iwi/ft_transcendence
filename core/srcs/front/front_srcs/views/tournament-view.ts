@@ -41,6 +41,11 @@ class TournamentView extends HTMLElement {
   private isInitialCountdown = false;
   private isPaused = false;
 
+
+private initialCountdownTimer: number | null = null;
+private ballCountdownTimer:     number | null = null;
+
+
   private keysPressed: Record<string, boolean> = {};
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
@@ -518,12 +523,7 @@ if (this.currentMatchIndex >= this.bracket.length) {
                 <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
                 <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
                 <div class="text-white text-sm space-y-1 w-full">
-                 <p>
-          <strong>🎯 Win Ratio:</strong>
-          ${player.winRatio > 0
-            ? (player.winRatio * 100).toFixed(1) + '%'
-            : '0.0%'}
-        </p>
+                
                   </div>
               </div>
             </div>
@@ -649,24 +649,30 @@ private setupEventListeners() {
 }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
-      this.togglePause();
-    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
+  if (e.key === 'Enter') {
+    // 1) Si on maintient la touche ou si un countdown initial est déjà en cours, on bloque :
+    if (e.repeat || this.isInitialCountdown) {
+      return;
+    }
+    // 2) Si c'est Game Over, on reset :
+    if (this.isGameOver) {
+      this.resetGame();
+      return;
+    }
+    // 3) Sinon (partie pas démarrée), on lance le 3-2-1 :
+    if (!this.isGameStarted) {
       this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-    } else if (e.key === 'Enter' && this.isGameOver) {
-        if (this.currentMatchIndex >= this.bracket.length) {
-          this.isTournamentOver = true;
-          this.tournamentWinner = this.winner;
-          this.render(); // Shows end screens
-        } else {
-          this.toggleGameUI(false);
-          this.render();
-          this.resetGame();
-        }
-      }
+    }
+    return;
   }
+
+  // G pour pause / reprise
+  if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
+    this.togglePause();
+  }
+}
 
   private updateGameSettings() {
     this.paddle1.speed = this.settings.paddleSpeed;
@@ -710,20 +716,31 @@ private setupEventListeners() {
     this.startBallCountdown();
   }
 
-  private startInitialCountdown() {
-    const interval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(interval);
-        this.isGameStarted = true;
-        this.gameLoop = true;
-        this.isBallActive = true;
-        this.isInitialCountdown = false;
-        this.startGameLoop();
-      }
-      this.draw();
-    }, 1000);
+private startInitialCountdown() {
+  // Si un ancien timer existe, on l’arrête (au cas où)
+  if (this.initialCountdownTimer !== null) {
+    clearInterval(this.initialCountdownTimer);
   }
+
+  this.countdown = COUNTDOWN_START;
+  this.initialCountdownTimer = window.setInterval(() => {
+    this.countdown--;
+    this.draw();
+
+    if (this.countdown <= 0) {
+      clearInterval(this.initialCountdownTimer!);
+      this.initialCountdownTimer = null;
+      this.isInitialCountdown = false;  // ← on redonne la main à ENTER
+
+      // à cet instant la partie démarre vraiment
+      this.isGameStarted = true;
+      this.gameLoop = true;
+      this.resetBall();
+      this.startGameLoop();
+    }
+  }, 1000);
+}
+
 
   private startBallCountdown() {
     this.countdown = COUNTDOWN_START;
