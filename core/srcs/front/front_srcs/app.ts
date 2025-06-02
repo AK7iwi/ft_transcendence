@@ -16,6 +16,12 @@ import './views/profile-view.ts';
 import './views/login-view.ts';
 import './views/register-view.ts';
 
+// new
+import './views/navbar-view.ts';
+import './views/footer-view.ts';
+
+
+
 import { WebSocketService } from './services/websocket-service';
 
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
@@ -62,7 +68,6 @@ class PongApp extends HTMLElement {
 
     navLinks.innerHTML = ''; // Reset existing links
 
-	// Ces 3 lignes servent plus a rien je crois
     const staticLinks = [
       ,
     ];
@@ -130,13 +135,7 @@ class PongApp extends HTMLElement {
       { path: '/settings', component: 'settings-view', action: requireAuth },
       { path: '/profile', component: 'profile-view', action: requireAuth },
 
-	  // dev
-    //   { path: '/tournament', component: 'tournament-view' },
-    //   { path: '/chat', component: 'chat-view' },
-    //   { path: '/friend-profile', component: 'friend-profile-view' },
-    //   { path: '/friends', component: 'friend-view' },
-    //   { path: '/settings', component: 'settings-view' },
-    //   { path: '/profile', component: 'profile-view' },
+	  
 
       { path: '(.*)', redirect: '/' }
     ]);
