@@ -3,6 +3,26 @@ import { API_BASE_URL } from '../config';
 export default class ApiService {
 
 
+  static async getUserStats(userId: number) {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Utilisateur non authentifié');
+
+    const res = await fetch(`${API_BASE_URL}/auth/users/${userId}/stats`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.message || 'Impossible de récupérer les stats utilisateur');
+    }
+
+    // On s’attend à { wins: number, losses: number, … }
+    return res.json();
+  }
+
 static async blockUser(blockedId: number) {
   const token = localStorage.getItem('token');
   const res = await fetch(`${API_BASE_URL}/auth/block`, {

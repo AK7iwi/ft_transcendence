@@ -22,7 +22,6 @@ class TournamentView extends HTMLElement {
     username: string;
     nickname: string;
     avatar?: string;
-    tournamentsWon?: number;
     winRatio?: number;
   }> = [];
 
@@ -66,62 +65,78 @@ class TournamentView extends HTMLElement {
   }
 
 async handleJoin(e: Event) {
-  e.preventDefault();
-  this.message = '';
-  this.messageType = '';
+    e.preventDefault();
+    this.message = '';
+    this.messageType = '';
 
-  const username = this.username.trim();
-  const nickname = this.nickname.trim();
+    const username = this.username.trim();
+    const nickname = this.nickname.trim();
 
-  if (!username || !nickname) {
-    this.message = 'Username and nickname are required';
-    this.messageType = 'error';
-    return this.render();
-  }
-
-  if (this.players.some(p => p.username === username)) {
-    this.message = 'This user is already registered';
-    this.messageType = 'error';
-    return this.render();
-  }
-
-  try {
-    const data = await ApiService.validateUsername(username) as {
-      valid: boolean;
-      message?: string;
-      avatar?: string;
-      id?: number;
-    };
-
-    if (!data.valid) {
-      this.message = data.message || 'User not found';
+    if (!username || !nickname) {
+      this.message = 'Username and nickname are required';
+      this.messageType = 'error';
+      return this.render();
+    }
+    if (this.players.some(p => p.username === username)) {
+      this.message = 'This user is already registered';
       this.messageType = 'error';
       return this.render();
     }
 
-    this.players.push({
-  id: data.id!,   // ← on stocke enfin l’id numérique
-  username,
-  nickname,
-  avatar: data.avatar?.startsWith('/')
-    ? `${API_BASE_URL}${data.avatar}`
-    : (data.avatar || `${API_BASE_URL}/avatars/default.png`),
-  tournamentsWon: Math.floor(Math.random() * 10),
-  winRatio: Math.random()
-    });
+    try {
+      // 1) Validation côté API
+      const data = await ApiService.validateUsername(username) as {
+        valid: boolean;
+        message?: string;
+        avatar?: string;
+        id?: number;
+      };
+      if (!data.valid) {
+        this.message = data.message || 'User not found';
+        this.messageType = 'error';
+        return this.render();
+      }
 
-    this.username = '';
-    this.nickname = '';
-    this.message = 'Player registered';
-    this.messageType = 'success';
-    this.render();
-  } catch (err) {
-    console.error('[handleJoin] Error:', err);
-    this.message = 'Failed to validate user';
-    this.messageType = 'error';
-    this.render();
+      // 2) Récupérer les stats (wins / losses) de ce joueur par son ID
+      const stats = await ApiService.getUserStats(data.id!);
+      const wins = stats.wins || 0;
+      const losses = stats.losses || 0;
+      const totalGames = wins + losses;
+      // winRatio entre 0 et 1, arrondi à 2 décimales
+      const winRatio = totalGames > 0
+        ? Math.round((wins / totalGames) * 100) / 100
+        : 0;
+
+      // 3) Construire l’URL de l’avatar (identique à ProfileView)
+      const avatarUrl = data.avatar
+        ? (data.avatar.startsWith('/') 
+            ? `${API_BASE_URL}${data.avatar}` 
+            : data.avatar)
+        : (`${API_BASE_URL}/avatars/default.png`);
+
+      // 4) Ajouter au tableau des joueurs avec le winRatio
+      this.players.push({
+        id: data.id!,
+        username,
+        nickname,
+        avatar: avatarUrl,
+        winRatio
+      });
+
+      // 5) Réinitialiser les champs du formulaire et afficher le message
+      this.username = '';
+      this.nickname = '';
+      this.message = 'Player registered';
+      this.messageType = 'success';
+      this.render();
+    }
+    catch (err) {
+      console.error('[handleJoin] Error:', err);
+      this.message = 'Failed to validate user';
+      this.messageType = 'error';
+      this.render();
+    }
   }
-}
   
 async startTournament() {
   if (this.players.length !== 4) {
@@ -171,79 +186,6 @@ async startTournament() {
 }
 
 
-// async startTournament() {
-//   if (this.players.length !== 4) {
-//     this.message = 'Exactly 4 players required to start';
-//     this.messageType = 'error';
-//     return this.render();
-//   }
-
-//   // 1) Créer le tournoi côté backend, récupérer son ID
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/tournament/create`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Authorization': `Bearer ${localStorage.getItem('token')}`
-//       },
-//       body: JSON.stringify({
-//         name: 'Mon nouveau tournoi', 
-//         // vous pouvez ajouter d’autres champs si besoin
-//       })
-//     });
-//     if (!response.ok) {
-//       throw new Error('Impossible de créer le tournoi');
-//     }
-//     const json = await response.json();
-//     this.currentTournamentId = json.id; // ← on stocke l’ID numérique
-//   } catch (err) {
-//     console.error('[startTournament] Erreur en créant le tournoi :', err);
-//     this.message = 'Failed to create tournament';
-//     this.messageType = 'error';
-//     return this.render();
-//   }
-
-//   // 2) Initialiser le bracket en local
-//   this.bracket = [
-//     { round: 'Semi-Final 1', players: [this.players[0].nickname, this.players[1].nickname] },
-//     { round: 'Semi-Final 2', players: [this.players[2].nickname, this.players[3].nickname] },
-//     { round: 'Final',        players: [] }
-//   ];
-
-//   this.matchScores = [
-//     { p1: 0, p2: 0 },
-//     { p1: 0, p2: 0 },
-//     { p1: 0, p2: 0 }
-//   ];
-
-//   this.message = 'Tournament started!';
-//   this.messageType = 'success';
-//   this.render();
-// }
-
-
-  // startTournament() {
-  //   if (this.players.length !== 4) {
-  //     this.message = 'Exactly 4 players required to start';
-  //     this.messageType = 'error';
-  //     return this.render();
-  //   }
-    
-  //   this.bracket = [
-  //     { round: 'Semi-Final 1', players: [this.players[0].nickname, this.players[1].nickname] },
-  //     { round: 'Semi-Final 2', players: [this.players[2].nickname, this.players[3].nickname] },
-  //     { round: 'Final', players: [] }
-  //   ];
-
-  //   this.matchScores = [
-  //     { p1: 0, p2: 0 },
-  //     { p1: 0, p2: 0 },
-  //     { p1: 0, p2: 0 }
-  //   ];
-  //   this.message = 'Tournament started!';
-  //   this.messageType = 'success';
-  //   this.render();
-  // }
 
   private resetTournament() {
     this.players = [];
@@ -295,10 +237,10 @@ private async recordMatchWinner(winnerNickname: string) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify({
-        tournamentId,
-        round,
-        matchNumber,
+     body: JSON.stringify({
+        tournamentId: this.currentTournamentId!,
+        round: this.currentMatchIndex < 2 ? 1 : 2,
+        matchNumber: (this.currentMatchIndex % 2) + 1,
         player1Id,
         player2Id,
         score1,
@@ -321,6 +263,12 @@ private async recordMatchWinner(winnerNickname: string) {
   this.message     = `${winnerNickname} a gagné ${currentMatch.round} !`;
   this.messageType = 'success';
 
+if (this.currentMatchIndex >= this.bracket.length) {
+    this.isTournamentOver = true;
+    this.tournamentWinner = winnerNickname;
+    // On force le rendu : render() appellera renderEndScreen()
+    return this.render();
+}
   this.resetGame();
   this.render();
 }
@@ -418,27 +366,27 @@ private async recordMatchWinner(winnerNickname: string) {
   }
 
   private renderEndScreen() {
-    if (!this.isTournamentOver || !this.tournamentWinner) return '';
+  if (!this.isTournamentOver || !this.tournamentWinner) return '';
+  const winner = this.players.find(p => p.nickname === this.tournamentWinner);
 
-    const winner = this.players.find(p => p.nickname === this.tournamentWinner);
+  return `
+    <div class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-80px)] p-8 text-white space-y-6">
+      <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+        🏆 Tournament Champion!
+      </h2>
+      <img
+        src="${winner?.avatar || `${API_BASE_URL}/avatars/default.png`}"
+        alt="${this.tournamentWinner}'s avatar"
+        class="w-32 h-32 rounded-full border-4 border-white"
+      />
+      <h3 class="text-2xl font-semibold">${this.tournamentWinner}</h3>
+      <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
+        New Tournament
+      </button>
+    </div>
+  `;
+}
 
-    return `
-      <div class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-80px)] p-8 text-white space-y-6">
-        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-          🏆 Tournament Champion!
-        </h2>
-        <img
-          src="${winner?.avatar || 'https://placehold.co/128x128?text=Avatar'}"
-          alt="${this.tournamentWinner}'s avatar"
-          class="w-32 h-32 rounded-full border-4 border-white"
-        />
-        <h3 class="text-2xl font-semibold">${this.tournamentWinner}</h3>x
-        <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
-          New Tournament
-        </button>
-      </div>
-    `;
-  }
 
   private renderBracket() {
     if (this.bracket.length === 0) return '';
@@ -570,9 +518,13 @@ private async recordMatchWinner(winnerNickname: string) {
                 <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
                 <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
                 <div class="text-white text-sm space-y-1 w-full">
-                  <p><strong>🏆 Tournaments Won:</strong> ${player.tournamentsWon || 0}</p>
-                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
-                </div>
+                 <p>
+          <strong>🎯 Win Ratio:</strong>
+          ${player.winRatio > 0
+            ? (player.winRatio * 100).toFixed(1) + '%'
+            : '0.0%'}
+        </p>
+                  </div>
               </div>
             </div>
           `).join('')}
