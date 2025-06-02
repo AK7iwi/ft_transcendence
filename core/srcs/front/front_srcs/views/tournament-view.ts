@@ -552,7 +552,7 @@ if (this.currentMatchIndex >= this.bracket.length) {
             <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
               ${this.currentMatchPlayers[0] || 'Player 1'}
             </span>
-            <span id="score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
+            <span id="tournament-score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
               0 - 0
             </span>
             <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
@@ -649,8 +649,8 @@ private toggleGameUI(showGame: boolean) {
 // ~---~ GAME FOR TOURNEY ~---~ //
 
 
-  private updateScoreDisplay() {
-    const scoreEl = document.getElementById('score');
+  private updateTournamentScoreDisplay() {
+    const scoreEl = this.querySelector('#tournament-score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
@@ -857,11 +857,11 @@ private startBallCountdown() {
       if (this.ball.x <= 0) {
         this.score.player2++;
         this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1] || 'Player 2') : this.resetBall(true);
-        this.updateScoreDisplay();
+        this.updateTournamentScoreDisplay();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
         this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0] || 'Player 1') : this.resetBall(true);
-        this.updateScoreDisplay();
+        this.updateTournamentScoreDisplay();
       }
     }
   }
@@ -930,7 +930,7 @@ private resetGame() {
   this.isBallActive = false;
   this.isInitialCountdown = false;
   this.gameLoop = false;
-  this.updateScoreDisplay();
+  this.updateTournamentScoreDisplay();
 
   if (this.initialCountdownTimer !== null) {
     clearInterval(this.initialCountdownTimer);

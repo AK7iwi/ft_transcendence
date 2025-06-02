@@ -60,7 +60,7 @@ private ballCountdownTimer: number | null = null;
     clearInterval(this.ballCountdownTimer);
     this.ballCountdownTimer = null;
   }
-  window.removeEventListener('resize', this.handleResize); // 🔥 Ajoute cette ligne ici
+
   // Stop animation
   cancelAnimationFrame(this.animationFrameId);
 }

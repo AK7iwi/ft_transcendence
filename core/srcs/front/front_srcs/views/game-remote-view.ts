@@ -1,39 +1,217 @@
+// remote-gamelog-view.ts
+import { SettingsService } from '../services/settings-service';
+import type { GameSettings } from '../services/settings-service';
 import { API_BASE_URL } from '../config';
 
-interface GameState {
-  ball: { x: number; y: number; vx: number; vy: number };
-  paddles: { player1: number; player2: number };
-}
+const COUNTDOWN_START = 3;
+const CANVAS_ASPECT_RATIO = 16 / 9;
+const PADDLE_MARGIN = 0.02;
 
-class GameRemoteView extends HTMLElement{
+class RemoteGamelogView extends HTMLElement {
+  private score = { player1: 0, player2: 0 };
+  private isGameStarted = false;
+  private isGameOver = false;
+  private winner = '';
+  private countdown = 0;
+  private isBallActive = false;
+  private isInitialCountdown = false;
+  private isPaused = false;
+
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
-  private socket: WebSocket | null = null;
-  private keysPressed: Set<string> = new Set();
 
-  constructor(private sessionId: string, private playerId: string) {
+  private settingsService = SettingsService.getInstance();
+  private settings: GameSettings =
+    JSON.parse(JSON.stringify(this.settingsService.getSettings()));
+
+  private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
+  private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
+  private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
+
+  private user: { id: number; username: string } = { id: 0, username: '' };
+
+  // ── NOUVEAU : propriétés WebSocket & input
+  private socket!: WebSocket;
+  private keysPressed: Set<string> = new Set();
+  private currentState: any = null;
+
+  private sessionId = '';  // valeur à déterminer ou générer au chargement
+  private playerId = 0;    // id du joueur (depuis localStorage ou autre)
+
+  constructor() {
     super();
-    this.initWebSocket(this.sessionId, this.playerId);
+    window.addEventListener('resize', this.handleResize);
   }
-  
-private initWebSocket(sessionId: string, playerId: string) {
+
+  connectedCallback() {
+    // 1) On récupère l’utilisateur (playerId)
+    const userJson = localStorage.getItem('user') || '{}';
+    const user = JSON.parse(userJson);
+    this.playerId = user?.id || 0;
+
+    // 2) On récupère sessionId depuis l’URL (ici “?id=…”), sinon générez à la volée
+    const urlParams = new URLSearchParams(window.location.search);
+    this.sessionId = urlParams.get('id') || Date.now().toString();
+
+    // 3) On construit à l’écran + WebSocket + clavier
+    this.render();
+    this.initWebSocket();
+    this.startKeyboardListeners();
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('keyup', this.handleKeyUp);
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.close();
+    }
+  }
+
+  private render() {
+    this.user = JSON.parse(localStorage.getItem('user') || '{}');
+    const playerName = this.user.username || 'Player 1';
+
+    this.innerHTML = `
+      <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
+        <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
+          <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+            ${playerName}
+          </span>
+          <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20" id="score">
+            0 - 0
+          </span>
+          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
+            Player 2
+          </span>
+        </div>
+        <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+          <div class="bg-white rounded-xl overflow-hidden">
+            <canvas id="remotePongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4 mt-6">
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Player 1:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
+          </span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Pause:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
+          </span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
+            Player 2:
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span>
+            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">K</span>
+          </span>
+        </div>
+      </div>
+    `;
+
+    this.canvas = this.querySelector('#remotePongCanvas') as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext('2d')!;
+    this.initGameDimensions();
+    this.draw();  // Premier affichage avant réception du state
+  }
+
+  private handleResize = () => {
+    if (this.isGameStarted) return;
+    this.initGameDimensions();
+    this.draw();
+  };
+
+  private initGameDimensions() {
+    const container = this.canvas.parentElement!;
+    let width = container.clientWidth;
+    let height = width / CANVAS_ASPECT_RATIO;
+    if (height > container.clientHeight) {
+      height = container.clientHeight;
+      width = height * CANVAS_ASPECT_RATIO;
+    }
+    this.canvas.width = width;
+    this.canvas.height = height;
+
+    // Centrer verticalement les paddles
+    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.updateGameSettings();
+  }
+
+  private updateGameSettings() {
+    this.paddle1.speed = this.settings.paddleSpeed;
+    this.paddle2.speed = this.settings.paddleSpeed;
+    this.ball.speed = this.settings.ballSpeed;
+    this.ball.dx = this.settings.ballSpeed;
+    this.ball.dy = this.settings.ballSpeed;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 2. INIT WEBSOCKET (auth + join + réception d’état + erreurs)
+  // ──────────────────────────────────────────────────────────────────────────────
+  private initWebSocket() {
+    // 1) Choisir ws:// ou wss:// selon API_BASE_URL
     const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
     const baseUrl = API_BASE_URL.replace(/^https?/, wsProtocol) + '/ws';
-    const wsUrl = `${baseUrl}?sessionId=${sessionId}&playerId=${playerId}`;
+    // 2) Optionnel : ajouter sessionId & playerId en query
+    const wsUrl = `${baseUrl}?sessionId=${encodeURIComponent(this.sessionId)}&playerId=${this.playerId}`;
 
     this.socket = new WebSocket(wsUrl);
 
+    // 3) onopen → envoyer “auth”
     this.socket.onopen = () => {
-      console.log('🔌 WebSocket connected');
+      console.log('🔌 WebSocket connected to', wsUrl);
+      const token = localStorage.getItem('token');
+      if (token) {
+        this.socket.send(
+          JSON.stringify({
+            type: 'auth',
+            payload: { token }
+          })
+        );
+      }
     };
 
+    // 4) onmessage → traiter auth-success, state, etc.
     this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      this.handleMessage(data);
+      const msg = JSON.parse(event.data);
+      switch (msg.type) {
+        case 'auth-success':
+          // Auth OK : rejoindre/créer la session
+          this.socket.send(
+            JSON.stringify({
+              type: 'game',
+              payload: {
+                action: 'join',      // ou "create"
+                playerId: this.playerId,
+                sessionId: this.sessionId
+              }
+            })
+          );
+          break;
+
+        case 'state':
+          // Réception de GameSession.state côté back
+          this.currentState = msg.payload;
+          this.handleServerState(msg.payload);
+          break;
+
+        case 'error':
+          console.error('[WS ERROR]', msg.message);
+          break;
+
+        default:
+          break;
+      }
     };
 
     this.socket.onclose = () => {
-      console.log('🔌 WebSocket disconnected');
+      console.warn('🔌 WebSocket disconnected');
     };
 
     this.socket.onerror = (err) => {
@@ -41,71 +219,191 @@ private initWebSocket(sessionId: string, playerId: string) {
     };
   }
 
-  private handleMessage(data: any) {
-    if (data.type === 'state') {
-      const gameState: GameState = data.payload;
-      console.log('🎮 Game state update:', gameState);
-      // TODO: Update your UI/rendering logic here
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 3. GESTION DE L’ÉTAT REÇU (GameSession.state)
+  // ──────────────────────────────────────────────────────────────────────────────
+  private handleServerState(state: any) {
+    // state a la structure de GameSession.state sur 768×432
+    this.score.player1 = state.score.player1;
+    this.score.player2 = state.score.player2;
+    this.isGameOver = state.isGameOver;
+    this.winner = state.winner;
+    this.isInitialCountdown = state.waitingForStart && state.countdown !== null;
+    this.countdown = state.countdown ?? 0;
+    this.isBallActive = !state.waitingForStart && !state.isGameOver;
+
+    // Mise à l’échelle des paddles
+    this.paddle1.x = (state.paddles.player1.x / 768) * this.canvas.width;
+    this.paddle1.y = (state.paddles.player1.y / 432) * this.canvas.height;
+    this.paddle1.width = (state.paddles.player1.width / 768) * this.canvas.width;
+    this.paddle1.height = (state.paddles.player1.height / 432) * this.canvas.height;
+
+    this.paddle2.x = (state.paddles.player2.x / 768) * this.canvas.width;
+    this.paddle2.y = (state.paddles.player2.y / 432) * this.canvas.height;
+    this.paddle2.width = (state.paddles.player2.width / 768) * this.canvas.width;
+    this.paddle2.height = (state.paddles.player2.height / 432) * this.canvas.height;
+
+    // Mise à l’échelle de la balle
+    this.ball.x = (state.ball.x / 768) * this.canvas.width;
+    this.ball.y = (state.ball.y / 432) * this.canvas.height;
+    this.ball.size = (state.ball.size / 768) * this.canvas.width;
+
+    // Si waitingForStart passe à false → partie démarrée localement
+    if (!state.waitingForStart && !this.isGameStarted) {
+      this.isGameStarted = true;
     }
 
-    if (data.type === 'opponent_disconnected') {
-      console.warn('⚠️ Opponent disconnected');
-      // TODO: Handle disconnection (e.g., show message)
+    // Mettre à jour le score HTML
+    this.updateScoreDisplay();
+
+    // Redessiner tout de suite
+    this.draw();
+  }
+
+  private updateScoreDisplay() {
+    const scoreEl = this.querySelector('#score');
+    if (scoreEl) {
+      scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
   }
 
-  sendInput(direction: 'up' | 'down' | null) {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(
-        JSON.stringify({
-          type: 'input',
-          payload: { direction },
-        })
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 4. DESSIN SUR LE CANVAS (identique à GamelogView, sans boucle locale)
+  // ──────────────────────────────────────────────────────────────────────────────
+  private draw() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Dessiner les deux paddles
+    this.ctx.fillStyle = this.settings.paddleColor;
+    this.ctx.fillRect(
+      this.paddle1.x,
+      this.paddle1.y,
+      this.paddle1.width,
+      this.paddle1.height
+    );
+    this.ctx.fillRect(
+      this.paddle2.x,
+      this.paddle2.y,
+      this.paddle2.width,
+      this.paddle2.height
+    );
+
+    // Dessiner la balle si active
+    if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
+      this.ctx.beginPath();
+      this.ctx.arc(
+        this.ball.x,
+        this.ball.y,
+        this.ball.size / 2,
+        0,
+        Math.PI * 2
       );
+      this.ctx.fillStyle = this.settings.ballColor;
+      this.ctx.fill();
+      this.ctx.closePath();
     }
+
+    // Ligne centrale pointillée
+    this.ctx.beginPath();
+    this.ctx.setLineDash([5, 15]);
+    this.ctx.moveTo(this.canvas.width / 2, 0);
+    this.ctx.lineTo(this.canvas.width / 2, this.canvas.height);
+    this.ctx.strokeStyle = '#000';
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+
+    // Messages texte (game over / paused / press ENTER / countdown)
+    if (this.isGameOver) {
+      this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
+      this.drawCenteredText(
+        'Press ENTER to Play Again',
+        24,
+        this.canvas.height / 2 + 30
+      );
+    } else if (this.isPaused) {
+      this.drawCenteredText('Paused', 48, this.canvas.height / 2 - 30);
+    } else if (!this.isGameStarted) {
+      this.drawCenteredText(
+        this.isInitialCountdown ? this.countdown.toString() : 'Press ENTER to Start',
+        this.isInitialCountdown ? 72 : 48,
+        this.canvas.height / 2
+      );
+    } else if (!this.isBallActive && this.countdown > 0) {
+      this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
+    }
+
+    // Tant que la partie n’est pas démarrée localement on boucle draw()
+    if (!this.isGameStarted) {
+      requestAnimationFrame(() => this.draw());
+    }
+    // Sinon, on ne boucle plus : on attend les prochains “state” du serveur
   }
 
-  close() {
-    this.socket?.close();
-  } 
-
-  connectedCallback() {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    this.playerId = String(user?.id || '');
-    this.sessionId = this.getSessionIdFromUrl(); // You'll extract it from query param
-
-    console.log('✅ PLAYER ID:', this.playerId, 'SESSION ID:', this.sessionId);
-
-    this.initWebSocket(this.sessionId, this.playerId);
-    this.render();
-    this.drawInitial();
+  private drawCenteredText(text: string, size: number, y: number) {
+    this.ctx.font = `bold ${size}px Arial`;
+    this.ctx.fillStyle = '#000';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(text, this.canvas.width / 2, y);
   }
 
-  disconnectedCallback() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('keyup', this.handleKeyUp);
-    this.close();
-  }
-
-  private getSessionIdFromUrl(): string {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('id') || '';
-  }
-  
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 5. CLAVIER : Enter pour “start”/“restart”, G pour pause, W/S/O/K pour “input”
+  // ──────────────────────────────────────────────────────────────────────────────
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'w' || e.key === 's') {
-      this.keysPressed.add(e.key);
+    // 1) Touche ENTER
+    if (e.key === 'Enter') {
+      if (e.repeat || this.isInitialCountdown) return;
+
+      if (this.isGameOver) {
+        // Partie terminée → envoi “restart”
+        this.resetGame();
+        return;
+      }
+
+      // Si la partie n’a pas démarré → envoi “start”
+      if (!this.isGameStarted) {
+        this.isInitialCountdown = true;
+        this.socket.send(
+          JSON.stringify({
+            type: 'game',
+            payload: {
+              action: 'start',
+              playerId: this.playerId,
+              sessionId: this.sessionId
+            }
+          })
+        );
+      }
+      return;
+    }
+
+    // 2) Touche G (Pause)
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
+      this.isPaused = !this.isPaused;
+      this.draw(); // redessine pour afficher / masquer “Paused”
+      return;
+    }
+
+    // 3) Touche W/S/O/K = “input”
+    const key = e.key.toLowerCase();
+    if (key === 'w' || key === 's' || key === 'o' || key === 'k') {
+      this.keysPressed.add(key);
       this.sendDirection();
     }
   };
 
   private handleKeyUp = (e: KeyboardEvent) => {
-    if (e.key === 'w' || e.key === 's') {
-      this.keysPressed.delete(e.key);
+    const key = e.key.toLowerCase();
+    if (key === 'w' || key === 's' || key === 'o' || key === 'k') {
+      this.keysPressed.delete(key);
       this.sendDirection();
     }
   };
+
+  private startKeyboardListeners() {
+    window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keyup', this.handleKeyUp);
+  }
 
   private sendDirection() {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
@@ -115,48 +413,338 @@ private initWebSocket(sessionId: string, playerId: string) {
       direction = 'up';
     } else if (this.keysPressed.has('s') && !this.keysPressed.has('w')) {
       direction = 'down';
+    } else if (this.keysPressed.has('o') && !this.keysPressed.has('k')) {
+      direction = 'up';
+    } else if (this.keysPressed.has('k') && !this.keysPressed.has('o')) {
+      direction = 'down';
     }
 
-    console.log(`PLAYERID: ${this.playerId} || SESSIONID: ${this.sessionId}`);
-    this.socket.send(JSON.stringify({
-      type: 'game',
-      payload: {
-        action: 'input',
-        direction: direction,
-        playerId: this.playerId,
-        sessionId: this.sessionId
-      }
-    }));
+    this.socket.send(
+      JSON.stringify({
+        type: 'game',
+        payload: {
+          action: 'input',
+          direction,
+          playerId: this.playerId,
+          sessionId: this.sessionId
+        }
+      })
+    );
   }
 
-  private render() {
-    this.innerHTML = `
-      <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
-        <div class="rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-          <div class="bg-white rounded-xl overflow-hidden">
-            <canvas id="pongCanvas" width="768" height="432" class="block"></canvas>
-          </div>
-        </div>
-      </div>
-    `;
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 6. RÉINITIALISER LA PARTIE (après “game over”)
+  // ──────────────────────────────────────────────────────────────────────────────
+  private resetGame() {
+    this.score = { player1: 0, player2: 0 };
+    this.isGameOver = false;
+    this.winner = '';
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.isInitialCountdown = false;
 
-    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
+    // On envoie “restart” au serveur
+    this.socket.send(
+      JSON.stringify({
+        type: 'game',
+        payload: {
+          action: 'restart',
+          playerId: this.playerId,
+          sessionId: this.sessionId
+        }
+      })
+    );
+
+    // On réinitialise l’affichage
+    this.initGameDimensions();
+    this.updateScoreDisplay();
+    this.draw();
   }
 
-  private drawInitial() {
-    this.ctx.fillStyle = '#eee';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    this.ctx.font = '24px Arial';
-    this.ctx.fillStyle = '#000';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('🎮 Waiting for game start...', this.canvas.width / 2, this.canvas.height / 2);
+  // ──────────────────────────────────────────────────────────────────────────────
+  // 7. Méthode start (vide, tout est déjà déclenché dans connectedCallback)
+  // ──────────────────────────────────────────────────────────────────────────────
+  public start() {
+    // Rien à faire ici, clavier et WebSocket sont déjà en place en connectedCallback
   }
-
 }
 
-customElements.define('game-remote-view', GameRemoteView);
+customElements.define('remote-gamelog-view', RemoteGamelogView);
+
+
+
+
+//MAT
+// import { API_BASE_URL } from '../config';
+
+// interface GameState {
+//   ball: { x: number; y: number; size: number; speed: number; dx: number; dy: number };
+//   paddles: {player1: { x: number; y: number; width: number; height: number; speed: number };
+//             player2: { x: number; y: number; width: number; height: number; speed: number } };
+//   score: {player1: number; player2: number;};
+//   isGameOver: boolean;
+//   winner: string | null;
+//   endScore: number;
+//   waitingForStart: boolean;
+//   countdown: number | null;
+// }
+
+// class GameRemoteView extends HTMLElement{
+//   private canvas!: HTMLCanvasElement;
+//   private ctx!: CanvasRenderingContext2D;
+//   private socket: WebSocket | null = null;
+//   private keysPressed: Set<string> = new Set();
+//   private currentState: GameState | null = null;
+//   private sessionId: string = '';
+//   private playerId: number = 0;
+
+//   constructor() {
+//     super();
+//   }
+  
+//   private initWebSocket(sessionId: string, playerId: string) {
+//     const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+//     const baseUrl = API_BASE_URL.replace(/^https?/, wsProtocol) + '/ws';
+//     const wsUrl = `${baseUrl}?sessionId=${sessionId}&playerId=${playerId}`;
+
+//     this.socket = new WebSocket(wsUrl);
+
+//     this.socket.onopen = () => {
+//       console.log('🔌 WebSocket connected');
+
+//       // 👇 Send auth message right after connect
+//       const token = localStorage.getItem('token');
+//       console.log(`this.socket.onopen ${ token }`);
+//       if (token) {
+//         this.socket?.send(JSON.stringify({
+//           type: 'auth',
+//           payload: { token }
+//         }));
+//       }
+//     }
+
+//     this.socket.onmessage = (event) => {
+//       const data = JSON.parse(event.data);
+//       this.handleMessage(data);
+//     };
+
+//     this.socket.onclose = () => {
+//       console.log('🔌 WebSocket disconnected');
+//     };
+
+//     this.socket.onerror = (err) => {
+//       console.error('WebSocket error:', err);
+//     };
+//   }
+
+//   private handleMessage(data: any) {
+//     if (data.type === 'state') {
+//       this.currentState = data.payload;
+//       if (this.currentState) {
+//         this.drawGame(this.currentState); // now it's guaranteed not null
+//       }
+//     }
+
+//     if (data.type === 'opponent_disconnected') {
+//       console.warn('⚠️ Opponent disconnected');
+//       this.drawDisconnected();
+//     }
+//   }
+
+//   private drawDisconnected() {
+//     if (!this.ctx) return;
+//     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+//     this.ctx.fillStyle = 'black';
+//     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+//     this.ctx.fillStyle = 'white';
+//     this.ctx.font = '24px Arial';
+//     this.ctx.fillText('⚠️ Opponent disconnected', this.canvas.width / 2, this.canvas.height / 2);
+//   }
+
+//   sendInput(direction: 'up' | 'down' | null) {
+//     if (this.socket?.readyState === WebSocket.OPEN) {
+//       this.socket.send(
+//         JSON.stringify({
+//           type: 'input',
+//           payload: { direction },
+//         })
+//       );
+//     }
+//   }
+
+//   close() {
+//     this.socket?.close();
+//   } 
+
+//   connectedCallback() {
+//     const userJson = localStorage.getItem('user') || '{}';
+//     const user = JSON.parse(userJson);
+//     this.playerId = user?.id ?? 0;
+
+//     const urlParams = new URLSearchParams(window.location.search);
+//     this.sessionId = urlParams.get('id') || '';
+
+//     console.log(`THIS PLAYERID PLEASE : ${ this.playerId} SESSIONID : ${this.sessionId}`);
+
+//     document.addEventListener('keydown', this.handleKeyDown);
+//     document.addEventListener('keyup', this.handleKeyUp);
+
+//     this.render();
+//     this.initWebSocket(this.sessionId, String(this.playerId)); // ✅ now runs with correct values
+//   }
+
+//   disconnectedCallback() {
+//     document.removeEventListener('keydown', this.handleKeyDown);
+//     document.removeEventListener('keyup', this.handleKeyUp);
+//     this.close();
+//   }
+
+//   private handleKeyDown = (e: KeyboardEvent) => {
+//     if (e.key === 'w' || e.key === 's') {
+//       this.keysPressed.add(e.key);
+//       this.sendDirection();
+//     }
+//     if (e.key === 'Enter') {
+//       this.socket?.send(JSON.stringify({
+//         type: 'game',
+//         payload: {
+//           action: 'start',
+//           playerId: this.playerId,
+//           sessionId: this.sessionId,
+//         }
+//       }));
+//     }
+//   };
+
+//   private handleKeyUp = (e: KeyboardEvent) => {
+//     if (e.key === 'w' || e.key === 's') {
+//       this.keysPressed.delete(e.key);
+//       this.sendDirection();
+//     }
+//   };
+
+//   private sendDirection() {
+//     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+
+//     let direction: 'up' | 'down' | null = null;
+//     if (this.keysPressed.has('w') && !this.keysPressed.has('s')) {
+//       direction = 'up';
+//     } else if (this.keysPressed.has('s') && !this.keysPressed.has('w')) {
+//       direction = 'down';
+//     }
+
+//     console.log(`PLAYERID: ${this.playerId} || SESSIONID: ${this.sessionId}`);
+//     this.socket.send(JSON.stringify({
+//       type: 'game',
+//       payload: {
+//         action: 'input',
+//         direction: direction,
+//         playerId: this.playerId,
+//         sessionId: this.sessionId
+//       }
+//     }));
+//   }
+
+//   private render() {
+//     this.innerHTML = `
+//       <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
+//         <div class="rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+//           <div class="bg-white rounded-xl overflow-hidden">
+//             <canvas id="pongCanvas" width="768" height="432" class="block"></canvas>
+//           </div>
+//         </div>
+//       </div>
+//     `;
+
+//     this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+//     this.ctx = this.canvas.getContext('2d')!;
+//   }
+
+//   private drawGame(state: GameState) {
+//     const { ball, paddles, score, isGameOver, winner, waitingForStart, countdown } = state;
+
+//     // Always clear screen and draw background first
+//     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+//     this.ctx.fillStyle = 'black';
+//     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+//     if (isGameOver) {
+//       this.ctx.fillStyle = 'white';
+//       this.ctx.font = '36px Arial';
+//       this.ctx.textAlign = 'center';
+//       this.ctx.fillText(`🏁 ${winner} wins!`, this.canvas.width / 2, this.canvas.height / 2);
+//       return;
+//     }
+
+//     if (waitingForStart) {
+//       this.ctx.fillStyle = 'white';
+//       this.ctx.font = '28px Arial';
+//       this.ctx.textAlign = 'center';
+
+//       if (countdown !== null) {
+//         this.ctx.fillText(`${countdown}`, this.canvas.width / 2, this.canvas.height / 2);
+//       } else {
+//         this.ctx.fillText('Press Enter to Start', this.canvas.width / 2, this.canvas.height / 2);
+//       }
+//       return;
+//     }
+
+//     // Draw paddles
+//     this.ctx.fillStyle = 'white';
+//     this.ctx.fillRect(
+//       paddles.player1.x,
+//       paddles.player1.y,
+//       paddles.player1.width,
+//       paddles.player1.height
+//     );
+//     this.ctx.fillRect(
+//       paddles.player2.x,
+//       paddles.player2.y,
+//       paddles.player2.width,
+//       paddles.player2.height
+//     );
+
+//     // Draw ball
+//     this.ctx.fillRect(ball.x, ball.y, ball.size, ball.size);
+
+//     // Draw score
+//     this.ctx.font = '32px Arial';
+//     this.ctx.textAlign = 'center';
+//     this.ctx.fillText(`${score.player1} : ${score.player2}`, this.canvas.width / 2, 40);
+//   }
+// }
+
+// customElements.define('game-remote-view', GameRemoteView);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // import { SettingsService } from '../services/settings-service';
 // import type { GameSettings } from '../services/settings-service';
@@ -748,4 +1336,3 @@ customElements.define('game-remote-view', GameRemoteView);
 // }
 
 // customElements.define('game-remote-view', GameRemoteView);
-
