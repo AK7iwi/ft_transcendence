@@ -9,7 +9,7 @@ class UserService {
                 id: user.user_id,
                 username: user.username,
                 avatar: user.avatar,
-                twoFactorEnabled: user.two_factor_enabled,
+                twoFactorEnabled: !!user.two_factor_enabled,
                 wins: user.wins,
                 losses: user.losses
             };

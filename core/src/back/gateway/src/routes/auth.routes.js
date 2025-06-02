@@ -57,7 +57,7 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.axios.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/setup`,
-                    request.body
+                    request.body,
                 );
                 return reply.code(200).send(response.data);
             } catch (error) {

@@ -4,6 +4,7 @@ class UserController {
     async getMe(request, reply) {
         try {
             const userId = request.user.id;
+        
             if (!userId) {
                 return reply.code(400).send({
                     success: false,
