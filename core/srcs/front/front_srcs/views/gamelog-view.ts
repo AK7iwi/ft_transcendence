@@ -209,6 +209,10 @@ const playerName = this.user.username || 'Player 1';
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
@@ -343,6 +347,7 @@ fetch(`${API_BASE_URL}/game/result`, {
     this.isInitialCountdown = false;
     this.gameLoop = false;
     this.initGame();
+     this.updateScoreDisplay();
     this.draw();
   }
 

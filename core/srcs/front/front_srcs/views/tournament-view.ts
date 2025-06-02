@@ -686,15 +686,15 @@ private async recordMatchWinner(winnerNickname: string) {
     this.draw();
   };
 
-  private setupEventListeners() {
-    ['keydown', 'keyup'].forEach((event) =>
-      window.addEventListener(event, (e) => {
-        if (['w', 's', 'o', 'k', 'Enter'].includes(e.key)) e.preventDefault();
-        this.keysPressed[e.key] = event === 'keydown';
-        if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
-      })
-    );
-  }
+private setupEventListeners() {
+  ['keydown', 'keyup'].forEach((event) =>
+    window.addEventListener(event, (e: Event) => {
+      const keyEvent = e as KeyboardEvent;
+      this.keysPressed[keyEvent.key] = event === 'keydown';
+      if (event === 'keydown') this.handleKeyDown(keyEvent);
+    })
+  );
+}
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
@@ -797,6 +797,10 @@ private async recordMatchWinner(winnerNickname: string) {
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
