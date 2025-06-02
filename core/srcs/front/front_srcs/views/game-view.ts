@@ -23,6 +23,9 @@ class GameView extends HTMLElement {
   private settingsService = SettingsService.getInstance();
   private settings: GameSettings = this.settingsService.getSettings();
 
+private initialCountdownTimer: number | null = null;
+private ballCountdownTimer: number | null = null;
+
   private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
@@ -76,6 +79,8 @@ class GameView extends HTMLElement {
     this.draw();
   }
 
+
+
   private updateScoreDisplay() {
     const scoreEl = document.getElementById('score');
     if (scoreEl) {
@@ -108,11 +113,16 @@ class GameView extends HTMLElement {
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
-    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
-      this.isInitialCountdown = true;
-      this.countdown = COUNTDOWN_START;
-      this.startInitialCountdown();
-    } else if (e.key === 'Enter' && this.isGameOver) {
+    } else if (
+  e.key === 'Enter' &&
+  !this.isGameStarted &&
+  !this.isGameOver &&
+  !this.isInitialCountdown  // <- NE PAS relancer si le countdown est déjà en cours
+) {
+  this.isInitialCountdown = true;
+  this.countdown = COUNTDOWN_START;
+  this.startInitialCountdown();
+} else if (e.key === 'Enter' && this.isGameOver) {
       this.resetGame();
     }
   }
@@ -148,47 +158,117 @@ class GameView extends HTMLElement {
     this.updateGameSettings();
   }
 
-  private resetBall() {
-    this.ball.x = this.canvas.width / 2;
-    this.ball.y = this.canvas.height / 2;
-    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    this.isBallActive = false;
-	this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
-    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
-    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
-    this.startBallCountdown();
+private resetBall() {
+  // Recentrer la balle
+  this.ball.x = this.canvas.width / 2;
+  this.ball.y = this.canvas.height / 2;
+  const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+  const direction = Math.random() > 0.5 ? 1 : -1;
+  this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+  this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+  this.isBallActive = false;
+
+  // Repositionner les paddles coeur de partie
+  this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+  this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+  this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+  this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+
+  // Stopper un ancien timer si besoin
+  if (this.ballCountdownTimer !== null) {
+    clearInterval(this.ballCountdownTimer);
+  }
+  this.startBallCountdown();
+}
+
+private startBallCountdown() {
+  this.countdown = COUNTDOWN_START;
+  this.ballCountdownTimer = window.setInterval(() => {
+    this.countdown--;
+    this.draw();
+
+    if (this.countdown <= 0) {
+      if (this.ballCountdownTimer !== null) {
+        clearInterval(this.ballCountdownTimer);
+        this.ballCountdownTimer = null;
+      }
+      this.isBallActive = true;
+      // on ne relance pas startGameLoop ici, car on l'appelle déjà quand le match démarre
+    }
+  }, 1000);
+}
+
+  // private resetBall() {
+  //   this.ball.x = this.canvas.width / 2;
+  //   this.ball.y = this.canvas.height / 2;
+  //   const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+  //   const direction = Math.random() > 0.5 ? 1 : -1;
+  //   this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+  //   this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+  //   this.isBallActive = false;
+	// this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
+  //   this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
+  //   this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+  //   this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+  //   this.startBallCountdown();
+  // }
+
+private startInitialCountdown() {
+  // Si un timer existe déjà, on le stoppe avant d'en recréer un
+  if (this.initialCountdownTimer !== null) {
+    clearInterval(this.initialCountdownTimer);
   }
 
-  private startInitialCountdown() {
-    const interval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(interval);
-        this.isGameStarted = true;
-        this.gameLoop = true;
-        this.isBallActive = true;
-        this.isInitialCountdown = false;
-        this.startGameLoop();
-      }
-      this.draw();
-    }, 1000);
-  }
+  this.countdown = COUNTDOWN_START;
+  this.initialCountdownTimer = window.setInterval(() => {
+    this.countdown--;
+    this.draw();
 
-  private startBallCountdown() {
-    this.countdown = COUNTDOWN_START;
-    const interval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(interval);
-        this.isBallActive = true;
+    if (this.countdown <= 0) {
+      // Quand le compte à rebours atteint 0, on arrête ce timer
+      if (this.initialCountdownTimer !== null) {
+        clearInterval(this.initialCountdownTimer);
+        this.initialCountdownTimer = null;
       }
-      this.draw();
-    }, 1000);
-  }
+
+      this.isGameStarted = true;
+      this.gameLoop = true;
+      this.isBallActive = true;
+      this.isInitialCountdown = false;
+      this.startGameLoop();
+    }
+  }, 1000);
+}
+
+
+
+
+  // private startInitialCountdown() {
+  //   const interval = setInterval(() => {
+  //     this.countdown--;
+  //     if (this.countdown <= 0) {
+  //       clearInterval(interval);
+  //       this.isGameStarted = true;
+  //       this.gameLoop = true;
+  //       this.isBallActive = true;
+  //       this.isInitialCountdown = false;
+  //       this.startGameLoop();
+  //     }
+  //     this.draw();
+  //   }, 1000);
+  // }
+
+  // private startBallCountdown() {
+  //   this.countdown = COUNTDOWN_START;
+  //   const interval = setInterval(() => {
+  //     this.countdown--;
+  //     if (this.countdown <= 0) {
+  //       clearInterval(interval);
+  //       this.isBallActive = true;
+  //     }
+  //     this.draw();
+  //   }, 1000);
+  // }
 
   private startGameLoop() {
     if (!this.gameLoop || this.isPaused) return;
