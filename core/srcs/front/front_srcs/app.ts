@@ -1,7 +1,6 @@
-import { Router } from '@vaadin/router';
-import { wsInstance } from '../services/websocket-instance';
 import './styles.css';
 
+// Views
 import './views/home-view.ts';
 import './views/game-view.ts';
 import './views/gamelog-view.ts';
@@ -9,33 +8,82 @@ import './views/game-remote-view.ts';
 import './views/tournament-view.ts';
 import './views/chat-view.ts';
 import './views/friend-profile-view.ts';
-
 import './views/friend-view.ts';
 import './views/settings-view.ts';
 import './views/profile-view.ts';
 import './views/login-view.ts';
 import './views/register-view.ts';
-
-// new
 import './views/navbar-view.ts';
 import './views/footer-view.ts';
 
-
-
 import { WebSocketService } from './services/websocket-service';
 
+// WebSocket init
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
 export default wsService;
 
-// Fonction pour protéger les routes
-function requireAuth(context: any, commands: any) {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return commands.redirect('/login');
-  }
-  return undefined;
+// ---- ROUTER ---- //
+
+type Route = {
+  path: string;
+  component: string;
+  protected?: boolean;
+};
+
+const routes: Route[] = [
+  { path: '/', component: 'home-view' },
+  { path: '/game', component: 'game-view' },
+  { path: '/gamelog', component: 'gamelog-view', protected: true },
+  { path: '/game-remote', component: 'game-remote-view' },
+  { path: '/register', component: 'register-view' },
+  { path: '/login', component: 'login-view' },
+  { path: '/tournament', component: 'tournament-view', protected: true },
+  { path: '/chat', component: 'chat-view', protected: true },
+  { path: '/friend-profile', component: 'friend-profile-view', protected: true },
+  { path: '/friends', component: 'friend-view', protected: true },
+  { path: '/settings', component: 'settings-view', protected: true },
+  { path: '/profile', component: 'profile-view', protected: true },
+];
+
+function navigateTo(path: string) {
+  history.pushState({}, '', path);
+  renderRoute();
 }
+
+function renderRoute() {
+  const main = document.querySelector('main');
+  if (!main) return;
+
+  const route = routes.find(r => r.path === window.location.pathname);
+  const token = localStorage.getItem('token');
+
+  if (!route) {
+    navigateTo('/');
+    return;
+  }
+
+  if (route.protected && !token) {
+    navigateTo('/login');
+    return;
+  }
+
+  main.innerHTML = `<${route.component}></${route.component}>`;
+}
+
+// Listen to browser back/forward
+window.addEventListener('popstate', renderRoute);
+
+// Intercept in-app <a> navigation
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('/')) {
+    e.preventDefault();
+    navigateTo(target.getAttribute('href')!);
+  }
+});
+
+// ---- APP COMPONENT ---- //
 
 class PongApp extends HTMLElement {
   constructor() {
@@ -43,6 +91,7 @@ class PongApp extends HTMLElement {
   }
 
   connectedCallback() {
+    document.body.className = 'bg-slate-900 text-white';
     this.innerHTML = `<p hidden>pong-app loaded</p>`;
     this.updateLinks();
     this.toggleAuthButtons();
@@ -66,20 +115,20 @@ class PongApp extends HTMLElement {
       return;
     }
 
-    navLinks.innerHTML = ''; // Reset existing links
+    navLinks.innerHTML = '';
 
-    const staticLinks = [
-      ,
-    ];
+    const staticLinks: { href: string; label: string }[] = [];
 
-    const authLinks = isAuthenticated ? [
-      { href: '/gamelog', label: 'Game' },
-      { href: '/tournament', label: 'Tournament' },
-      { href: '/chat', label: 'Chat' },
-      { href: '/friends', label: 'Friends' },
-      { href: '/settings', label: 'Settings' },
-      { href: '/profile', label: 'Profile' },
-    ] : [];
+    const authLinks = isAuthenticated
+      ? [
+          { href: '/gamelog', label: 'Game' },
+          { href: '/tournament', label: 'Tournament' },
+          { href: '/chat', label: 'Chat' },
+          { href: '/friends', label: 'Friends' },
+          { href: '/settings', label: 'Settings' },
+          { href: '/profile', label: 'Profile' },
+        ]
+      : [];
 
     const createLink = ({ href, label, onClick }: any) => {
       const link = document.createElement('a');
@@ -87,10 +136,10 @@ class PongApp extends HTMLElement {
       link.className =
         'relative transition duration-300 ease-in-out ' +
         'hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500 ' +
-        'after:content-[\'\'] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
+        'after:content-[""] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
         'hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500 ' +
         'after:transition-all after:duration-300';
-      link.innerHTML = `${label}`;
+      link.innerHTML = label;
       if (onClick) {
         link.addEventListener('click', (e) => {
           e.preventDefault();
@@ -112,33 +161,7 @@ class PongApp extends HTMLElement {
   }
 
   setupRouter() {
-    const outlet = document.querySelector('main');
-    if (!outlet) {
-      console.error('❌ <main> element not found in DOM!');
-      return;
-    }
-
-    const router = new Router(outlet);
-    router.setRoutes([
-      { path: '/', component: 'home-view' },
-      { path: '/game', component: 'game-view' },
-      { path: '/gamelog', component: 'gamelog-view', action: requireAuth },
-      { path: '/game-remote', component: 'game-remote-view' },
-      { path: '/register', component: 'register-view' },
-      { path: '/login', component: 'login-view' },
-
-      // Routes protégées
-      { path: '/tournament', component: 'tournament-view', action: requireAuth },
-      { path: '/chat', component: 'chat-view', action: requireAuth },
-      { path: '/friend-profile', component: 'friend-profile-view', action: requireAuth },
-      { path: '/friends', component: 'friend-view', action: requireAuth },
-      { path: '/settings', component: 'settings-view', action: requireAuth },
-      { path: '/profile', component: 'profile-view', action: requireAuth },
-
-	  
-
-      { path: '(.*)', redirect: '/' }
-    ]);
+    renderRoute();
   }
 }
 

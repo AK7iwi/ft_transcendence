@@ -1,7 +1,6 @@
 
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
-import { Router } from '@vaadin/router';
 
 interface Conversation {
   id: string;
@@ -58,7 +57,9 @@ class ChatView extends HTMLElement {
         const route = target.getAttribute('data-link');
         if (route) {
           e.preventDefault();
-          Router.go(route);
+          history.pushState({}, '', route);
+window.dispatchEvent(new PopStateEvent('popstate'));
+
         }
       }
     });
