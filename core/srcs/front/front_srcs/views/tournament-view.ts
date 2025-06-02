@@ -105,7 +105,7 @@ async handleJoin(e: Event) {
   nickname,
   avatar: data.avatar?.startsWith('/')
     ? `${API_BASE_URL}${data.avatar}`
-    : (data.avatar || 'https://placehold.co/96x96?text=Avatar'),
+    : (data.avatar || `${API_BASE_URL}/avatars/default.png`),
   tournamentsWon: Math.floor(Math.random() * 10),
   winRatio: Math.random()
     });
