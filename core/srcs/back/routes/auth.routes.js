@@ -372,52 +372,61 @@ console.log('📥 Headers reçus:', request.headers);
   }
 });
 
-// Route pour bloquer un utilisateur
-fastify.post('/block', {
-  preHandler: [fastify.authenticate],
-  handler: async (req, reply) => {
-    const blockerId = req.user.id;
-    const { blockedId } = req.body;
-console.log(`[BLOCK] ${blockerId} → ${blockedId}`);
+fastify.get(
+  '/blocked',
+  { preHandler: [authenticate] },
+  async (request, reply) => {
+    const blockerId = request.user.id;
+    const rows = dbApi.db
+      .prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?')
+      .all(blockerId);
+    const blockedIds = rows.map(r => r.blocked_id);
+    return reply.code(200).send(blockedIds);
+  }
+);
 
-    if (!blockedId) {
-      return reply.code(400).send({ error: 'blockedId is required' });
-    }
-
+// ––– Bloquer (POST /auth/block) –––
+fastify.post(
+  '/block',
+  { preHandler: [authenticate] },
+  async (request, reply) => {
+    const blockerId = request.user.id;
+    const { blockedId } = request.body;
+    if (!blockedId) return reply.code(400).send({ error: 'blockedId required' });
     try {
-      const stmt = dbApi.db.prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)');
-      stmt.run(blockerId, blockedId);
+      dbApi.db
+        .prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)')
+        .run(blockerId, blockedId);
       return reply.code(201).send({ message: 'User blocked successfully' });
     } catch (err) {
-      console.error('Error blocking user:', err.message);
+      console.error(err);
       return reply.code(500).send({ error: 'Internal server error' });
     }
   }
-});
+);
 
-fastify.post('/auth/unblock', { preValidation: [fastify.authenticate] }, async (request, reply) => {
-  const { unblockId } = request.body;
-  const currentUserId = request.user.id;
 
-  try {
-    const stmt = fastify.db.prepare(`
-      DELETE FROM blocks 
-      WHERE blocker_id = ? AND blocked_id = ?
-    `);
-
-    const result = stmt.run(currentUserId, unblockId);
-
-    if (result.changes === 0) {
-      return reply.status(404).send({ message: 'Relation de blocage introuvable' });
+fastify.post(
+  '/unblock',
+  { preHandler: [authenticate] },
+  async (request, reply) => {
+    const currentUserId = request.user.id;
+    const { unblockId } = request.body;
+    if (!unblockId) return reply.code(400).send({ error: 'unblockId required' });
+    try {
+      const result = dbApi.db
+        .prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?')
+        .run(currentUserId, unblockId);
+      if (result.changes === 0) {
+        return reply.code(404).send({ message: 'No blocking relationship found' });
+      }
+      return reply.code(200).send({ message: 'User unblocked successfully' });
+    } catch (err) {
+      console.error(err);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
-
-    reply.status(200).send({ message: 'Utilisateur débloqué avec succès' });
-
-  } catch (error) {
-    fastify.log.error(error);
-    reply.status(500).send({ message: 'Erreur serveur lors du déblocage.' });
   }
-});
+);
 
 
 fastify.delete('/friends/remove', {

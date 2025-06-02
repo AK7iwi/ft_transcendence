@@ -33,8 +33,11 @@ static async blockUser(blockedId: number) {
     },
     body: JSON.stringify({ blockedId })
   });
-
-  if (!res.ok) throw new Error('Failed to block user');
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    console.error('[ApiService.blockUser] HTTP', res.status, text);
+    throw new Error(`Failed to block user (status ${res.status})`);
+  }
   return res.json();
 }
 
@@ -48,15 +51,34 @@ static async unblockUser(unblockId: number) {
     },
     body: JSON.stringify({ unblockId })
   });
-
   if (!res.ok) {
-    const errorMessage = await res.text();
-    console.error('Backend error:', res.status, errorMessage);
-    throw new Error(`Échec du déblocage utilisateur: ${errorMessage}`);
+    const text = await res.text().catch(() => '');
+    console.error('[ApiService.unblockUser] HTTP', res.status, text);
+    throw new Error(`Échec du déblocage (status ${res.status} : ${text})`);
   }
-  
   return res.json();
 }
+
+  static async getBlockedUsers(): Promise<number[]> {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('Utilisateur non authentifié');
+
+  // On a renommé en “/auth/blocked” côté serveur
+  const res = await fetch(`${API_BASE_URL}/auth/blocked`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => null);
+    throw new Error(text || 'Impossible de récupérer la liste des bloqués');
+  }
+  return (await res.json()) as number[];
+}
+
 
 
     private static readonly MAX_RETRIES = 3;
