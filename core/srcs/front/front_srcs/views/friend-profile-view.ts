@@ -202,7 +202,7 @@ ApiService.getUserById(friendId)
   `;
 
   this.container.querySelector('#back-button')?.addEventListener('click', () => {
-    window.history.back();
+    window.location.href = '/chat';
   });
 }
 }
