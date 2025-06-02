@@ -513,21 +513,26 @@ if (this.currentMatchIndex >= this.bracket.length) {
         <!-- Full width player cards -->
         <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
           ${this.players.map(player => `
-            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
-                <img
-                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
-                  alt="Avatar of ${player.nickname}"
-                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-                />
-                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
-                <div class="text-white text-sm space-y-1 w-full">
-                
-                  </div>
-              </div>
-            </div>
-          `).join('')}
+  <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+    <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+      <img
+        src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+        alt="Avatar of ${player.nickname}"
+        class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+      />
+      <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+      <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+      <div class="text-white text-sm space-y-1 w-full"></div>
+      <button
+        class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
+        data-player-id="${player.id}"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+`).join('')}
+
         </div>
 
         ${this.bracket.length === 0 ? `
@@ -588,10 +593,25 @@ if (this.currentMatchIndex >= this.bracket.length) {
   this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
   this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
   this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
+  this.querySelectorAll('.remove-player-btn')?.forEach(button => {
+  button.addEventListener('click', (e) => {
+    const id = Number((button as HTMLElement).getAttribute('data-player-id'));
+    this.removePlayer(id);
+  });
+});
+
   this.querySelector('.play-match-button')?.addEventListener('click', () => {
     this.toggleGameUI(true);
   });
 }
+
+private removePlayer(id: number) {
+  this.players = this.players.filter(p => p.id !== id);
+  this.message = 'Player removed';
+  this.messageType = 'success';
+  this.render();
+}
+
 
   private toggleGameUI(showGame: boolean) {
     const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
