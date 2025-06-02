@@ -26,9 +26,9 @@ class GameSession {
   }
 
   update() {
-    const { ball, paddles, score, isGameOver, winner, endScore } = this.state;
+    const { ball, paddles, score, isGameOver, winner, endScore, waitingForStart, countdown } = this.state;
 
-    if (this.state.isGameOver) return;
+    if (this.state.isGameOver || this.state.waitingForStart) return;
     // Move ball
     ball.x += ball.dx;
     ball.y += ball.dy;
@@ -53,21 +53,10 @@ class GameSession {
       ball.y + ball.size >= paddle.y &&
       ball.y <= paddle.y + paddle.height;
 
-    if (
-      ball.dx < 0 &&
-      ball.x <= paddles.player1.x + paddles.player1.width &&
-      ball.x >= paddles.player1.x &&
-      ballHitsPaddle(paddles.player1)
-    ) {
+    if (ball.dx < 0 && ball.x <= paddles.player1.x + paddles.player1.width && ball.x >= paddles.player1.x && ballHitsPaddle(paddles.player1))
       ball.dx *= -1;
-    } else if (
-      ball.dx > 0 &&
-      ball.x + ball.size >= paddles.player2.x &&
-      ball.x + ball.size <= paddles.player2.x + paddles.player2.width &&
-      ballHitsPaddle(paddles.player2)
-    ) {
+    else if (ball.dx > 0 && ball.x + ball.size >= paddles.player2.x && ball.x + ball.size <= paddles.player2.x + paddles.player2.width && ballHitsPaddle(paddles.player2))
       ball.dx *= -1;
-    }
 
     // Clamp paddles
     paddles.player1.y = Math.max(0, Math.min(332, paddles.player1.y));
@@ -78,6 +67,7 @@ class GameSession {
       if (score.player2 >= this.state.endScore) {
         this.state.isGameOver = true;
         this.state.winner = 'Player 2';
+        setTimeout(() => this.fullReset(), 3000);
       } else {
         this.resetBall('right');
       }
@@ -88,10 +78,20 @@ class GameSession {
       if (score.player1 >= this.state.endScore) {
         this.state.isGameOver = true;
         this.state.winner = 'Player 1';
+        setTimeout(() => this.fullReset(), 3000);
       } else {
         this.resetBall('left');
       }
     }
+  }
+
+  fullReset() {
+    this.player1 = null;
+    this.player2 = null;
+    this.players.clear();
+    this.state = this.initState();
+    this.state.waitingForStart = true;
+    this.state.countdown = null;
   }
 
   isPlayer1(userId) {
@@ -100,7 +100,7 @@ class GameSession {
 
   resetBall(direction = 'right') {
     const ball = this.state.ball;
-    const angle = (Math.random() * Math.PI) / 3 - Math.PI / 6;
+    const angle = (Math.random() * Math.PI / 3) - (Math.PI / 6);
     const speed = ball.speed;
     const dir = direction === 'left' ? -1 : 1;
 
@@ -118,7 +118,7 @@ class WebSocketService {
       path: '/ws'
     });
 
-    this.clients = new Map(); 
+    this.clients = new Map(); // ✅ Added
     this.games = new Map();
     this.gameSessions = new Map();
     this.gamePlayers = new Map();
@@ -132,22 +132,20 @@ class WebSocketService {
     
     this.wss.on('connection', (ws, req) => {
       const clientId = this.generateClientId();
-      this.clients.set(clientId, ws); 
+      this.clients.set(clientId, ws); // ✅ Store ws with ID
       ws.isAlive = true;
 
       console.log(`✅ Client connected: ${clientId}`);
 
-      ws.send(
-        JSON.stringify({
-          type: 'connection',
-          clientId,
-          message: 'Connected to secure WebSocket server'
-        })
-      );
+      ws.send(JSON.stringify({
+        type: 'connection',
+        clientId,
+        message: 'Connected to secure WebSocket server'
+      }));
 
       ws.on('message', (rawMessage) => {
         try {
-          console.log(`client : ${clientId}`);
+          console.log(`client : ${ clientId }`)
           const data = JSON.parse(rawMessage);
           this.handleMessage(clientId, data);
         } catch (err) {
@@ -158,57 +156,88 @@ class WebSocketService {
 
       ws.on('close', () => {
         console.log(`❌ Client disconnected: ${clientId}`);
-
-        // Récupérer l’utilisateur lié à ce clientId (s’il est authentifié)
+        
         const disconnectedWs = this.clients.get(clientId);
         const userId = disconnectedWs?.userId;
 
         if (userId) {
-          // Le retirer de onlineUsers
           this.onlineUsers.delete(userId);
-          // Diffuser qu’il passe en offline
-          this.broadcastUserStatus(userId, 'offline');
+        // 🔥 Diffuse le statut hors ligne
+        this.broadcastUserStatus(userId, 'offline');
         }
 
-        // Retirer ensuite le clientId et avertir la déconnexion
+        const userId2 = ws.userId;
         this.clients.delete(clientId);
+        this.onlineUsers.delete(userId2);
+
+        // 🔥 Notify opponent if in a game session
+        for (const [sessionId, session] of this.gameSessions.entries()) {
+          if (session.players.has(userId)) {
+            session.players.delete(userId);
+
+            const opponentId = [...session.players.keys()].find(id => id !== userId);
+            if (opponentId) {
+              const opponentWs = this.onlineUsers.get(opponentId);
+              if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+                opponentWs.send(JSON.stringify({
+                  type: 'opponent_disconnected',
+                  message: 'Match Terminated - Opponent Disconnected'
+                }));
+              }
+            }
+
+            session.player1 === userId && (session.player1 = null);
+            session.player2 === userId && (session.player2 = null);
+          }
+        }
         this.broadcastUserDisconnected(clientId);
       });
-
       ws.on('pong', () => {
         ws.isAlive = true;
       });
     });
-
-    // Boucle de mise à jour des parties à 60 FPS
     setInterval(() => {
       for (const [sessionId, session] of this.gameSessions.entries()) {
         session.update();
 
         for (const userId of session.players.keys()) {
           const ws = this.onlineUsers.get(userId);
+
           if (!ws) {
             console.warn(`[WARN] No socket for user ${userId}`);
             continue;
           }
+
           if (ws.readyState !== WebSocket.OPEN) {
             console.warn(`[WARN] Socket not open for user ${userId}`);
-            this.onlineUsers.delete(userId);
+            this.onlineUsers.delete(userId); // ✅ Clean up dead socket
             continue;
           }
+
           try {
-            ws.send(
-              JSON.stringify({
-                type: 'state',
-                payload: session.state
-              })
-            );
+            ws.send(JSON.stringify({
+              type: 'state',
+              payload: session.state
+            }));
           } catch (err) {
             console.error(`[ERROR] Failed to send to user ${userId}:`, err);
           }
         }
       }
     }, 1000 / 60);
+  }
+
+  broadcastUserStatus(userId, status) {
+    const message = JSON.stringify({
+      type: 'user-status',
+      payload: { userId, status }  // ✅ Important: payload structuré
+    });
+
+    for (const ws of this.clients.values()) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+      }
+    }
   }
 
   generateClientId() {
@@ -224,10 +253,10 @@ class WebSocketService {
         this.handleAuth(clientId, data.payload);
         break;
       case 'dm':
-        this.handleDirectMessage(clientId, data.payload);
+        this.handleDirectMessage(clientId, data.payload); // 🔧 add this
         break;
       case 'game':
-        this.handleGameMessage(clientId, data.payload);
+        this.handleGameMessage(clientId, data.payload)
         break;
       default:
         console.warn(`⚠️ Unknown message type: ${data.type}`);
@@ -239,86 +268,98 @@ class WebSocketService {
   }
 
   handleAuth(clientId, payload) {
-    const token = payload?.token;
-
-    if (!token) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'Missing token'
-      });
-    }
-
-    let userId;
-    try {
-      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
-      userId = decoded.id;
-    } catch (err) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'Invalid token'
-      });
-    }
-
-    const ws = this.clients.get(clientId);
-    if (!ws) {
-      return this.sendToClient(clientId, {
-        type: 'error',
-        message: 'WebSocket client not found'
-      });
-    }
-
-    // Log après avoir vérifié userId et ws
-    console.log(`[AUTH] Setting online user: ${userId}`);
-    console.log(`[AUTH] clientId: ${clientId}, ws readyState: ${ws.readyState}`);
-
-    ws.userId = userId;
-    ws.clientId = clientId;
-
-    this.onlineUsers.set(userId, ws);
-    this.clients.set(clientId, ws);
-
-    this.sendToClient(clientId, {
-      type: 'auth-success',
-      userId
+  const token = payload?.token;
+  if (!token) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'Missing token'
     });
-
-    console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
-
-    // Diffuser le statut “online”
-    this.broadcastUserStatus(userId, 'online');
   }
+
+  let userId;
+  try {
+    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+  } catch (err) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'Invalid token'
+    });
+  }
+
+  const ws = this.clients.get(clientId);
+  if (!ws) {
+    return this.sendToClient(clientId, {
+      type: 'error',
+      message: 'WebSocket client not found'
+    });
+  }
+
+  ws.userId = userId;
+  ws.clientId = clientId;
+
+  this.onlineUsers.set(userId, ws);
+  this.clients.set(clientId, ws);
+
+  this.sendToClient(clientId, {
+    type: 'auth-success',
+    userId
+  });
+
+  console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
+
+  // 🔥 Nouvelle ligne : diffuse aux autres utilisateurs qu’il est en ligne
+  this.broadcastUserStatus(userId, 'online');
+}
 
   handleGameMessage(clientId, payload) {
     const { action, direction, playerId, sessionId } = payload;
     if (!playerId || !sessionId) return;
 
+    // Remove player from other sessions
+    for (const [otherSessionId, otherSession] of this.gameSessions.entries()) {
+      if (otherSessionId !== sessionId && otherSession.players.has(playerId)) {
+        otherSession.players.delete(playerId);
+        if (otherSession.player1 === playerId) otherSession.player1 = null;
+        if (otherSession.player2 === playerId) otherSession.player2 = null;
+      }
+    }
+
+    // Create session if it doesn't exist
     if (!this.gameSessions.has(sessionId)) {
       this.gameSessions.set(sessionId, new GameSession(sessionId));
     }
 
     const session = this.gameSessions.get(sessionId);
 
+    // Register player if not already present
     if (!session.players.has(playerId)) {
       session.players.set(playerId, null);
+
+      // Assign roles
+      if (!session.player1) session.player1 = playerId;
+      else if (!session.player2 && session.player1 !== playerId) session.player2 = playerId;
     }
 
-    if (session.players.size === 2 && session.state.waitingForStart) {
+    // If both players are present and waiting for start, send initial state
+    if (session.player1 && session.player2 && session.state.waitingForStart) {
       for (const userId of session.players.keys()) {
         const ws = this.onlineUsers.get(userId);
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({
-              type: 'state',
-              payload: session.state
-            })
-          );
+          ws.send(JSON.stringify({
+            type: 'state',
+            payload: session.state
+          }));
         }
       }
     }
 
+    // Handle movement input
     if (action === 'input') {
       session.players.set(playerId, direction);
     }
+
+    // Handle game start
     if (action === 'start' && session.state.waitingForStart && !session.state.countdown) {
       session.state.countdown = 3;
 
@@ -357,6 +398,7 @@ class WebSocketService {
   }
 
   handleDirectMessage(clientId, payload) {
+
     const { toUserId, text } = payload || {};
     const fromWs = this.clients.get(clientId);
     const fromUserId = fromWs?.userId;
@@ -366,15 +408,13 @@ class WebSocketService {
       return;
     }
 
-    // Vérification du blocage
+    // ✅ Vérification du blocage
     if (isBlocked(fromUserId, toUserId)) {
       console.log(`🚫 Message bloqué : ${fromUserId} est bloqué par ou bloque ${toUserId}`);
-      fromWs?.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'You are blocked or have blocked this user.'
-        })
-      );
+      fromWs?.send(JSON.stringify({
+        type: 'error',
+        message: 'You are blocked or have blocked this user.'
+      }));
       return;
     }
 
@@ -397,6 +437,7 @@ class WebSocketService {
     console.log(`[DM] ${fromUserId} → ${toUserId}: ${text}`);
   }
 
+  
   broadcast(message) {
     const msg = JSON.stringify(message);
     for (const ws of this.clients.values()) {
@@ -405,35 +446,37 @@ class WebSocketService {
       }
     }
   }
-
+  
   sendToClient(clientId, message) {
     const ws = this.clients.get(clientId);
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
   }
-
+  
   broadcastUserDisconnected(clientId) {
+    for (const [sessionId, session] of this.gameSessions.entries()) {
+      if (session.players.has(userId)) {
+        session.players.delete(userId);
+
+        // Optional: remove player1/player2 reference
+        if (session.player1 === userId) session.player1 = null;
+        if (session.player2 === userId) session.player2 = null;
+
+        // Optional: if both are gone, destroy session
+        if (session.players.size === 0) {
+          this.gameSessions.delete(sessionId);
+          console.log(`[Game] Removed empty session: ${sessionId}`);
+        }
+      }
+    }
     this.broadcast({
       type: 'disconnection',
       clientId,
       message: 'User disconnected'
     });
   }
-
-  // ← BIEN placer cette méthode DANS la classe, AVANT cette accolade fermante.
-  broadcastUserStatus(userId, status) {
-    const message = JSON.stringify({
-      type: 'user-status',
-      payload: { userId, status }
-    });
-    for (const ws of this.clients.values()) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(message);
-      }
-    }
-  }
-} // ─── fin de la classe WebSocketService ─────────────────────────────────────
+}
 
 function isBlocked(senderId, receiverId) {
   const stmt = db.prepare(`
