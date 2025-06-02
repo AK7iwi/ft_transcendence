@@ -1,154 +1,80 @@
 const WebSocket = require('ws');
-const jwt = require('jsonwebtoken');
-const { getUsernameById } = require('../db.js'); // adjust path as needed
-
+const Database = require('better-sqlite3');
+const db = new Database('/data/database.sqlite');
 
 class WebSocketService {
   constructor(server) {
-    this.wss = new WebSocket.Server({ server, path: '/ws' });
-    this.clients = new Map();       // clientId → ws
-    this.onlineUsers = new Map();   
-    this.rooms = new Map();         // roomId → { hostId, guestId, clients: Set }
-    this.presence = Array(20).fill(0);
+    this.wss = new WebSocket.Server({
+      server,
+      path: '/ws'
+    });
+
+    this.clients = new Map(); // ✅ Added
+    this.games = new Map();
+    this.gamePlayers = new Map();
+    this.onlineUsers = new Map();
 
     this.setupWebSocket();
   }
 
-  
   setupWebSocket() {
-  console.log('[WS SERVER] WebSocket server initialized with path /ws');
-
-  this.wss.on('connection', (ws) => {
-    console.log('here? \'connection\'');
-    const clientId = this.generateClientId();
-    this.clients.set(clientId, ws);
-
-    console.log(`✅ Client connected: ${clientId}`);
-
-    // Envoi immédiat d'un message de connection au client
-    ws.send(JSON.stringify({
-      type: 'connection',
-      clientId,
-      message: 'Connected to secure WebSocket server'
-    }));
-
-    // Réception d'un message
-    ws.on('message', (rawMessage) => {
-      console.log('here? \'message\'');
-      try {
-        console.log('[SERVER] Received raw message string:', rawMessage);
-        const data = JSON.parse(rawMessage);
-        this.handleMessage(clientId, ws, data);
-      } catch (err) {
-        console.error('❌ Invalid JSON message:', err);
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Invalid JSON'
-        }));
-      }
-    });
-
-    // Fermeture de la connexion
-    ws.on('close', () => {
-      const clientInfo = this.clients.get(clientId);
-      const wsUserId = clientInfo?.userId;
-      const roomId = 'pong-room';
-
-      if (this.rooms.has(roomId)) {
-        const room = this.rooms.get(roomId);
-        room.clients.delete(clientId);
-
-        if (room.hostId === wsUserId) {
-          room.hostId = null;
-        } else if (room.guestId === wsUserId) {
-          room.guestId = null;
-        }
-
-        if (room.clients.size === 0) {
-          this.rooms.delete(roomId); // suppression complète de la room si vide
-        }
-      }
-
-      this.clients.delete(clientId);
-    });
-
-    // Réponse au ping (heartbeat)
-    ws.on('pong', () => {
-      console.log('here? \'pong\'');
+    console.log('✅ Setting up WebSocket server');
+    
+    this.wss.on('connection', (ws, req) => {
+      const clientId = this.generateClientId();
+      this.clients.set(clientId, ws); // ✅ Store ws with ID
       ws.isAlive = true;
-    });
 
-    // Marquer la socket comme “vivante” dès qu'elle se connecte
-    ws.isAlive = true;
-  });
+      console.log(`✅ Client connected: ${clientId}`);
 
-  // Heartbeat: ping toutes les 30s pour détecter les connexions mortes
-  setInterval(() => {
-    for (const [clientId, ws] of this.clients.entries()) {
-      if (!ws.isAlive) {
-        console.log(`⚠️ Terminating stale client: ${clientId}`);
-        ws.terminate();
-        this.handleDisconnect(clientId, ws);
-      } else {
-        ws.isAlive = false;
-        ws.ping();
-      }
-    }
-  }, 30000);
-}
+      ws.send(JSON.stringify({
+        type: 'connection',
+        clientId,
+        message: 'Connected to secure WebSocket server'
+      }));
 
+      ws.on('message', (rawMessage) => {
+        try {
+          console.log(`client : ${ clientId }`)
+          const data = JSON.parse(rawMessage);
+          this.handleMessage(clientId, data);
+        } catch (err) {
+          console.error('❌ Invalid JSON message:', err);
+          ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+        }
+      });
 
-  generateClientId() {
-    return Array.from(this.onlineUsers.keys());
-    }
+      ws.on('close', () => {
+        console.log(`❌ Client disconnected: ${clientId}`);
+        console.log('❌ Client disconnected: user', [...this.gamePlayers.entries()]);
+        console.log('❌ Client disconnected. Online users:', [...this.onlineUsers.keys()]);
+        this.clients.delete(clientId);
+        this.broadcastUserDisconnected(clientId);
+      });
 
-  handlePlayerJoin(userId) {
-    let role;
-    console.log(`in handleplayerJoin: userId = ${userId}`);
-    if (this.roles.hostId === userId || !this.roles.hostId) {
-      this.roles.hostId = userId;
-      role = 'host';
-      console.log('------------- HOST');
-    } else if (this.roles.guestId === userId || !this.roles.guestId) {
-      this.roles.guestId = userId;
-      role = 'guest';
-      console.log('------------- GUEST');
-    } else {
-      role = 'noob';
-      console.warn(`🔴 Room full. Host: ${this.roles.hostId} | Guest: ${this.roles.guestId}`);
-      console.log('------------- NOOB');
-    }
-
-    console.log('------------- SENDTOCLIENT');
-    this.sendToGameClient(userId, {
-      type: 'game',
-      data: { action: 'playerJoined', role }
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
     });
   }
 
+  generateClientId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
 
-  handleMessage(clientId, ws, data) {
-    console.log(`[SERVER] Parsed message:`, data);
-    console.log('[WS SERVER] Message brut reçu :', data);
+  handleMessage(clientId, data) {
     switch (data.type) {
-      case 'auth':
-        this.handleAuth(clientId, ws, data.payload.token);
-        break;
       case 'chat':
         this.handleChatMessage(clientId, data.payload);
         break;
-      case 'game':
-        this.handleGameMessage(clientId, data.payload);
-        console.log('sending to handle game message');
-        break;
-      case 'tournament':
-        this.handleTournamentMessage(clientId, data.payload);
+      case 'auth':
+        this.handleAuth(clientId, data.payload);
         break;
       case 'dm':
-        this.handleDirectMessage(clientId, data.payload);
+        this.handleDirectMessage(clientId, data.payload); // 🔧 add this
         break;
-        case 'invite-pong':
-        this.handlePongInvite(clientId, data.payload);
+      case 'game':
+        this.handleGameMessage(clientId, data.payload)
         break;
       default:
         console.warn(`⚠️ Unknown message type: ${data.type}`);
@@ -158,189 +84,58 @@ class WebSocketService {
         });
     }
   }
+      
+  handleAuth(clientId, payload) {
+    const token = payload?.token;
 
-  handlePongInvite(clientId, { toUserId }) {
-    const toWs = this.onlineUsers.get(toUserId);
-    if (!toWs) return;
-
-    toWs.send(JSON.stringify({
-      type: 'pong-invite',
-      from: this.clients.get(clientId).userId
-    }));
-  }
-
-
-handleDirectMessage(clientId, payload) {
-  console.log('[WS SERVER] handleDirectMessage payload:', payload);
-
-  const { toUserId, text } = payload || {};
-  const fromWs = this.clients.get(clientId);
-  const fromUserId = fromWs?.userId;
-
-  if (!fromUserId || !toUserId || !text?.trim()) {
-    console.warn('[DM] Invalid message:', { fromUserId, toUserId, text });
-    return;
-  }
-
-  // ✅ Vérification du blocage
-  if (isBlocked(fromUserId, toUserId)) {
-    console.log(`🚫 Message bloqué : ${fromUserId} est bloqué par ou bloque ${toUserId}`);
-    fromWs?.send(JSON.stringify({
-      type: 'error',
-      message: 'You are blocked or have blocked this user.'
-    }));
-    return;
-  }
-
-  const toWs = this.onlineUsers.get(toUserId);
-  const payloadToSend = {
-    type: 'dm',
-    senderId: fromUserId,
-    text: text.trim(),
-    timestamp: Date.now()
-  };
-
-  if (toWs?.readyState === WebSocket.OPEN) {
-    toWs.send(JSON.stringify(payloadToSend));
-  }
-
-  if (fromWs?.readyState === WebSocket.OPEN) {
-    fromWs.send(JSON.stringify(payloadToSend));
-  }
-
-  console.log(`[DM] ${fromUserId} → ${toUserId}: ${text}`);
-}
-
-handleAuth(clientId, ws, token) {
-  if (!token) {
-    return this.sendToClient(clientId, { type: 'error', message: 'Missing token' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-    ws.userId = userId;
-
-    // 1) ...
-this.clients.set(clientId, ws);
-// 2) enregistrez directement un seul ws pour cet userId :
-this.onlineUsers.set(userId, ws);
-    let sockets = this.onlineUsers.get(userId);
-    if (!sockets) {
-      sockets = new Set();
-      this.onlineUsers.set(userId, sockets);
-    }
-    sockets.add(ws);
-
-    // … reste de la logique de rooms, rôle, broadcast, etc.
-
-  } catch (err) {
-    console.error('❌ Error in handleAuth:', err);
-    this.sendToClient(clientId, { type: 'error', message: 'Invalid token' });
-    ws.close();
-  }
-
-
-
-
-    // 3) Création / mise à jour de la room
-    const roomId = 'pong-room';
-    if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, {
-        hostId:   userId,
-        guestId:  null,
-        clients:  new Set([clientId])
+    if (!token) {
+      return this.sendToClient(clientId, {
+        type: 'error',
+        message: 'Missing token'
       });
-    } else {
-      const room = this.rooms.get(roomId);
-      // si pas encore de guest et que ce n’est pas l’host
-      if (!room.guestId && room.hostId !== userId) {
-        room.guestId = userId;
-      }
-      room.clients.add(clientId);
     }
 
-    const room = this.rooms.get(roomId);
-    const { hostId, guestId } = room;
+    let userId;
+    try {
+      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+      userId = decoded.id;
+    } catch (err) {
+      return this.sendToClient(clientId, {
+        type: 'error',
+        message: 'Invalid token'
+      });
+    }
 
-    // 4) Détermine le rôle et l’opposant pour CE client
-    const role       = hostId === userId ? 'host' : 'guest';
-    const opponentId = role === 'host' ? guestId : hostId;
+    const ws = this.clients.get(clientId);
+    if (!ws) {
+      return this.sendToClient(clientId, {
+        type: 'error',
+        message: 'WebSocket client not found'
+      });
+    }
 
-    // 📨 Répond d’abord à CE client
+    // ✅ Associate both clientId and userId with the socket
+    ws.userId = userId;
+    ws.clientId = clientId;
+
+    this.onlineUsers.set(userId, ws);           // ✅ Map userId to socket
+    this.clients.set(clientId, ws);             // ✅ Keep clientId → ws mapping
+
     this.sendToClient(clientId, {
       type: 'auth-success',
-      userId,
-      role,
-      opponentId
+      userId
     });
 
-    // 5) Si les deux joueurs sont là, broadcast playerJoined à tous
-    if (hostId && guestId) {
-      room.clients.forEach(id => {
-        const wsClient = this.clients.get(id);
-        if (!wsClient || typeof wsClient.userId !== 'number') return;
+    console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
+  }
 
-        const uid = wsClient.userId;
-        const r   = uid === hostId ? 'host' : 'guest';
-        const opp = r === 'host' ? guestId : hostId;
+  handleGameMessage(clientId, payload) {
+    const { action, direction, playerId, sessionId } = payload;
 
-        this.sendToClient(id, {
-          type: 'game',
-          data: {
-            action:     'playerJoined',
-            role:       r,
-            opponentId: opp
-          }
-        });
-        console.log(`[WS] playerJoined → client=${id} role=${r} opponent=${opp}`);
-      });
+    if (action === 'input') {
+      console.log(`[Game] Input from ${playerId} (${clientId}) → ${direction}`);
     }
-
-    // Marque l’utilisateur en ligne et notifie
-    this.presence[userId] = 1;
-    this.broadcast({
-      type:   'user-status',
-      userId,
-      status: 'online'
-    });
-
-
-    console.log(`🔓 Authenticated user ${userId} as ${role}`);
   }
-
-
-  handleDisconnect(clientId, ws) {
-    const sockets = this.onlineUsers.get(wsUserId);
-if (sockets) {
-  sockets.delete(ws);
-  if (sockets.size === 0) {
-    this.onlineUsers.delete(wsUserId);
-    // on broadcast “offline” ici seulement
-    this.broadcast({ type: 'user-status', userId: wsUserId, status: 'offline' });
-  }
-}
-  const wsUserId = ws.userId;
-  const roomId = 'pong-room';
-
-  if (this.rooms.has(roomId)) {
-    const room = this.rooms.get(roomId);
-    room.clients.delete(clientId);
-    if (room.hostId === wsUserId) room.hostId = null;
-    if (room.guestId === wsUserId) room.guestId = null;
-    if (room.clients.size === 0) this.rooms.delete(roomId);
-  }
-
-  if (wsUserId && this.onlineUsers.has(wsUserId)) {
-    this.presence[wsUserId] = 0;
-    this.onlineUsers.delete(wsUserId);
-    this.broadcast({ type: 'user-status', userId: wsUserId, status: 'offline' });
-  }
-
-  this.clients.delete(clientId);
-  console.log(`❌ User ${wsUserId} disconnected`);
-}
-
 
   handleChatMessage(clientId, payload) {
     if (!payload || typeof payload.text !== 'string' || !payload.text.trim()) {
@@ -363,187 +158,47 @@ if (sockets) {
     this.broadcast(chatMessage);
   }
 
-  handleGameMessage(clientId, payload) {
-  const { action, userId, gameId, ...rest } = payload;
-  const roomKey = `pong-room-${gameId}`;
+  handleDirectMessage(clientId, payload) {
 
-  switch (action) {
-    case 'join': {
-  // 1) Récupère la room (ici une seule room "pong-room")
-  const roomId = 'pong-room';
-  let room = this.rooms.get(roomId);
+    const { toUserId, text } = payload || {};
+    const fromWs = this.clients.get(clientId);
+    const fromUserId = fromWs?.userId;
 
-  // 2) Si pas de room, le premier devient host
-  if (!room) {
-    room = { hostId: userId, guestId: null, clients: new Set() };
-    this.rooms.set(roomId, room);
-  }
-  // 3) Sinon, si pas de guest et pas lui-même l’host, devient guest
-  else if (!room.guestId && room.hostId !== userId) {
-    room.guestId = userId;
-  }
-  // 4) Ajoute toujours le client à la liste
-  room.clients.add(clientId);
-
-  // 5) Si deux joueurs présents, on notifie tout le monde une seule fois
-  if (room.hostId && room.guestId) {
-    for (const id of room.clients) {
-      const wsClient = this.clients.get(id);
-      if (!wsClient || typeof wsClient.userId !== 'number') continue;
-      const uid = wsClient.userId;
-      const role = uid === room.hostId ? 'host' : 'guest';
-      const opp  = role === 'host' ? room.guestId : room.hostId;
-      this.sendToClient(id, {
-        type: 'game',
-        data: { action: 'playerJoined', role, opponentId: opp }
-      });
+    if (!fromUserId || !toUserId || !text?.trim()) {
+      console.warn('[DM] Invalid message:', { fromUserId, toUserId, text });
+      return;
     }
-  }
-  break;
-}
-case 'leaveGame': {
-  const roomId = 'pong-room';
-  const room = this.rooms.get(roomId);
-  if (!room) break;
 
-  // 1) Retire le client
-  room.clients.delete(clientId);
-  // 2) Réinitialise host/guest si besoin
-  if (room.hostId === userId)  room.hostId  = null;
-  if (room.guestId === userId) room.guestId = null;
-  // 3) Si plus personne, on détruit la room
-  if (room.clients.size === 0) {
-    this.rooms.delete(roomId);
-  } else {
-    // 4) Informe l’adversaire qu’on a quitté
-    for (const otherId of room.clients) {
-      this.sendToClient(otherId, {
-        type: 'game',
-        data: { action: 'playerLeft' }
-      });
+    // ✅ Vérification du blocage
+    if (isBlocked(fromUserId, toUserId)) {
+      console.log(`🚫 Message bloqué : ${fromUserId} est bloqué par ou bloque ${toUserId}`);
+      fromWs?.send(JSON.stringify({
+        type: 'error',
+        message: 'You are blocked or have blocked this user.'
+      }));
+      return;
     }
-  }
-  break;
-}
 
-      case 'scoreUpdate':
-        this.broadcast({ type: 'game', data: { action: 'scoreUpdate', ...rest } });
-        break;
-    
+    const toWs = this.onlineUsers.get(toUserId);
+    const payloadToSend = {
+      type: 'dm',
+      senderId: fromUserId,
+      text: text.trim(),
+      timestamp: Date.now()
+    };
 
-  const room = this.rooms.get(roomId);
-
-  const role =
-  room.hostId === wsUserId ? 'host' :
-  room.guestId === wsUserId ? 'guest' :
-  null; // 👈 Obligatoire !
-
-this.sendToClient(clientId, {
-  type: 'game',
-  data: {
-    action: 'playerJoined',
-    role,
-    opponentId: role === 'host' ? room.guestId : room.hostId
-  }
-});
-
-case 'leaveGame':
-      // retire ce client de la room
-      room.clients.delete(clientId);
-      if (room.hostId === userId) room.hostId = null;
-      if (room.guestId=== userId) room.guestId= null;
-      // informe l’adversaire
-      for (const id of room.clients) {
-        this.sendToClient(id, {
-          type: 'game',
-          data: { action: 'playerLeft' }
-        });
-      }
-      break;
-  break;
-
-case 'startGame': {
-  const room = this.rooms.get('pong-room');
-  if (!room || !room.hostId || !room.guestId ||
-      this.presence[room.hostId] !== 1 || this.presence[room.guestId] !== 1) {
-    this.sendToClient(clientId, {
-      type: 'error',
-      message: 'Both players must be connected to start the game.'
-    });
-    return;
-  }
-
-  this.broadcast({
-    type: 'game',
-    data: {
-      action: 'startGame',
-      settings: rest.settings,
-      startAt: rest.startAt,
-      hostId: room.hostId,
-      guestId: room.guestId,
+    if (toWs?.readyState === WebSocket.OPEN) {
+      toWs.send(JSON.stringify(payloadToSend));
     }
-  });
-  break;
-}
-      case 'endGame':
-        this.broadcast({
-          type: 'game',
-          data: {
-            action: 'endGame',
-            winner: rest.winner,
-            by: clientId
-          }
-        });
-        break;
-      case 'resetGame':
-        this.broadcast({
-          type: 'game',
-          data: { action: 'resetGame', by: clientId }
-        });
-        break;
-      case 'ballUpdate':
-        this.broadcast({
-          type: 'game',
-          data: {
-            action: 'ballUpdate',
-            ...rest,
-            clientId
-          }
-        });
-        break;
-      case 'ballReset':
-        this.broadcast({
-          type: 'game',
-          data: {
-            action: 'ballReset',
-            ...rest,
-            clientId
-          }
-        });
-        break;
-      case 'movePaddle':
-        this.broadcast({
-          type: 'game',
-          data: {
-            action: 'movePaddle',
-            y: rest.y,
-            clientId
-          }
-        });
-        break;
-      default:
-        console.warn(`[WS] Unknown game action:`, action);
+
+    if (fromWs?.readyState === WebSocket.OPEN) {
+      fromWs.send(JSON.stringify(payloadToSend));
     }
+
+    console.log(`[DM] ${fromUserId} → ${toUserId}: ${text}`);
   }
 
-  handleTournamentMessage(clientId, payload) {
-    this.broadcast({
-      type: 'tournament',
-      clientId,
-      data: payload
-    });
-  }
-
+  
   broadcast(message) {
     const msg = JSON.stringify(message);
     for (const ws of this.clients.values()) {
@@ -552,47 +207,31 @@ case 'startGame': {
       }
     }
   }
-
+  
   sendToClient(clientId, message) {
     const ws = this.clients.get(clientId);
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
   }
-
-sendToGameClient(toUserId, message) {
-  const sockets = this.onlineUsers.get(toUserId) || new Set();
-  const payload = JSON.stringify(message);
-
-  for (const sock of sockets) {
-    if (sock.readyState === WebSocket.OPEN) {
-      sock.send(payload);
-    }
+  
+  broadcastUserDisconnected(clientId) {
+    this.broadcast({
+      type: 'disconnection',
+      clientId,
+      message: 'User disconnected'
+    });
   }
 }
 
-
-  getOnlineUserIds() {
-    return Array.from(this.onlineUsers.keys());
-  }
-}
-
-
-module.exports = WebSocketService;
-
-
-
-// Ajout : charger la base de données
-const Database = require('better-sqlite3');
-const db = new Database('/data/database.sqlite');
-
-// Fonction de vérification de blocage
 function isBlocked(senderId, receiverId) {
   const stmt = db.prepare(`
     SELECT 1 FROM blocks 
     WHERE (blocker_id = ? AND blocked_id = ?) 
-       OR (blocker_id = ? AND blocked_id = ?)
+      OR (blocker_id = ? AND blocked_id = ?)
   `);
   const result = stmt.get(senderId, receiverId, receiverId, senderId);
   return !!result;
 }
+
+module.exports = WebSocketService;
