@@ -34,15 +34,15 @@ ApiService.getUserById(friendId)
       ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : `${API_BASE_URL}/avatars/${data.avatar}`)
       : `${API_BASE_URL}/avatars/default.png`;
 
-    // On appelle simultanément loadStats ET loadMatchHistory,
-    // puis on fait un render() une fois que les deux sont terminés.
+
+
     return Promise.all([
       this.loadStats(friendId),
       this.loadMatchHistory(Number(friendId))
     ]);
   })
   .then(() => {
-    // une fois les deux chargements terminés, on affiche tout
+
     this.render();
   })
   .catch(err => {
@@ -95,7 +95,7 @@ ApiService.getUserById(friendId)
     });
   };
 
-  // Construction des lignes du tableau historique
+
   const historyRows = this.matchHistory
     .map(m => {
       const scoreText =

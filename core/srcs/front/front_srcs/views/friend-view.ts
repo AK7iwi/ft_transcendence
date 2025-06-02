@@ -30,7 +30,7 @@ class FriendView extends HTMLElement {
   try {
     const data = JSON.parse(event.data);
     if (data.type === 'user-status') {
-      this.handleUserStatus(data.payload); // ✅ Corrige ici !
+      this.handleUserStatus(data.payload); 
     }
   } catch (err) {
     console.error('Invalid WebSocket message', err);

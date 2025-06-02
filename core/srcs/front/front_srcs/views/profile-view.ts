@@ -76,26 +76,26 @@ private async handleAvatarUpload(event: Event) {
   if (!file) return;
 
   try {
-    // 1) On upload l’image et on reçoit un chemin relatif, par ex. "/avatars/user123.png"
+
     const avatarPath = await ApiService.uploadAvatar(file);
 
-    // 2) On stocke ce chemin pour usage futur
+
     this.user.avatar = avatarPath;
 
-    // 3) On construit une URL cache-bustée
+
     const newUrl = avatarPath.startsWith('/')
       ? `${API_BASE_URL}${avatarPath}?t=${Date.now()}`
       : `${avatarPath}?t=${Date.now()}`;
     this.avatarUrl = newUrl;
 
-    // 4) Au lieu d’appeler `this.render()` (qui reconstruit tout),
-    //    on cible directement la balise <img> et on met à jour son src.
+
+
     const imgEl = this.querySelector<HTMLImageElement>('img[user-avatar]');
     if (imgEl) {
       imgEl.src = this.avatarUrl;
     }
 
-    // 5) Enfin, on affiche le message de succès
+
     this.showMessage('success', 'Avatar mis à jour !');
   } catch (err) {
     this.showMessage('error', 'Échec du téléchargement de l’avatar');
@@ -103,20 +103,7 @@ private async handleAvatarUpload(event: Event) {
 }
 
 
-  // private async handleAvatarUpload(event: Event) {
-  //   const input = event.target as HTMLInputElement;
-  //   const file = input.files?.[0];
-  //   if (!file) return;
 
-  //   try {
-  //     const avatar = await ApiService.uploadAvatar(file);
-  //     this.avatarUrl = avatar.startsWith('/') ? `${API_BASE_URL}${avatar}` : avatar;
-  //     this.user.avatar = avatar;
-  //     this.showMessage('success', 'Avatar mis à jour !');
-  //   } catch (err) {
-  //     this.showMessage('error', 'Échec du téléchargement de l’avatar');
-  //   }
-  // }
 
   private logout() {
     localStorage.removeItem('token');

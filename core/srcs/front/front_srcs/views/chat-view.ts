@@ -7,7 +7,7 @@ interface Conversation {
   name: string;
   lastMessage: string;
   blocked: boolean;
-  avatar: string; // Ajoute cette ligne
+  avatar: string;
 }
 
 interface Message {
@@ -36,11 +36,10 @@ class ChatView extends HTMLElement {
     const userJson = localStorage.getItem('user') || '{}';
     const user = JSON.parse(userJson);
     this.currentUserId = user?.id ?? 0;
-    // Si user.id n’est pas défini, currentUserId vaut 0.
 
     this.loadConversations()
       .then(() => {
-        // On rend après avoir récupéré la liste d’amis
+
         this.render();
       })
       .catch(err => {
@@ -50,7 +49,7 @@ class ChatView extends HTMLElement {
     this.setupWebSocket();
     this.bindEvents();
 
-    // Pour gérer la navigation vers "Invite to play" si on clique sur un bouton
+
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
       if (target.classList.contains('invite-play-btn')) {
@@ -66,7 +65,7 @@ window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   disconnectedCallback() {
-    // Quand l’élément est retiré du DOM, on ferme le WS
+
     if (this.websocket) {
       this.websocket.close();
       this.websocket = null;
@@ -74,31 +73,31 @@ window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   private bindEvents() {
-    // Clicks sur les éléments à l’intérieur du composant
+
     this.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
 
-      // 1) Sélection d’une conversation
-      // 1) Sélection d’une conversation
+
+
 const convItem = target.closest('.conversation-item') as HTMLElement | null;
 if (convItem) {
   const id = convItem.dataset.id;
   if (!id || id === this.selectedConversationId) {
-    return; // pas de changement nécessaire
+    return; 
   }
 
-  // → On met à jour immédiatement la conversation sélectionnée
-  this.selectedConversationId = id;
-  this.messages = [];      // optionnel : vider l’ancien chat
-  this.render();           // on affiche tout de suite la nouvelle fenêtre (vide)
 
-  // → Puis on charge l’historique en arrière‐plan
+  this.selectedConversationId = id;
+  this.messages = [];      
+  this.render();          
+
+
   this.loadMessages(id)
     .catch(err => {
       console.error('[loadMessages] failed:', err);
     })
     .then(() => {
-      // Une fois l’historique reçu, on re‐render pour afficher les anciens messages
+
       this.render();
     });
 
@@ -106,7 +105,7 @@ if (convItem) {
 }
 
 
-      // 2) Invite to play
+
       if (target.closest('#invite-button')) {
         this.inviteToPlay(this.selectedConversationId);
         return;
@@ -117,7 +116,7 @@ if (convItem) {
       return;
     }
 
-    // Bouton « Débloquer »
+
     if (target.closest('#unblock-button')) {
       this.handleUnblockUser();
       return;
@@ -128,7 +127,7 @@ if (convItem) {
       }
     });
 
-    // Mise à jour de inputText au fur et à mesure qu’on tape
+
     this.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       if (target.id === 'input-message') {
@@ -136,7 +135,7 @@ if (convItem) {
       }
     });
 
-    // Soumission du formulaire d’envoi de message
+
     this.addEventListener('submit', (e) => {
       const form = e.target as HTMLFormElement;
       if (form.id === 'form-message') {
@@ -154,10 +153,10 @@ private async loadConversations() {
     this.conversations = friends.map(f => {
       let raw = f.avatar || "";
 
-      // Nettoyage robuste du chemin de l'avatar pour éviter la duplication de 'avatars/'
+
       raw = raw.replace(/^(\/?avatars\/)+/, '');
 
-      // Construction correcte de l'URL finale :
+
       const avatarUrl = raw
         ? `${API_BASE_URL}/avatars/${raw}`
         : `${API_BASE_URL}/avatars/default.png`;
@@ -180,25 +179,6 @@ private async loadConversations() {
 
 
 
-// private async loadConversations() {
-//   try {
-//     const friends = await ApiService.getFriends();
-//     // (1) on récupère d’abord la liste d’amis
-//     const blockedIds: number[] = await ApiService.getBlockedUsers();
-//     // (2) on récupère la liste des IDs bloqués sous GET /auth/blocked
-//     this.conversations = friends.map((f: any) => ({
-//       id: String(f.id),
-//       name: f.username,
-//       lastMessage: '',
-//       avatar: `${API_BASE_URL}/avatars/${f.avatar || 'default.png'}`,
-//       blocked: blockedIds.includes(f.id),
-//     }));
-//   } catch (err) {
-//     console.error('[loadConversations] error:', err);
-//     throw err;
-//   }
-// }
-
 
   private setupWebSocket() {
     const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + '/ws';
@@ -209,7 +189,7 @@ private async loadConversations() {
       console.log('[WS] Connection ouverte');
       const token = localStorage.getItem('token');
       if (token) {
-        // On envoie un message d’authentification dès que c’est ouvert
+
         const authMsg = { type: 'auth', payload: { token } };
         this.websocket!.send(JSON.stringify(authMsg));
         console.log('[WS] Sent auth:', authMsg);
@@ -222,17 +202,17 @@ private async loadConversations() {
         console.log('[WS] Received:', data);
 
         if (data.type === 'dm') {
-          // Structure attendue du serveur : { type: 'dm', senderId, text, timestamp }
+
           const { senderId, text } = data;
-          // Si ce DM vient du user actuellement sélectionné
+
           if (String(senderId) === this.selectedConversationId) {
             const senderName =
               this.conversations.find(c => c.id === String(senderId))?.name || 'Inconnu';
             this.messages.push({ author: senderName, text, me: false });
             this.render();
           } else {
-            // Tu peux, par exemple, mettre à jour lastMessage dans conversations,
-            // ou afficher une notification "nouveau message"
+
+
             console.log(
               `[WS] Nouveau DM de ${senderId}, mais conversation ${
                 this.selectedConversationId
@@ -240,7 +220,7 @@ private async loadConversations() {
             );
           }
         }
-        // Tu peux gérer d’autres types si nécessaire
+
       } catch (err) {
         console.error('[WS] Erreur en traitant le message:', err);
       }
@@ -260,7 +240,7 @@ private async loadConversations() {
     try {
       console.log('[loadMessages] friendsId =', friendId);
       const result = await ApiService.getMessages(friendId);
-      // On s’attend à un tableau de { sender: { id, username }, content }
+
       this.messages = result.map((msg: any) => ({
         author: msg.sender?.username || '???',
         text: msg.content,
@@ -301,7 +281,7 @@ private async loadConversations() {
       </div>
     `;
 
-    // Envoi côté serveur : type 'dm', payload : { toUserId, text }
+
     const payload = {
       type: 'dm',
       payload: {
@@ -312,7 +292,7 @@ private async loadConversations() {
     this.websocket.send(JSON.stringify(payload));
     console.log('[INVITE] envoyée sur WebSocket:', payload);
 
-    // On ajoute le message localement pour que l’utilisateur voit son propre message
+
     this.messages.push({
       author: 'Vous',
       text: invitationMessage.trim(),
@@ -324,7 +304,7 @@ private async loadConversations() {
   private async sendMessage() {
     const text = this.inputText.trim();
     if (!text) {
-      return; // Rien à envoyer si c’est vide
+      return; 
     }
     const toUserId = Number(this.selectedConversationId);
     if (!toUserId) {
@@ -333,11 +313,11 @@ private async loadConversations() {
     }
 
     try {
-      // 1) Envoi via l’API REST pour conserver en base de données
+
       await ApiService.sendMessage({ receiverId: toUserId, content: text });
       console.log('[sendMessage] REST API renvoyé OK');
 
-      // 2) Envoi via WebSocket pour la livraison en temps réel
+
       const payload = {
         type: 'dm',
         payload: {
@@ -352,9 +332,9 @@ private async loadConversations() {
         console.warn('[sendMessage] WS non ouvert, impossible d’envoyer le DM');
       }
 
-      // 3) Ajout local du message pour afficher instantanément
+
       this.messages.push({ author: 'Vous', text, me: true });
-      this.inputText = ''; // On vide l’input
+      this.inputText = '';
       this.render();
     } catch (err) {
       console.error('[sendMessage] Erreur envoi:', err);
@@ -376,19 +356,19 @@ private async loadConversations() {
     return;
   }
   try {
-    // 1) Appel à l’API pour bloquer
+
     await ApiService.blockUser(blockedId);
 
-    // 2) Mettre à jour localement l’état “blocked” de cette conversation
+
     const conv = this.conversations.find((c) => c.id === String(blockedId));
     if (conv) conv.blocked = true;
 
-    // 3) Afficher un message flash + re-render
+
     this.flashMessage = 'Utilisateur bloqué avec succès.';
     this.flashType = 'success';
     this.render();
 
-    // 4) Effacer le message après 3 secondes
+
     setTimeout(() => {
       this.flashMessage = '';
       this.flashType = '';
@@ -414,19 +394,19 @@ private async handleUnblockUser() {
     return;
   }
   try {
-    // 1) Appel à l’API pour débloquer
+
     await ApiService.unblockUser(unblockId);
 
-    // 2) Mettre à jour localement l’état “blocked” de cette conversation
+
     const conv = this.conversations.find((c) => c.id === String(unblockId));
     if (conv) conv.blocked = false;
 
-    // 3) Afficher un message flash + re-render
+
     this.flashMessage = 'Utilisateur débloqué avec succès.';
     this.flashType = 'success';
     this.render();
 
-    // 4) Effacer le message après 3 secondes
+
     setTimeout(() => {
       this.flashMessage = '';
       this.flashType = '';
@@ -452,9 +432,6 @@ private async handleUnblockUser() {
   }
 
   render() {
-    // Note : On reconstruit entièrement le innerHTML à chaque fois, 
-    // donc on perd la sélection du caret dans l’input — ceci est juste pour la démo.
-    // Si tu veux plus performant, envisage un diff ou un shadow DOM + lit-html / lit-element.
 
     this.innerHTML = `
     <div class="flex h-[80vh] bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white overflow-hidden">
@@ -498,10 +475,10 @@ private async handleUnblockUser() {
         ${
           this.selectedConversationId
             ? (() => {
-                // On récupère l’objet Conversation sélectionné
+
                 const conv = this.conversations.find((x) => x.id === this.selectedConversationId)!;
 
-                // On choisit le HTML du bouton selon conv.blocked
+
                 const blockButtonHTML = conv.blocked
                   ? `<button
                        id="unblock-button"
@@ -594,7 +571,7 @@ private async handleUnblockUser() {
     </div>
   `;
 
-  // Après avoir recréé le innerHTML, on remet le focus sur l’input
+
   const input = this.querySelector<HTMLInputElement>('#input-message');
   if (input) {
     setTimeout(() => input.focus(), 0);
