@@ -347,30 +347,29 @@ fastify.get('/friends', {
   }
 });
 
-fastify.get('/auth/friends', {
-  preHandler: authenticate,
-  handler: async (request, reply) => {
-    try {
-      const userId = request.user.id;
-      console.log('🔎 Récupération des amis pour l’utilisateur', userId);
-
-      const rows = db.prepare(`
-        SELECT u.id, u.username
-        FROM friends f
-        JOIN users u ON u.id = f.friend_id
-        WHERE f.user_id = ?
-      `).all(userId);
-console.log('📥 Headers reçus:', request.headers);
-
-      console.log('👥 Amis trouvés :', rows);
-      return rows;
-    } catch (err) {
-  console.error('❌ Erreur dans /auth/friends:', err.stack || err.message || err);
-  reply.code(500).send({ error: 'Erreur serveur', details: err.message });
-}
-
+// … dans la fonction authRoutes(fastify, options) …
+fastify.get('/auth/friends', { preHandler: authenticate }, async (req, reply) => {
+  try {
+    const userId = req.user.id;
+    const rows = dbApi.db.prepare(`
+      SELECT
+        u.id,
+        u.username,
+        CASE WHEN u.avatar IS NOT NULL AND u.avatar != ''
+             THEN u.avatar
+             ELSE 'default.png'
+        END AS avatar
+      FROM friends f
+      JOIN users u ON u.id = f.friend_id
+      WHERE f.user_id = ?
+    `).all(userId);
+    return reply.send(rows);
+  } catch (err) {
+    console.error('Erreur dans /auth/friends:', err);
+    reply.code(500).send({ error: 'Erreur serveur' });
   }
 });
+
 
 fastify.get(
   '/blocked',

@@ -8,8 +8,8 @@ interface Conversation {
   id: string;
   name: string;
   lastMessage: string;
-  avatar: string;
-  blocked: boolean; // ← nouveau champ
+  blocked: boolean;
+  avatar: string; // Ajoute cette ligne
 }
 
 interface Message {
@@ -27,6 +27,8 @@ class ChatView extends HTMLElement {
   private flashMessage: string = '';
   private flashType: 'success' | 'error' | '' = '';
   private currentUserId: number = 0;
+
+  private avatarUrl: string = '';
 
   constructor() {
     super();
@@ -147,21 +149,55 @@ if (convItem) {
 private async loadConversations() {
   try {
     const friends = await ApiService.getFriends();
-    // (1) on récupère d’abord la liste d’amis
-    const blockedIds: number[] = await ApiService.getBlockedUsers();
-    // (2) on récupère la liste des IDs bloqués sous GET /auth/blocked
-    this.conversations = friends.map((f: any) => ({
-      id: String(f.id),
-      name: f.username,
-      lastMessage: '',
-      avatar: `${API_BASE_URL}/avatars/${f.avatar || 'default.png'}`,
-      blocked: blockedIds.includes(f.id),
-    }));
+    const blockedIds = await ApiService.getBlockedUsers();
+
+    this.conversations = friends.map(f => {
+      let raw = f.avatar || "";
+
+      // Nettoyage robuste du chemin de l'avatar pour éviter la duplication de 'avatars/'
+      raw = raw.replace(/^(\/?avatars\/)+/, '');
+
+      // Construction correcte de l'URL finale :
+      const avatarUrl = raw
+        ? `${API_BASE_URL}/avatars/${raw}`
+        : `${API_BASE_URL}/avatars/default.png`;
+
+      return {
+        id: String(f.id),
+        name: f.username,
+        lastMessage: "",
+        avatar: avatarUrl,
+        blocked: blockedIds.includes(f.id),
+      };
+    });
   } catch (err) {
-    console.error('[loadConversations] error:', err);
+    console.error("[loadConversations] error:", err);
     throw err;
   }
 }
+
+
+
+
+
+// private async loadConversations() {
+//   try {
+//     const friends = await ApiService.getFriends();
+//     // (1) on récupère d’abord la liste d’amis
+//     const blockedIds: number[] = await ApiService.getBlockedUsers();
+//     // (2) on récupère la liste des IDs bloqués sous GET /auth/blocked
+//     this.conversations = friends.map((f: any) => ({
+//       id: String(f.id),
+//       name: f.username,
+//       lastMessage: '',
+//       avatar: `${API_BASE_URL}/avatars/${f.avatar || 'default.png'}`,
+//       blocked: blockedIds.includes(f.id),
+//     }));
+//   } catch (err) {
+//     console.error('[loadConversations] error:', err);
+//     throw err;
+//   }
+// }
 
 
   private setupWebSocket() {
@@ -437,10 +473,11 @@ private async handleUnblockUser() {
                   data-id="${c.id}"
                 >
                   <img
-                    src="${c.avatar}"
-                    alt="Avatar"
-                    class="w-8 h-8 rounded-full object-cover"
-                  />
+  src="${c.avatar}"
+  alt="Avatar"
+  class="w-8 h-8 rounded-full object-cover"
+/>
+
                   <div class="flex-1">
                     <p class="font-semibold">${c.name}</p>
                     <p class="text-gray-400 text-sm">${c.lastMessage || ''}</p>
