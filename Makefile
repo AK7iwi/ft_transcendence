@@ -1,8 +1,24 @@
-# Build et lancement complet
-all:
+all: generate-certs build start
+	@clear	
+
+setup-scripts:
+	@echo "Scripts directory setup..."
+	@chmod +x ./core/scripts/generate-certs.sh
+
+# Generate SSL certificates
+generate-certs: setup-scripts
+	@echo "Generating SSL certificates..."
+	@./core/scripts/generate-certs.sh
+
+# Build and start containers
+build:
+	@echo "Build containers..."
 	docker compose -f ./docker-compose.yml build --no-cache
+
+# Start containers
+start:
+	@echo "Starting containers..."
 	docker compose -f ./docker-compose.yml up -d
-	@clear
 
 # Logs back + front
 logs:

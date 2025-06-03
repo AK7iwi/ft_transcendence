@@ -54,7 +54,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
       } catch (err) {
   console.error('🔥 Erreur dans /auth/me :', err);
-  return reply.status(500).send({ error: 'Internal Server Error' });
+  return reply.code(500).send({ error: 'Internal Server Error' });
 }
 
     }

@@ -11,8 +11,6 @@ services:
     env_file: ./.env
     volumes:
     - sqlite_data:/data
-    - ./back/public/avatars:/usr/src/app/public/avatars
-    - ./back/certs:/usr/src/app/certs
     networks:
       - transcendence
     restart: unless-stopped
@@ -35,8 +33,6 @@ services:
       back:
         condition: service_healthy
     env_file: ./.env
-    volumes:
-      - ./back/certs:/usr/src/app/certs
     networks:
       - transcendence
     restart: unless-stopped

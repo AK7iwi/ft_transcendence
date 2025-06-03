@@ -162,35 +162,47 @@ class WebSocketService {
 
         if (userId) {
           this.onlineUsers.delete(userId);
-        // 🔥 Diffuse le statut hors ligne
-        this.broadcastUserStatus(userId, 'offline');
-        }
+          // Broadcast offline status
+          this.broadcastUserStatus(userId, 'offline');
+          
+          // Handle game session cleanup
+          for (const [sessionId, session] of this.gameSessions.entries()) {
+            if (session.players.has(userId)) {
+              session.players.delete(userId);
 
-        const userId2 = ws.userId;
-        this.clients.delete(clientId);
-        this.onlineUsers.delete(userId2);
+              const opponentId = [...session.players.keys()].find(id => id !== userId);
+              if (opponentId) {
+                const opponentWs = this.onlineUsers.get(opponentId);
+                if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+                  opponentWs.send(JSON.stringify({
+                    type: 'opponent_disconnected',
+                    message: 'Match Terminated - Opponent Disconnected'
+                  }));
+                }
+              }
 
-        // 🔥 Notify opponent if in a game session
-        for (const [sessionId, session] of this.gameSessions.entries()) {
-          if (session.players.has(userId)) {
-            session.players.delete(userId);
+              // Clean up player references
+              if (session.player1 === userId) session.player1 = null;
+              if (session.player2 === userId) session.player2 = null;
 
-            const opponentId = [...session.players.keys()].find(id => id !== userId);
-            if (opponentId) {
-              const opponentWs = this.onlineUsers.get(opponentId);
-              if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
-                opponentWs.send(JSON.stringify({
-                  type: 'opponent_disconnected',
-                  message: 'Match Terminated - Opponent Disconnected'
-                }));
+              // Remove empty sessions
+              if (session.players.size === 0) {
+                this.gameSessions.delete(sessionId);
+                console.log(`[Game] Removed empty session: ${sessionId}`);
               }
             }
-
-            session.player1 === userId && (session.player1 = null);
-            session.player2 === userId && (session.player2 = null);
           }
         }
-        this.broadcastUserDisconnected(clientId);
+
+        this.clients.delete(clientId);
+        
+        // Broadcast disconnection to all clients
+        this.broadcast({
+          type: 'disconnection',
+          clientId,
+          userId,  // Include userId in the broadcast
+          message: 'User disconnected'
+        });
       });
       ws.on('pong', () => {
         ws.isAlive = true;
@@ -308,7 +320,7 @@ class WebSocketService {
 
   console.log(`✅ Authenticated client ${clientId} as user ${userId}`);
 
-  // 🔥 Nouvelle ligne : diffuse aux autres utilisateurs qu’il est en ligne
+  // 🔥 Nouvelle ligne : diffuse aux autres utilisateurs qu'il est en ligne
   this.broadcastUserStatus(userId, 'online');
 }
 
@@ -452,29 +464,6 @@ class WebSocketService {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
-  }
-  
-  broadcastUserDisconnected(clientId) {
-    for (const [sessionId, session] of this.gameSessions.entries()) {
-      if (session.players.has(userId)) {
-        session.players.delete(userId);
-
-        // Optional: remove player1/player2 reference
-        if (session.player1 === userId) session.player1 = null;
-        if (session.player2 === userId) session.player2 = null;
-
-        // Optional: if both are gone, destroy session
-        if (session.players.size === 0) {
-          this.gameSessions.delete(sessionId);
-          console.log(`[Game] Removed empty session: ${sessionId}`);
-        }
-      }
-    }
-    this.broadcast({
-      type: 'disconnection',
-      clientId,
-      message: 'User disconnected'
-    });
   }
 }
 

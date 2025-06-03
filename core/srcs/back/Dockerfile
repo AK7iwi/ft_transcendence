@@ -9,9 +9,6 @@ RUN apt-get update && apt-get upgrade -y && \
 # Set working directory
 WORKDIR /usr/src/app
 
-# Create certificates directory and set permissions
-RUN mkdir -p /usr/src/app/certs && chmod 755 /usr/src/app/certs
-
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
@@ -19,17 +16,9 @@ RUN npm install
 # Copy the rest of the backend files
 COPY . .
 
-# Make the cert generation script executable
-RUN chmod +x /usr/src/app/scripts/generate-certs.sh
-
 # Expose Fastify port
 EXPOSE 3000
 
-# Create an entrypoint script
-RUN echo '#!/bin/bash\n\
-/usr/src/app/scripts/generate-certs.sh\n\
-node back.js' > /usr/src/app/entrypoint.sh && \
-chmod +x /usr/src/app/entrypoint.sh
 
 # Use the entrypoint script
-CMD ["/usr/src/app/entrypoint.sh"]
+CMD ["npm", "run", "dev"]
