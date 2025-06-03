@@ -85,9 +85,9 @@ class ProfileView extends HTMLElement {
       			imgEl.src = this.avatarUrl;
     		}
 
-    		this.showMessage('success', 'Avatar mis à jour !');
+    		this.showMessage('success', 'Avatar updated!');
   		} catch (err) {
-    		this.showMessage('error', 'Échec du téléchargement de l’avatar');
+    		this.showMessage('error', 'Failed to upload avatar');
   		}
 	}
 
@@ -102,7 +102,7 @@ class ProfileView extends HTMLElement {
       		const data = await ApiService.getMatchHistory();
       		this.matchHistory = data;
     	} catch (err) {
-      		console.error('Erreur lors du chargement de l’historique des matchs :', err);
+      		console.error('Error loading match history:', err);
     	}
   	}
 
@@ -194,7 +194,7 @@ class ProfileView extends HTMLElement {
       		</div>
 
       		<div class="mx-auto max-w-7xl px-6 lg:px-8 my-12">
-        		<h3 class="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Match History</h3>
+        		<h3 class="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Match History (Tournaments)</h3>
         		<div class="overflow-x-auto">
           			<table class="min-w-full table-auto divide-y divide-gray-700">
             			<thead class="bg-gray-800">
