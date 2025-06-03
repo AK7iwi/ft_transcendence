@@ -45,7 +45,7 @@ class FriendProfileView {
 			this.render();
 		})
 		.catch(err => {
-			console.error('Erreur chargement profil ami:', err);
+			console.error('Error loading friend profile:', err);
 		});
   	}
 
@@ -63,7 +63,7 @@ class FriendProfileView {
       		this.winRate = total > 0 ? Math.round((this.wins / total) * 100) : 0;
       		this.render();
     	} catch (err) {
-      		console.error('Erreur chargement stats ami :', err);
+      		console.error('Error loading friend stats:', err);
     	}
   	}
 
@@ -72,7 +72,7 @@ class FriendProfileView {
       		const data = await ApiService.getUserMatchHistory(friendId);
       		this.matchHistory = data;
     	} catch (err) {
-      		console.error('Erreur chargement historique ami :', err);
+      		console.error('Error loading history friend:', err);
     	}
   	}
 
