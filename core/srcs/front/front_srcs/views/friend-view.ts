@@ -36,7 +36,6 @@ class FriendView extends HTMLElement {
 				console.error('Invalid WebSocket message', err);
 			}
 		};
-
   	}
 
   	handleUserStatus(data: { userId: number; status: 'online' | 'offline' }) {
