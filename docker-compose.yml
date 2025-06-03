@@ -3,17 +3,16 @@ services:
     container_name: back
     image: back
     build:
-      context: ./back
+      context: ./core/srcs/back
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
       - "3000:3000"
-    env_file: ../.env
+    env_file: ./.env
     volumes:
     - sqlite_data:/data
     - ./back/public/avatars:/usr/src/app/public/avatars
     - ./back/certs:/usr/src/app/certs
-
     networks:
       - transcendence
     restart: unless-stopped
@@ -28,14 +27,14 @@ services:
     container_name: front
     image: front
     build:
-      context: ./front
+      context: ./core/srcs/front
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
     depends_on:
       back:
         condition: service_healthy
-    env_file: ../.env
+    env_file: ./.env
     volumes:
       - ./back/certs:/usr/src/app/certs
     networks:
