@@ -411,13 +411,12 @@ if (this.currentMatchIndex >= this.bracket.length) {
               return `
                 <div class="rounded-lg p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 w-48">
                   <div class="bg-gray-900 rounded-lg flex flex-col overflow-hidden">
-                    <div
-                      class="flex justify-between px-4 py-2 text-center"
-                      style="${isWinnerTop ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-bottom: calc(0.5rem + 4px);' : ''}"
-                    >
-                      <span>${match.players[0] || 'TBD'}</span>
-                      <span>${scores.p1}</span>
-                    </div>
+                   <div class="flex justify-between px-4 py-2 text-center 
+						${isWinnerTop ? 'bg-gradient-to-r from-purple-700 to-pink-600 text-white pb-4' : ''}">
+						<span>${match.players[0] || 'TBD'}</span>
+						<span>${scores.p1}</span>
+					</div>
+
 
                     <div class="relative w-full border-t-2 border-gray-900 my-1">
                       <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 px-2 text-xs text-gray-300 font-bold rounded border border-gray-300">
@@ -425,13 +424,12 @@ if (this.currentMatchIndex >= this.bracket.length) {
                       </span>
                     </div>
 
-                    <div
-                      class="flex justify-between px-4 py-2 text-center"
-                      style="${isWinnerBottom ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-top: calc(0.5rem + 2px);' : ''}"
-                    >
-                      <span>${match.players[1] || 'TBD'}</span>
-                      <span>${scores.p2}</span>
-                    </div>
+                    <div class="flex justify-between px-4 py-2 text-center 
+						${isWinnerBottom ? 'bg-gradient-to-r from-purple-700 to-pink-600 text-white pt-4' : ''}">
+						<span>${match.players[1] || 'TBD'}</span>
+						<span>${scores.p2}</span>
+					</div>
+
                   </div>
                 </div>
               `;
@@ -475,10 +473,10 @@ if (this.currentMatchIndex >= this.bracket.length) {
     this.innerHTML = `
       <main class="w-full mx-auto p-8">
 
-        <!-- Limited width for inputs and join -->
-        <div class="max-w-xl mx-auto p-8 space-y-6" id="form-wrapper" style="display: ${this.bracket.length > 0 ? 'none' : 'block'};">
-          <div id="tournament-ui">
-            <h2 class="text-3xl font-bold text-center">Tournament</h2>
+        <div id="form-wrapper" class="max-w-xl mx-auto p-8 space-y-6 ${this.bracket.length > 0 ? 'hidden' : 'block'}">
+  			<div id="tournament-ui">
+    			<h2 class="text-3xl font-bold text-center">Tournament</h2>
+
 
             <form class="flex gap-2 mb-4" onsubmit="return false;">
               <input
@@ -510,13 +508,13 @@ if (this.currentMatchIndex >= this.bracket.length) {
           </div> <!-- tournament-ui -->
         </div> <!-- form-wrapper -->
 
-        <!-- Full width player cards -->
-        <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
-          ${this.players.map(player => `
-  <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-    <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+        <div class="grid grid-cols-[repeat(auto-fit,_minmax(150px,_200px))] gap-2 mb-6 px-8 justify-center mx-auto">
+  ${this.players.map(player => `
+    <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+      <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+
       <img
-        src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+        src="${player.avatar || `${API_BASE_URL}/avatars/default.png`}"
         alt="Avatar of ${player.nickname}"
         class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
       />
@@ -552,7 +550,7 @@ if (this.currentMatchIndex >= this.bracket.length) {
             <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
               ${this.currentMatchPlayers[0] || 'Player 1'}
             </span>
-            <span id="tournament-score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
+            <span id="score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
               0 - 0
             </span>
             <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
@@ -649,8 +647,8 @@ private toggleGameUI(showGame: boolean) {
 // ~---~ GAME FOR TOURNEY ~---~ //
 
 
-  private updateTournamentScoreDisplay() {
-    const scoreEl = this.querySelector('#tournament-score');
+  private updateScoreDisplay() {
+    const scoreEl = document.getElementById('score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
@@ -857,11 +855,11 @@ private startBallCountdown() {
       if (this.ball.x <= 0) {
         this.score.player2++;
         this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1] || 'Player 2') : this.resetBall(true);
-        this.updateTournamentScoreDisplay();
+        this.updateScoreDisplay();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
         this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0] || 'Player 1') : this.resetBall(true);
-        this.updateTournamentScoreDisplay();
+        this.updateScoreDisplay();
       }
     }
   }
@@ -930,7 +928,7 @@ private resetGame() {
   this.isBallActive = false;
   this.isInitialCountdown = false;
   this.gameLoop = false;
-  this.updateTournamentScoreDisplay();
+  this.updateScoreDisplay();
 
   if (this.initialCountdownTimer !== null) {
     clearInterval(this.initialCountdownTimer);

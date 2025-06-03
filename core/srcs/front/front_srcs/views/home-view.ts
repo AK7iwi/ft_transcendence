@@ -22,6 +22,7 @@ class HomeView extends HTMLElement {
 					<h2 class="text-center text-base/7 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">How It’s Built</h2>
 					<p class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-950 sm:text-5xl">Core milestones of our development journey</p>
 					<div class="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
+
 						<!-- Server -->
 						<div class="relative lg:row-span-2">
 							<div class="absolute inset-px rounded-lg bg-white max-lg:rounded-b-4xl lg:rounded-r-4xl"></div>
@@ -60,6 +61,7 @@ class HomeView extends HTMLElement {
 							</div>
 							<div class="pointer-events-none absolute inset-px rounded-lg shadow-sm ring-1 ring-black/5 max-lg:rounded-b-4xl lg:rounded-r-4xl"></div>
 						</div>
+
 						<!-- Game -->
 						<div class="relative max-lg:row-start-1">
 							<div class="absolute inset-px rounded-lg bg-white max-lg:rounded-t-4xl"></div>
@@ -74,6 +76,7 @@ class HomeView extends HTMLElement {
 							</div>
 							<div class="pointer-events-none absolute inset-px rounded-lg shadow-sm ring-1 ring-black/5 max-lg:rounded-t-4xl"></div>
 						</div>
+
 						<!-- Security -->
 						<div class="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
 							<div class="absolute inset-px rounded-lg bg-white"></div>
@@ -82,12 +85,10 @@ class HomeView extends HTMLElement {
 									<p class="mt-2 text-lg font-medium tracking-tight max-lg:text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Security & 2FA</p>
 									<p class="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">Keep your data safe with strong encryption, secure authentication, and protection against common vulnerabilities. Two-Factor Authentication (2FA) adds an extra layer of security to ensure only you can access your account.</p>
 								</div>
-								<div class="@container flex flex-1 items-center max-lg:py-6 lg:pb-2">
-									<img class="h-[min(152px,40cqw)] object-cover" src="https://tailwindcss.com/plus-assets/img/component-images/bento-03-security.png" alt="">
-								</div>
 							</div>
 							<div class="pointer-events-none absolute inset-px rounded-lg shadow-sm ring-1 ring-black/5"></div>
 						</div>
+						
 						<!-- Tailwind CSS Only -->
 						<div class="relative lg:row-span-2">
 							<div class="absolute inset-px rounded-lg bg-white max-lg:rounded-b-4xl lg:rounded-r-4xl"></div>
