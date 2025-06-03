@@ -33,11 +33,8 @@ class GameRemoteView extends HTMLElement{
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
-      console.log('🔌 WebSocket connected');
 
-      // 👇 Send auth message right after connect
       const token = localStorage.getItem('token');
-      console.log(`this.socket.onopen ${ token }`);
       if (token) {
         this.socket?.send(JSON.stringify({
           type: 'auth',
@@ -64,7 +61,7 @@ class GameRemoteView extends HTMLElement{
     if (data.type === 'state') {
       this.currentState = data.payload;
       if (this.currentState) {
-        this.drawGame(this.currentState); // now it's guaranteed not null
+        this.drawGame(this.currentState);
       }
     }
 
@@ -109,13 +106,11 @@ class GameRemoteView extends HTMLElement{
     const urlParams = new URLSearchParams(window.location.search);
     this.sessionId = urlParams.get('id') || '';
 
-    console.log(`THIS PLAYERID PLEASE : ${ this.playerId} SESSIONID : ${this.sessionId}`);
-
     document.addEventListener('keydown', this.handleKeyDown);
     document.addEventListener('keyup', this.handleKeyUp);
 
     this.render();
-    this.initWebSocket(this.sessionId, String(this.playerId)); // ✅ now runs with correct values
+    this.initWebSocket(this.sessionId, String(this.playerId));
   }
 
   disconnectedCallback() {
@@ -158,7 +153,6 @@ class GameRemoteView extends HTMLElement{
       direction = 'down';
     }
 
-    console.log(`PLAYERID: ${this.playerId} || SESSIONID: ${this.sessionId}`);
     this.socket.send(JSON.stringify({
       type: 'game',
       payload: {
@@ -171,7 +165,7 @@ class GameRemoteView extends HTMLElement{
   }
 
   private render() {
-    this.innerHTML = `
+  this.innerHTML = `
       <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
         <div class="rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
           <div class="bg-white rounded-xl overflow-hidden">
@@ -179,7 +173,7 @@ class GameRemoteView extends HTMLElement{
           </div>
         </div>
       </div>
-    `;
+  `;
 
     this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
@@ -188,7 +182,6 @@ class GameRemoteView extends HTMLElement{
   private drawGame(state: GameState) {
     const { ball, paddles, score, isGameOver, winner, waitingForStart, countdown } = state;
 
-    // Always clear screen and draw background first
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -214,7 +207,6 @@ class GameRemoteView extends HTMLElement{
       return;
     }
 
-    // Draw paddles
     this.ctx.fillStyle = 'white';
     this.ctx.fillRect(
       paddles.player1.x,
@@ -229,10 +221,8 @@ class GameRemoteView extends HTMLElement{
       paddles.player2.height
     );
 
-    // Draw ball
     this.ctx.fillRect(ball.x, ball.y, ball.size, ball.size);
 
-    // Draw score
     this.ctx.font = '32px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(`${score.player1} : ${score.player2}`, this.canvas.width / 2, 40);
