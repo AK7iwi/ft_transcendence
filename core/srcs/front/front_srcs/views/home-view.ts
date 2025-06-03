@@ -83,7 +83,7 @@ class HomeView extends HTMLElement {
 							<div class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
 								<div class="px-8 pt-8 sm:px-10 sm:pt-10">
 									<p class="mt-2 text-lg font-medium tracking-tight max-lg:text-center bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Security & 2FA</p>
-									<p class="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">Keep your data safe with strong encryption, secure authentication, and protection against common vulnerabilities. Two-Factor Authentication (2FA) adds an extra layer of security to ensure only you can access your account.</p>
+									<p class="mt-2 mb-8 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">Keep your data safe with strong encryption, secure authentication, and protection against common vulnerabilities. Two-Factor Authentication (2FA) adds an extra layer of security to ensure only you can access your account.</p>
 								</div>
 							</div>
 							<div class="pointer-events-none absolute inset-px rounded-lg shadow-sm ring-1 ring-black/5"></div>
