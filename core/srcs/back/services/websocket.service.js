@@ -1,6 +1,11 @@
+
+
+
+
 const WebSocket = require('ws');
 const Database = require('better-sqlite3');
 const db = new Database('/data/database.sqlite');
+const { getUserById } = require('../db');
 
 class GameSession {
   constructor(sessionId) {
@@ -62,27 +67,52 @@ class GameSession {
     paddles.player1.y = Math.max(0, Math.min(332, paddles.player1.y));
     paddles.player2.y = Math.max(0, Math.min(332, paddles.player2.y));
 
-    if (ball.x <= 0) {
+        if (ball.x <= 0) {
       score.player2 += 1;
       if (score.player2 >= this.state.endScore) {
+        // Fin de match
         this.state.isGameOver = true;
         this.state.winner = 'Player 2';
         setTimeout(() => this.fullReset(), 3000);
       } else {
-        this.resetBall('right');
+        // Début du décompte 3 → 2 → 1 avant de replacer la balle côté 'right'
+        this.state.waitingForStart = true;
+        this.state.countdown = 3;
+        const countdownInterval = setInterval(() => {
+          this.state.countdown--;
+          if (this.state.countdown <= 0) {
+            clearInterval(countdownInterval);
+            this.state.waitingForStart = false;
+            this.state.countdown = null;
+            this.resetBall('right');
+          }
+        }, 1000);
       }
     }
 
     if (ball.x + ball.size >= 768) {
       score.player1 += 1;
       if (score.player1 >= this.state.endScore) {
+        // Fin de match
         this.state.isGameOver = true;
         this.state.winner = 'Player 1';
         setTimeout(() => this.fullReset(), 3000);
       } else {
-        this.resetBall('left');
+        // Début du décompte 3 → 2 → 1 avant de replacer la balle côté 'left'
+        this.state.waitingForStart = true;
+        this.state.countdown = 3;
+        const countdownInterval = setInterval(() => {
+          this.state.countdown--;
+          if (this.state.countdown <= 0) {
+            clearInterval(countdownInterval);
+            this.state.waitingForStart = false;
+            this.state.countdown = null;
+            this.resetBall('left');
+          }
+        }, 1000);
       }
     }
+
   }
 
   fullReset() {
@@ -127,87 +157,192 @@ class WebSocketService {
     this.setupWebSocket();
   }
 
-  setupWebSocket() {
-    console.log('✅ Setting up WebSocket server');
-    
-    this.wss.on('connection', (ws, req) => {
-      const clientId = this.generateClientId();
-      this.clients.set(clientId, ws); // ✅ Store ws with ID
-      ws.isAlive = true;
 
-      console.log(`✅ Client connected: ${clientId}`);
 
-      ws.send(JSON.stringify({
+setupWebSocket() {
+  console.log('✅ Setting up WebSocket server');
+
+  this.wss.on('connection', (ws, req) => {
+    const clientId = this.generateClientId();
+    this.clients.set(clientId, ws);
+    ws.isAlive = true;
+
+    console.log(`✅ Client connected: ${clientId}`);
+
+    // 1) Envoyer tout de suite un message de connexion
+    ws.send(
+      JSON.stringify({
         type: 'connection',
         clientId,
         message: 'Connected to secure WebSocket server'
-      }));
+      })
+    );
 
-      ws.on('message', (rawMessage) => {
-        try {
-          console.log(`client : ${ clientId }`)
-          const data = JSON.parse(rawMessage);
-          this.handleMessage(clientId, data);
-        } catch (err) {
-          console.error('❌ Invalid JSON message:', err);
-          ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
-        }
-      });
+    // ───────────────────────────────────────────────────────────────────────────
+    // 2) NOUVEAU : envoyer l'état initial (waitingForStart = true) dès la connexion
+    //    On doit récupérer la session de jeu correspondant à la query string
+    //    ex. ws://…/ws?sessionId=123&playerId=42
+    //---------------------------------------------------------------------------
+    //    2.1 Extraire sessionId et playerId des query params
+    if (!req.url) return;
+    const url = new URL(req.url, `http://${req.headers.host}`); 
+    // note : si vous êtes en wss://, `new URL(req.url!, 'https://' + req.headers.host)` fonctionne aussi
+    const sessionId = url.searchParams.get('sessionId') || '';
+    const playerId = url.searchParams.get('playerId') || '';
 
-      ws.on('close', () => {
-        console.log(`❌ Client disconnected: ${clientId}`);
-        
-        const disconnectedWs = this.clients.get(clientId);
-        const userId = disconnectedWs?.userId;
+    //    2.2 Récupérer (ou créer) l'objet GameSession existant
+    let session = null;
+    if (this.gameSessions.has(sessionId)) {
+      session = this.gameSessions.get(sessionId);
+    } else {
+      // Si vous souhaitez créer d'office une session vide
+      session = new GameSession(sessionId);
+      this.gameSessions.set(sessionId, session);
+    }
 
-        if (userId) {
-          this.onlineUsers.delete(userId);
-          // Broadcast offline status
-          this.broadcastUserStatus(userId, 'offline');
-          
-          // Handle game session cleanup
-          for (const [sessionId, session] of this.gameSessions.entries()) {
-            if (session.players.has(userId)) {
-              session.players.delete(userId);
+    //    2.3 Préparer l'état à envoyer (full copy de session.state + noms des joueurs)
+    //        Imaginons que vous ayez une méthode pour récupérer les pseudos par ID :
+    //        getUserById(id) → { username: string, … }
+    let player1Name = 'Player 1';
+    let player2Name = 'Player 2';
+    if (session.player1) {
+      const row1 = getUserById(session.player1);
+      if (row1?.username) player1Name = row1.username;
+    }
+    if (session.player2) {
+      const row2 = getUserById(session.player2);
+      if (row2?.username) player2Name = row2.username;
+    }
 
-              const opponentId = [...session.players.keys()].find(id => id !== userId);
-              if (opponentId) {
-                const opponentWs = this.onlineUsers.get(opponentId);
-                if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
-                  opponentWs.send(JSON.stringify({
-                    type: 'opponent_disconnected',
-                    message: 'Match Terminated - Opponent Disconnected'
-                  }));
-                }
-              }
+    const initialState = {
+      ball: session.state.ball,
+      paddles: session.state.paddles,
+      player1Name,
+      player2Name,
+      score: session.state.score,
+      isGameOver: session.state.isGameOver,
+      winner: session.state.winner,
+      waitingForStart: true,   // par défaut on attend que l'un des joueurs appuie sur Enter
+      countdown: null          // pas encore de countdown démarré
+    };
 
-              // Clean up player references
-              if (session.player1 === userId) session.player1 = null;
-              if (session.player2 === userId) session.player2 = null;
+    //    2.4 Envoyer le state au client
+    ws.send(
+      JSON.stringify({
+        type: 'state',
+        payload: initialState
+      })
+    );
+    // ───────────────────────────────────────────────────────────────────────────
 
-              // Remove empty sessions
-              if (session.players.size === 0) {
-                this.gameSessions.delete(sessionId);
-                console.log(`[Game] Removed empty session: ${sessionId}`);
-              }
-            }
-          }
-        }
-
-        this.clients.delete(clientId);
-        
-        // Broadcast disconnection to all clients
-        this.broadcast({
-          type: 'disconnection',
-          clientId,
-          userId,  // Include userId in the broadcast
-          message: 'User disconnected'
-        });
-      });
-      ws.on('pong', () => {
-        ws.isAlive = true;
-      });
+    ws.on('message', (rawMessage) => {
+      try {
+        console.log(`client : ${clientId}`);
+        const data = JSON.parse(rawMessage);
+        this.handleMessage(clientId, data);
+      } catch (err) {
+        console.error('❌ Invalid JSON message:', err);
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+      }
     });
+
+    ws.on('close', () => {
+      console.log(`❌ Client disconnected: ${clientId}`);
+      // … reste du code de nettoyage …
+    });
+
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+  });
+
+
+
+
+
+  // setupWebSocket() {
+  //   console.log('✅ Setting up WebSocket server');
+    
+  //   this.wss.on('connection', (ws, req) => {
+  //     const clientId = this.generateClientId();
+  //     this.clients.set(clientId, ws); // ✅ Store ws with ID
+  //     ws.isAlive = true;
+
+  //     console.log(`✅ Client connected: ${clientId}`);
+
+  //     ws.send(JSON.stringify({
+  //       type: 'connection',
+  //       clientId,
+  //       message: 'Connected to secure WebSocket server'
+  //     }));
+
+  //     ws.on('message', (rawMessage) => {
+  //       try {
+  //         console.log(`client : ${ clientId }`)
+  //         const data = JSON.parse(rawMessage);
+  //         this.handleMessage(clientId, data);
+  //       } catch (err) {
+  //         console.error('❌ Invalid JSON message:', err);
+  //         ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
+  //       }
+  //     });
+
+  //     ws.on('close', () => {
+  //       console.log(`❌ Client disconnected: ${clientId}`);
+        
+  //       const disconnectedWs = this.clients.get(clientId);
+  //       const userId = disconnectedWs?.userId;
+
+  //       if (userId) {
+  //         this.onlineUsers.delete(userId);
+  //         // Broadcast offline status
+  //         this.broadcastUserStatus(userId, 'offline');
+          
+  //         // Handle game session cleanup
+  //         for (const [sessionId, session] of this.gameSessions.entries()) {
+  //           if (session.players.has(userId)) {
+  //             session.players.delete(userId);
+
+  //             const opponentId = [...session.players.keys()].find(id => id !== userId);
+  //             if (opponentId) {
+  //               const opponentWs = this.onlineUsers.get(opponentId);
+  //               if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+  //                 opponentWs.send(JSON.stringify({
+  //                   type: 'opponent_disconnected',
+  //                   message: 'Match Terminated - Opponent Disconnected'
+  //                 }));
+  //               }
+  //             }
+
+  //             // Clean up player references
+  //             if (session.player1 === userId) session.player1 = null;
+  //             if (session.player2 === userId) session.player2 = null;
+
+  //             // Remove empty sessions
+  //             if (session.players.size === 0) {
+  //               this.gameSessions.delete(sessionId);
+  //               console.log(`[Game] Removed empty session: ${sessionId}`);
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       this.clients.delete(clientId);
+        
+  //       // Broadcast disconnection to all clients
+  //       this.broadcast({
+  //         type: 'disconnection',
+  //         clientId,
+  //         userId,  // Include userId in the broadcast
+  //         message: 'User disconnected'
+  //       });
+  //     });
+  //     ws.on('pong', () => {
+  //       ws.isAlive = true;
+  //     });
+  //   });// … à l’intérieur de setupWebSocket/setInterval …
+
+
     setInterval(() => {
       for (const [sessionId, session] of this.gameSessions.entries()) {
         session.update();

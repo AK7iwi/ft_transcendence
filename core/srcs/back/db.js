@@ -250,8 +250,16 @@ function recordGameResult(winnerId, loserId) {
   stmt.run(winnerId, loserId);
 }
 
+function getUserById(userId) {
+  const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
+  return stmt.get(userId); // renvoie { username } ou undefined
+}
 
 
+
+
+
+module.exports.getUserById = getUserById;
 module.exports.updateUser = updateUser;
 
 
