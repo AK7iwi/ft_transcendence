@@ -1,4 +1,4 @@
-all: clean-containers generate-certs build start
+all: generate-certs build start
 	@clear	
 
 # Make sure scripts directory exists and has proper permissions
@@ -46,7 +46,7 @@ clean-docker:
 	@clear
 
 # Stop containers
-clean: clean-containers
+clean:
 	docker compose -f ./docker-compose.yml down
 
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
