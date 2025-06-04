@@ -1,6 +1,7 @@
-all: generate-certs build start
+all: clean-containers generate-certs build start
 	@clear	
 
+# Make sure scripts directory exists and has proper permissions
 setup-scripts:
 	@echo "Scripts directory setup..."
 	@chmod +x ./core/scripts/generate-certs.sh
@@ -26,27 +27,32 @@ logs:
 	docker logs back
 	docker logs front
 
-# Arrête les conteneurs, garde les volumes et données persistantes
-clean:
-	docker compose -f ./docker-compose.yml down
-
-# Arrête tout, supprime volumes, cache Docker et fichiers persistants
-fclean: clean-certs
+# Stop and remove all containers
+clean-containers:
 	@echo "Stopping and removing all containers..."
-	-docker stop $(docker ps -aq) 2>/dev/null || true
-	-docker rm $(docker ps -aq) 2>/dev/null || true
-	@echo "Cleaning up Docker environment..."
-	docker compose -f ./docker-compose.yml down -v
-	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
-	-docker system prune -af --volumes
-	@clear
+	-docker stop $(shell docker ps -aq) 2>/dev/null || true
+	-docker rm $(shell docker ps -aq) 2>/dev/null || true
 
 # Clean certificates
 clean-certs: setup-scripts
 	@echo "Cleaning certificate directories..."
 	@./core/scripts/clean-certs.sh
 
+clean-docker:
+	@echo "Cleaning up Docker environment..."
+	docker compose -f ./docker-compose.yml down -v
+	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
+	-docker system prune -af --volumes
+	@clear
+
+# Stop containers
+clean: clean-containers
+	docker compose -f ./docker-compose.yml down
+
+# Arrête tout, supprime volumes, cache Docker et fichiers persistants
+fclean: clean-containers clean-certs clean-docker
+
 # Clean puis rebuild
 re: clean all
 
-.PHONY: all logs clean fclean re clean-certs
+.PHONY: all logs clean fclean re clean-certs clean-docker setup-scripts generate-certs build start 
