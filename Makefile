@@ -41,7 +41,6 @@ clean-certs: setup-scripts
 clean-docker:
 	@echo "Cleaning up Docker environment..."
 	docker compose -f ./docker-compose.yml down -v
-	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
 	-docker system prune -af --volumes
 
 # Stop containers
@@ -50,7 +49,7 @@ clean:
 
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
 fclean: clean-containers clean-certs clean-docker
-	@clear
+	@clear	
 
 # Clean puis rebuild
 re: clean all

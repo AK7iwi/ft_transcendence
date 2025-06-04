@@ -5,17 +5,13 @@ const path = require('path');
 const fastifyModule = require('fastify');
 const WebSocketService = require('./services/websocket.service');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
-const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
 const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
 const fastifyCors = require('@fastify/cors');
 const authRoutes = require('./routes/auth.routes');
 const avatarRoutes = require('./routes/avatar.routes');
 const authenticate = require('./middleware/authenticate');
-
-
+const SanitizeService = require('./middleware/security.middleware');
 
 // Créer Fastify
 const fastify = fastifyModule({
@@ -29,14 +25,12 @@ const fastify = fastifyModule({
 // DB
 const { db } = require('./db'); // ou ./services/db selon ton arborescence
 
-
 // Plugins
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, 'public', 'avatars'),
   prefix: '/avatars/',
   decorateReply: false
 });
-
 
 fastify.register(fastifyMultipart);
 fastify.register(fastifyCors, {
@@ -56,10 +50,8 @@ fastify.register(require('./routes/gamelog.routes'));
 fastify.register(require('./routes/tournament.routes'), { prefix: '/tournament' });
 fastify.register(require('./routes/profile.routes'));
 
-
-
 fastify.get('/chat/messages/:userId', {
-  preHandler: authenticate,
+  preHandler: [SanitizeService.sanitize, authenticate],
   handler: async (request, reply) => {
     const senderId = request.user.id;
     const receiverId = parseInt(request.params.userId, 10);
@@ -85,32 +77,33 @@ fastify.get('/chat/messages/:userId', {
 
 const { saveRemoteGame } = require('./db'); // ajuste si nécessaire
 
-fastify.post('/remote-game', async (request, reply) => {
-  const { player1Id, player2Id, score1, score2, winnerId } = request.body;
+fastify.post('/remote-game', {
+  preHandler: [SanitizeService.sanitize, authenticate],
+  handler: async (request, reply) => {
+    const { player1Id, player2Id, score1, score2, winnerId } = request.body;
 
-  if (
-    typeof player1Id !== 'number' ||
-    typeof player2Id !== 'number' ||
-    typeof score1 !== 'number' ||
-    typeof score2 !== 'number' ||
-    typeof winnerId !== 'number'
-  ) {
-    return reply.code(400).send({ error: 'Invalid input data' });
-  }
+    if (
+      typeof player1Id !== 'number' ||
+      typeof player2Id !== 'number' ||
+      typeof score1 !== 'number' ||
+      typeof score2 !== 'number' ||
+      typeof winnerId !== 'number'
+    ) {
+      return reply.code(400).send({ error: 'Invalid input data' });
+    }
 
-  try {
-    saveRemoteGame({ player1Id, player2Id, score1, score2, winnerId });
-    reply.code(201).send({ message: 'Remote game saved' });
-  } catch (err) {
-    console.error('Error saving remote game:', err);
-    reply.code(500).send({ error: 'Database error' });
+    try {
+      saveRemoteGame({ player1Id, player2Id, score1, score2, winnerId });
+      reply.code(201).send({ message: 'Remote game saved' });
+    } catch (err) {
+      console.error('Error saving remote game:', err);
+      reply.code(500).send({ error: 'Database error' });
+    }
   }
 });
 
-
-
 fastify.post('/chat/message', {
-  preHandler: authenticate,
+  preHandler: [SanitizeService.sanitize, authenticate],
   handler: async (request, reply) => {
     const { receiverId, content } = request.body;
     const senderId = request.user.id;
@@ -123,43 +116,66 @@ fastify.post('/chat/message', {
   }
 });
 
-
-fastify.get('/profile', async (request, reply) => {
-  try {
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) throw new Error('Authorization header missing');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
-    if (!user) throw new Error('Utilisateur non trouvé');
-    return { id: user.id, username: user.username, avatar: user.avatar, twoFactorEnabled: user.two_factor_enabled };
-  } catch (err) {
-    return reply.status(401).send({ error: 'Accès refusé' });
+fastify.get('/profile', {
+  preHandler: [SanitizeService.sanitize, authenticate],
+  handler: async (request, reply) => {
+    try {
+      const token = request.headers.authorization?.split(' ')[1];
+      if (!token) throw new Error('Authorization header missing');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+      if (!user) throw new Error('Utilisateur non trouvé');
+      return { 
+        id: user.id, 
+        username: user.username, 
+        avatar: user.avatar, 
+        twoFactorEnabled: user.two_factor_enabled 
+      };
+    } catch (err) {
+      return reply.status(401).send({ error: 'Accès refusé' });
+    }
   }
 });
 
-// fastify.get('/2fa/setup', async (_, reply) => {
-//   try {
-//     const secret = speakeasy.generateSecret({ length: 20 });
-//     const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
-//     return { qrCodeDataURL, secret: secret.base32 };
-//   } catch (err) {
-//     reply.code(500).send({ error: 'Failed to generate QR code' });
-//   }
-// });
-
-fastify.get('/debug-static', (req, reply) => {
-  const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');
-  return {
-    path: filePath,
-    exists: fs.existsSync(filePath)
-  };
+fastify.get('/debug-static', {
+  preHandler: [SanitizeService.sanitize, authenticate],
+  handler: async (req, reply) => {
+    const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');
+    return {
+      path: filePath,
+      exists: fs.existsSync(filePath)
+    };
+  }
 });
 
 // Online users route
 fastify.get('/auth/online-users', {
-  preHandler: [fastify.authenticate],
+  preHandler: [SanitizeService.sanitize, authenticate],
   handler: async (req, reply) => {
     return { online: fastify.websocketService.getOnlineUserIds() };
+  }
+});
+
+fastify.get('/users/:id', {
+  preHandler: [SanitizeService.sanitize, authenticate], // 🔐 protège la route
+  handler: async (request, reply) => {
+    const friendId = parseInt(request.params.id, 10);
+
+    const user = db.prepare(`
+      SELECT id, username, avatar
+      FROM users
+      WHERE id = ?
+    `).get(friendId);
+
+    if (!user) {
+      return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar || 'default.png'
+    };
   }
 });
 
@@ -181,28 +197,5 @@ fastify.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
     process.exit(1);
   }
   console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
-});
-
-fastify.get('/users/:id', {
-  preHandler: [authenticate], // 🔐 protège la route
-  handler: async (request, reply) => {
-    const friendId = parseInt(request.params.id, 10);
-
-    const user = db.prepare(`
-      SELECT id, username, avatar
-      FROM users
-      WHERE id = ?
-    `).get(friendId);
-
-    if (!user) {
-      return reply.code(404).send({ error: 'Utilisateur non trouvé' });
-    }
-
-    return {
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar || 'default.png'
-    };
-  }
 });
 

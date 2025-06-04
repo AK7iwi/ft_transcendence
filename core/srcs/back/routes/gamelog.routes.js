@@ -1,10 +1,11 @@
 //gamelog-route.js
 const { db, recordGameResult } = require('../db');
 const authenticate = require('../middleware/authenticate');
+const SanitizeService = require('../middleware/security.middleware');
 
 async function gameLogRoutes(fastify, options) {
   fastify.post('/game/result', {
-    preHandler: [authenticate],
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (req, reply) => {
       const { winnerId, loserId } = req.body;
 
@@ -32,6 +33,5 @@ async function gameLogRoutes(fastify, options) {
     }
   });
 }
-
 
 module.exports = gameLogRoutes;

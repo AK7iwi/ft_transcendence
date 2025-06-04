@@ -4,11 +4,11 @@ const util = require('util');
 const pump = util.promisify(require('stream').pipeline);
 const authenticate = require('../middleware/authenticate');
 const { db } = require('../db'); // ✅ destructuring correct
-
+const SanitizeService = require('../middleware/security.middleware');
 
 async function avatarRoutes(fastify, options) {
   fastify.post('/upload-avatar', {
-    preHandler: authenticate,
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         console.log('[AVATAR] Upload avatar triggered');
@@ -40,6 +40,5 @@ async function avatarRoutes(fastify, options) {
     }
   });
 }
-
 
 module.exports = avatarRoutes;
