@@ -4,7 +4,7 @@ class UpdateController {
     async updateUsername(request, reply) {
         try {
             const { currentUsername, newUsername } = request.body;
-            const updatedUser = await UpdateService.updateUsername(currentUsername, newUsername, request.server.axios);
+            const updatedUser = await UpdateService.updateUsername(currentUsername, newUsername, request.server.serviceClient);
             
             return reply.code(200).send({
               success: true,
@@ -25,7 +25,7 @@ class UpdateController {
     async updatePassword(request, reply) {
         try {
             const { username, newPassword } = request.body;
-            const updatedUser = await UpdateService.updatePassword(username, newPassword, request.server.axios);
+            const updatedUser = await UpdateService.updatePassword(username, newPassword, request.server.serviceClient);
             
             return reply.code(200).send({
               success: true,

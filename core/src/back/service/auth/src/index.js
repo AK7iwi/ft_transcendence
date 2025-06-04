@@ -1,24 +1,17 @@
 const fastify = require('fastify');
-const axios = require('axios');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
 const authRoutes = require('./auth/auth.routes');
 const twoFactorRoutes = require('./two-factor/two-factor.routes');
 const internalRoutes = require('./internal/internal.routes');
+const ServiceClient = require('./utils/service-client');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
 
-// Create axios instance with configuration
-const axiosInstance = axios.create({
-    timeout: 5000, // 5 seconds timeout
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
-
-// Register axios instance
-app.decorate('axios', axiosInstance);
+// Create and register service client
+const serviceClient = new ServiceClient(app);
+app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();
@@ -27,6 +20,7 @@ initializeDatabase();
 app.register(authRoutes, { prefix: '/auth' });
 app.register(twoFactorRoutes, { prefix: '/auth' });
 app.register(internalRoutes, { prefix: '/auth' });
+
 // Test endpoint
 app.get('/', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is running' });

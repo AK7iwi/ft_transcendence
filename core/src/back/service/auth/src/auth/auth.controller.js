@@ -5,7 +5,7 @@ class AuthController {
     async register(request, reply) {
         try {
             const { username, password } = request.body;
-            const user = await AuthService.registerUser(username, password, request.server.axios);
+            const user = await AuthService.registerUser(username, password, request.server.serviceClient);
 
             return reply.code(200).send({
                 success: true,
@@ -27,7 +27,7 @@ class AuthController {
     async login(request, reply) {
         try {
             const { username, password } = request.body;
-            const user = await AuthService.loginUser(username, password, request.server.axios);
+            const user = await AuthService.loginUser(username, password);
             
             const token = JWTService.generateJWTToken({
                 id: user.id,

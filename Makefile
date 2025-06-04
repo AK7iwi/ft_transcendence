@@ -5,13 +5,13 @@ all: generate-certs build start
 # Make sure scripts directory exists and has proper permissions
 setup-scripts:
 	@echo "Scripts directory setup..."
-	@chmod +x core/scripts/generate-certs.sh
-	@chmod +x core/scripts/clean-certs.sh
+	@chmod +x core/scripts/generate-scripts.sh
+	@chmod +x core/scripts/clean-scripts.sh
 
 # Generate SSL certificates
 generate-certs: setup-scripts
 	@echo "Generating SSL certificates..."
-	@./core/scripts/generate-certs.sh
+	@./core/scripts/generate-scripts.sh
 
 # Build and start containers
 build:
@@ -37,7 +37,7 @@ clean-containers:
 # Clean certificates and security files
 clean-certs: setup-scripts
 	@echo "Cleaning certificates and security files..."
-	@./core/scripts/clean-certs.sh
+	@./core/scripts/clean-scripts.sh
 
 # Clean Docker system (images, volumes, networks)
 clean-docker:

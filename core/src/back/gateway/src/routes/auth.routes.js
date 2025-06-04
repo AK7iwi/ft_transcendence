@@ -9,15 +9,15 @@ module.exports = async function (fastify, opts) {
         preHandler: SanitizeService.sanitize,
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/register`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Registration failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -32,15 +32,15 @@ module.exports = async function (fastify, opts) {
         preHandler: SanitizeService.sanitize,
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/login`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 401;
-                const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+                const statusCode = error.status || 401;
+                const errorMessage = error.message || 'Login failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -55,15 +55,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],   
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/setup`,
-                    request.body,
+                    request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || '2FA setup failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || '2FA setup failed';
                 return reply.code(statusCode).send({
                     success: false, 
                     message: errorMessage
@@ -77,15 +77,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-setup`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || '2FA verification failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || '2FA verification failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -99,15 +99,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-login`,
                     request.body    
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || '2FA verification failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || '2FA verification failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -121,15 +121,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.post(
+                const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/disable`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || '2FA disable failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || '2FA disable failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage

@@ -17,7 +17,7 @@ class TwoFactorController {
             const secret = await TwoFactorService.generateSecret(request.user.username);
             
             // Store secret temporarily (don't enable 2FA yet)
-            await TwoFactorService.store2FASecret(userId, secret.base32);
+            await TwoFactorService.store2FASecret(userId, secret.base32, request.server.serviceClient);
 
             // Generate QR code
             const qrCode = await TwoFactorService.generateQRCode(secret);
@@ -42,7 +42,6 @@ class TwoFactorController {
 
     async verify_setup2FA(request, reply) {
         try {
-            
             const userId = request.user.id;
             //2fa token
             const { token } = request.body;
@@ -71,7 +70,7 @@ class TwoFactorController {
 
             // If this is part of setup, enable 2FA
             if (request.body.setup) {
-                await TwoFactorService.enable2FA(userId);
+                await TwoFactorService.enable2FA(userId, request.server.serviceClient);
             }
 
             return reply.code(200).send({
@@ -135,8 +134,6 @@ class TwoFactorController {
                     token: jwtToken
                 }
             });
-
-
         } catch (error) {
             return reply.code(500).send({
                 success: false,
@@ -157,7 +154,7 @@ class TwoFactorController {
                 });
             }
             
-            await TwoFactorService.disable2FA(userId);
+            await TwoFactorService.disable2FA(userId, request.server.serviceClient);
             
             return reply.code(200).send({
                 success: true,

@@ -9,15 +9,14 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.get(
-                    `${process.env.USER_SERVICE_URL}/user/me`, 
-                    request.body
+                const response = await fastify.serviceClient.get(
+                    `${process.env.USER_SERVICE_URL}/user/me`
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || 'Get user profile failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Get user profile failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -32,15 +31,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.put(
+                const response = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/user/username`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || 'Update username failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Update username failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage
@@ -55,15 +54,15 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.axios.put(
+                const response = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/user/password`,
                     request.body
                 );
-                return reply.code(200).send(response.data);
+                return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.response?.status || 400;
-                const errorMessage = error.response?.data?.message || error.message || 'Update password failed';
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Update password failed';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage

@@ -1,15 +1,15 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
-const axios = require('axios');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 // const gameRoutes = require('./routes/game.routes');
 // const tournamentRoutes = require('./routes/tournament.routes');
 // const chatRoutes = require('./routes/chat.routes');
-const fs = require('fs');
-const path = require('path');
+const ServiceClient = require('./utils/service-client');
 
 // Initialize Fastify
 const fastify = fastifyModule({
@@ -18,7 +18,7 @@ const fastify = fastifyModule({
       key: fs.readFileSync(path.join(__dirname, '../certs/key.pem')),
       cert: fs.readFileSync(path.join(__dirname, '../certs/cert.pem')),
     },
-  });
+});
 
 // Register plugins
 fastify.register(cors, {
@@ -26,21 +26,14 @@ fastify.register(cors, {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-  });
+});
 
 // Register websocket
 fastify.register(websocket);
 
-//Configure axios
-const axiosInstance = axios.create({
-    timeout: 5000, // 5 seconds timeout
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
-
-// Register axios instance
-fastify.decorate('axios', axiosInstance);
+// Create and register service client
+const serviceClient = new ServiceClient(fastify);
+fastify.decorate('serviceClient', serviceClient);
 
 // Basic route
 fastify.get('/', async (request, reply) => {
@@ -49,7 +42,7 @@ fastify.get('/', async (request, reply) => {
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
-    reply.code(200).send( { success: true, message: 'Server is healthy' });
+    reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
 // Register routes
