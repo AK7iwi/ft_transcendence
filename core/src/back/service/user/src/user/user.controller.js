@@ -3,7 +3,7 @@ const UserService = require('./user.service');
 class UserController {
     async getMe(request, reply) {
         try {
-            const userId = request.user.id;
+            const userId = request.headers['x-user-id'];
         
             if (!userId) {
                 return reply.code(400).send({
@@ -25,16 +25,15 @@ class UserController {
                 message: 'User information retrieved successfully',
                 data: {
                     user: {
-                        id: user.user_id,
+                        id: user.id,
                         username: user.username,
                         avatar: user.avatar || '/avatars/default.png',
-                        twoFactorEnabled: !!user.two_factor_enabled,
+                        twoFactorEnabled: user.twoFactorEnabled,
                         wins: user.wins,
                         losses: user.losses
                     }
                 }
             });
-
         } catch (error) {
             return reply.code(400).send({
                 success: false,

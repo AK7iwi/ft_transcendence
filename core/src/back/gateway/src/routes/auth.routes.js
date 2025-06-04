@@ -57,7 +57,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/setup`,
-                    request.body
+                    request.body,
+                    {
+                        headers: {
+                            'X-User-Id': request.user.id
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -79,7 +84,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-setup`,
-                    request.body
+                    request.body,
+                    {
+                        headers: {
+                            'X-User-Id': request.user.id
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -101,7 +111,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-login`,
-                    request.body    
+                    request.body,
+                    {
+                        headers: {
+                            'X-User-Id': request.body.userId
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -123,7 +138,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/disable`,
-                    request.body
+                    request.body,
+                    {
+                        headers: {
+                            'X-User-Id': request.user.id
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {

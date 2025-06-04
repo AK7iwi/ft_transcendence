@@ -23,6 +23,11 @@ class InternalController {
         try {
             const { userId, secret } = request.body;
             await InternalService.secret2FA(userId, secret);
+            
+            return reply.code(200).send({
+                success: true,
+                message: '2FA secret stored successfully'
+            });
         } catch (error) {
             request.log.error('[SECRET 2FA ERROR]', error);
             return reply.code(400).send({
@@ -36,6 +41,11 @@ class InternalController {
         try {
             const { userId } = request.body;
             await InternalService.enable2FA(userId);
+
+            return reply.code(200).send({
+                success: true,
+                message: '2FA enabled successfully'
+            });
         } catch (error) {
             request.log.error('[ENABLE 2FA ERROR]', error);
             return reply.code(400).send({
@@ -49,6 +59,11 @@ class InternalController {
         try {
             const { userId } = request.body;
             await InternalService.disable2FA(userId);
+
+            return reply.code(200).send({
+                success: true,
+                message: '2FA disabled successfully'
+            });
         } catch (error) {
             request.log.error('[DISABLE 2FA ERROR]', error);
             return reply.code(400).send({

@@ -4,17 +4,19 @@ const JWTService = require('../../security/middleware/jwt/jwt.service');
 class TwoFactorController {
     async setup2FA(request, reply) {
         try {
-            const userId = request.user.id;
+            const { username } = request.body;
+            const userId = request.headers['x-user-id'];
 
             //check if 2fa is already enabled
             const twoFactorEnabled = await TwoFactorService.getTwoFactorEnabled(userId);
+            console.log(twoFactorEnabled);
             if (twoFactorEnabled) {
                 return reply.code(400).send({
                     success: false,
                     message: '2FA already setup'
                 });
             }
-            const secret = await TwoFactorService.generateSecret(request.user.username);
+            const secret = await TwoFactorService.generateSecret(username);
             
             // Store secret temporarily (don't enable 2FA yet)
             await TwoFactorService.store2FASecret(userId, secret.base32, request.server.serviceClient);
@@ -27,7 +29,7 @@ class TwoFactorController {
                 message: '2FA setup initiated',
                 data: {
                     user: {
-                        username: request.user.username,
+                        username: username,
                         qrCode: qrCode
                     }
                 }
@@ -42,15 +44,8 @@ class TwoFactorController {
 
     async verify_setup2FA(request, reply) {
         try {
-            const userId = request.user.id;
-            //2fa token
-            const { token } = request.body;
-            if (!token) {
-                return reply.code(400).send({
-                    success: false,
-                    message: 'Token is required'
-                });
-            }
+            const { username, token } = request.body;
+            const userId = request.headers['x-user-id'];
 
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
             if (!secret) {
@@ -78,7 +73,7 @@ class TwoFactorController {
                 message: '2FA verification successful',
                 data: {
                     user: {
-                        username: request.user.username
+                        username: username
                     }
                 }
             });
@@ -92,15 +87,8 @@ class TwoFactorController {
 
     async verify_login2FA(request, reply) {
         try {
-            const userId = request.user.id;
-
-            const { token } = request.body;
-            if (!token) {
-                return reply.code(400).send({
-                    success: false,
-                    message: 'Token is required'
-                });
-            }
+            const { username, token } = request.body;
+            const userId = request.headers['x-user-id'];
 
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
             if (!secret) {
@@ -120,7 +108,7 @@ class TwoFactorController {
             
             const jwtToken = JWTService.generateJwtToken({
                 id: userId,
-                username: request.user.username
+                username: username
             });
 
             return reply.code(200).send({
@@ -129,7 +117,7 @@ class TwoFactorController {
                 data: {
                     user: {
                         id: userId,
-                        username: request.user.username
+                        username: username
                     },
                     token: jwtToken
                 }
@@ -144,16 +132,17 @@ class TwoFactorController {
 
     async disable2FA(request, reply) {
         try {
-            const userId = request.user.id;
+            const { username } = request.body;
+            const userId = request.headers['x-user-id'];
 
-            const { token } = request.body;
-            if (!token) {
+            //verify the token before disable
+            const secret = await TwoFactorService.getTwoFactorSecret(userId);
+            if (!secret) {
                 return reply.code(400).send({
                     success: false,
-                    message: 'Token is required'
+                    message: '2FA not set up'
                 });
             }
-            
             await TwoFactorService.disable2FA(userId, request.server.serviceClient);
             
             return reply.code(200).send({
@@ -162,7 +151,7 @@ class TwoFactorController {
                 data: {
                     user: {
                         id: userId,
-                        username: request.user.username
+                        username: username
                     }
                 }
             });

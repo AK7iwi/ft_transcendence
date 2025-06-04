@@ -10,7 +10,12 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/me`
+                    `${process.env.USER_SERVICE_URL}/user/me`,
+                    {
+                        headers: {
+                            'X-User-Id': request.user.id
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {

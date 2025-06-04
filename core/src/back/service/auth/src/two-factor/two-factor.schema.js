@@ -1,5 +1,12 @@
 const twoFactorSchema = {
     setup2FA: {
+        headers: {
+            type: 'object',
+            required: ['x-user-id'],
+            properties: {
+                'x-user-id': { type: 'string', minLength: 1 }
+            }
+        },
         body: {
             type: 'object',
             required: [],
@@ -7,6 +14,13 @@ const twoFactorSchema = {
         }
     },
     verify_setup2FA: {
+        headers: {
+            type: 'object',
+            required: ['x-user-id'],
+            properties: {
+                'x-user-id': { type: 'string', minLength: 1 }
+            }
+        },
         body: {
             type: 'object',
             required: ['token'],
@@ -16,6 +30,13 @@ const twoFactorSchema = {
         }
     },
     verify_login2FA: {
+        headers: {
+            type: 'object',
+            required: ['x-user-id'],
+            properties: {
+                'x-user-id': { type: 'string', minLength: 1 }
+            }
+        },
         body: {
             type: 'object',
             required: ['token'],
@@ -25,10 +46,19 @@ const twoFactorSchema = {
         }
     },
     disable2FA: {
+        headers: {
+            type: 'object',
+            required: ['x-user-id'],
+            properties: {
+                'x-user-id': { type: 'string', minLength: 1 }
+            }
+        },
         body: {
             type: 'object',
-            required: [],
-            properties: {}
+            required: ['token'],
+            properties: {
+                token: { type: 'string', minLength: 6, maxLength: 6 }
+            }
         }
     }
 };

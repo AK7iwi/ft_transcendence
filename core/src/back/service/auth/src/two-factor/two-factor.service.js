@@ -82,7 +82,8 @@ class TwoFactorService {
 
     static async getTwoFactorEnabled(userId) {
         try {
-            return await DbModel.getTwoFactorEnabled(userId);
+            const enabled = await DbModel.getTwoFactorEnabled(userId);
+            return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
         } catch (error) {
             throw new Error('Failed to get 2FA enabled');
         }

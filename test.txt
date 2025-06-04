@@ -57,7 +57,7 @@ curl -k -X GET \
 
 curl -k -X POST \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0IiwiaWF0IjoxNzQ4ODMxMDI3LCJleHAiOjE3NDg5MTc0Mjd9.as48SwNiFD_XcqwQtOX4nRonzGsIyAih1bIS3fAkz40" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -d '{}' \
   "https://localhost:3000/auth/2fa/setup"
 

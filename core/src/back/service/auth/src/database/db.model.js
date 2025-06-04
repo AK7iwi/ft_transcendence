@@ -70,7 +70,8 @@ class DbModel {
             FROM users
             WHERE id = ?
         `);
-        return stmt.get(userId);
+        const result = stmt.get(userId);
+        return result ? result.two_factor_enabled : false;
     }
     
     static async getTwoFactorSecret(userId) {
