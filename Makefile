@@ -6,11 +6,17 @@ all: generate-certs build start
 setup-scripts:
 	@echo "Scripts directory setup..."
 	@chmod +x core/scripts/generate-certs.sh
+	@chmod +x core/scripts/clean-certs.sh
 
 # Generate SSL certificates
 generate-certs: setup-scripts
 	@echo "Generating SSL certificates..."
 	@./core/scripts/generate-certs.sh
+
+# Clean certificates and security files
+clean-certs: setup-scripts
+	@echo "Cleaning certificates and security files..."
+	@./core/scripts/clean-certs.sh
 
 # Build and start containers
 build:
@@ -31,7 +37,7 @@ logs:
 clean:
 	docker compose -f docker-compose.yml down
 
-fclean:
+fclean: clean-certs
 	docker compose -f docker-compose.yml down -v;
 	-docker system prune -af
 	@clear
@@ -39,4 +45,4 @@ fclean:
 # Rebuild everything
 re: fclean all
 
-.PHONY: all logs generate-certs clean fclean re build start setup-scripts
+.PHONY: all logs generate-certs clean-certs clean fclean re build start setup-scripts
