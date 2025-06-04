@@ -43,7 +43,6 @@ clean-docker:
 	docker compose -f ./docker-compose.yml down -v
 	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
 	-docker system prune -af --volumes
-	@clear
 
 # Stop containers
 clean:
