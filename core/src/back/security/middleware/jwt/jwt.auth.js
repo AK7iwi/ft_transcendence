@@ -8,7 +8,7 @@ class JWTAuthentication {
             if (!token) {
                 return reply.code(401).send({
                     success: false,
-                    message: 'No token provided'
+                    message: 'Authentication failed'
                 });
             }
 
@@ -17,10 +17,13 @@ class JWTAuthentication {
             
             // Add user info to request
             request.user = decoded;
+
+            // Continue to the next middleware/route handler
+            return;
         } catch (error) {
             return reply.code(401).send({
                 success: false,
-                message: 'Invalid token'
+                message: 'Authentication failed'
             });
         }
     }
