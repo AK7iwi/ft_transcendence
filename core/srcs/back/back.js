@@ -1,4 +1,3 @@
-// back.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -39,9 +38,6 @@ fastify.register(fastifyCors, {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 });
-
-// Middleware
-fastify.decorate('authenticate', authenticate);
 
 // Routes
 fastify.register(authRoutes, { prefix: '/auth' });
