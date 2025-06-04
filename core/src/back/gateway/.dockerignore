@@ -49,4 +49,4 @@ temp
 data/
 
 # SSL certificates
-certs
+# certs  # Comment out or remove this line

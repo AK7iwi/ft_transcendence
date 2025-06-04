@@ -5,12 +5,12 @@ all: generate-certs build start
 # Make sure scripts directory exists and has proper permissions
 setup-scripts:
 	@echo "Scripts directory setup..."
-	@chmod +x scripts/generate-certs.sh
+	@chmod +x core/scripts/generate-certs.sh
 
 # Generate SSL certificates
 generate-certs: setup-scripts
 	@echo "Generating SSL certificates..."
-	@./scripts/generate-certs.sh
+	@./core/scripts/generate-certs.sh
 
 # Build and start containers
 build:

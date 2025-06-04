@@ -1,54 +1,41 @@
 #!/bin/bash
 
-# Define paths relative to the project root
-CERT_DIR="../core/certs"
-CERT_FILE="$CERT_DIR/cert.pem"
-KEY_FILE="$CERT_DIR/key.pem"
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CORE_DIR="$(dirname "$SCRIPT_DIR")"
+SRCS_DIR="$CORE_DIR/src"
 
-# Create only the certs directory if it doesn't exist
-if [ ! -d "$CERT_DIR" ]; then
-    echo "Creating certs directory..."
-    mkdir "$CERT_DIR"  # Removed -p flag to only create certs directory
-fi
+# Create temporary certs directory
+TEMP_CERTS_DIR="$SCRIPT_DIR/temp_certs"
+mkdir -p "$TEMP_CERTS_DIR"
 
-# Check if certificates exist
-if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
-    echo "Generating new SSL certificates..."
-    
-    # Generate private key
-    openssl genrsa -out "$KEY_FILE" 2048
-    
-    # Generate certificate signing request
-    openssl req -new -key "$KEY_FILE" -out "$CERT_DIR/csr.pem" \
-        -subj "/CN=localhost" \
-        -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
-    
-    # Generate self-signed certificate
-    openssl x509 -req -in "$CERT_DIR/csr.pem" \
-        -signkey "$KEY_FILE" \
-        -out "$CERT_FILE" \
-        -days 365 \
-        -extfile <(echo "subjectAltName=DNS:localhost,IP:127.0.0.1")
-    
-    # Clean up CSR
-    rm "$CERT_DIR/csr.pem"
-    
-    # Set proper permissions
-    chmod 600 "$KEY_FILE"
-    chmod 644 "$CERT_FILE"
-    
-    echo "Certificates generated successfully!"
-    echo "Certificate location: $CERT_FILE"
-    echo "Key location: $KEY_FILE"
-else
-    echo "Using existing certificates..."
-fi
+# Generate private key and certificate
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout "$TEMP_CERTS_DIR/key.pem" \
+    -out "$TEMP_CERTS_DIR/cert.pem" \
+    -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=localhost"
 
-# Verify certificates exist
-if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
-    echo "Certificate verification successful"
-    ls -la "$CERT_DIR"
-else
-    echo "ERROR: Certificate generation failed!"
-    exit 1
-fi
+# Set proper permissions
+chmod 600 "$TEMP_CERTS_DIR/key.pem"
+chmod 644 "$TEMP_CERTS_DIR/cert.pem"
+
+# Create certs directories in front and back if they don't exist
+mkdir -p "$SRCS_DIR/front/certs"
+mkdir -p "$SRCS_DIR/back/gateway/certs"
+
+# Copy certificates to front and back directories
+cp "$TEMP_CERTS_DIR/key.pem" "$SRCS_DIR/front/certs/"
+cp "$TEMP_CERTS_DIR/cert.pem" "$SRCS_DIR/front/certs/"
+cp "$TEMP_CERTS_DIR/key.pem" "$SRCS_DIR/back/gateway/certs/"
+cp "$TEMP_CERTS_DIR/cert.pem" "$SRCS_DIR/back/gateway/certs/"
+
+# Set proper permissions in the destination directories
+chmod 600 "$SRCS_DIR/back/gateway/certs/key.pem"
+chmod 644 "$SRCS_DIR/back/gateway/certs/cert.pem"
+chmod 600 "$SRCS_DIR/front/certs/key.pem"
+chmod 644 "$SRCS_DIR/front/certs/cert.pem"
+
+# Remove the temporary certs directory
+rm -rf "$TEMP_CERTS_DIR"
+
+echo "SSL certificates have been generated and copied to front and back directories" 

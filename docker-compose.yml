@@ -4,15 +4,14 @@ services:
     container_name: gateway
     image: gateway
     build:
-      context: ./src/back/gateway
+      context: ./core/src/back/gateway
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
       - "3000:3000"
     env_file: .env
     volumes:
-      - ./src/back/security:/usr/src/app/security
-      - ./certs:/usr/src/app/certs
+      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
@@ -28,7 +27,7 @@ services:
     container_name: auth-service
     image: auth-service
     build:
-      context: ./src/back/service/auth
+      context: ./core/src/back/service/auth
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -36,7 +35,7 @@ services:
     env_file: .env
     volumes:
       - auth_data:/data
-      - ./src/back/security:/usr/src/app/security
+      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
@@ -52,7 +51,7 @@ services:
     container_name: user-service
     image: user-service
     build:
-      context: ./src/back/service/user 
+      context: ./core/src/back/service/user 
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -60,7 +59,7 @@ services:
     env_file: .env
     volumes:
       - user_data:/data
-      - ./src/back/security:/usr/src/app/security
+      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
@@ -142,7 +141,7 @@ services:
     container_name: front
     image: front
     build:
-      context: ./src/front
+      context: ./core/src/front
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
