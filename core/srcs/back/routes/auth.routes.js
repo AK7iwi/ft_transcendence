@@ -4,29 +4,49 @@ const dbApi = require('../db');
 const authenticate = require('../middleware/authenticate');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
-const { sqlInjectionProtection, xssProtection } = require('../middleware/security.middleware');
+const SanitizeService = require('../middleware/security.middleware');
 
 async function authRoutes(fastify, options) {
+    // POST /auth/register - Inscription utilisateur
+    fastify.post('/register', {
+      preHandler: [SanitizeService.sanitize],
+      handler: async (request, reply) => {
+        try {
+          const { username, password } = request.body;
+          const userId = await AuthService.registerUser(username, password);
+  
+          return reply.code(200).send({
+            success: true,
+            message: 'User registered successfully',
+            userId
+          });
+        } catch (error) {
+          return reply.code(400).send({
+            success: false,
+            error: error.message
+          });
+        }
+      }
+    });
 
-fastify.get('/users/:id/stats', async (req, reply) => {
-  const userId = req.params.id;
+  fastify.get('/users/:id/stats', {
+    preHandler: [authenticate],
+    handler: async (req, reply) => {
+      const userId = req.params.id;
+      try {
+        const row = dbApi.db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
 
-  try {
-    const row = dbApi.db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
+        if (!row) {
+          return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+        }
 
-    if (!row) {
-      return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+        return { wins: row.wins, losses: row.losses };
+      } catch (err) {
+        console.error('Erreur chargement stats:', err);
+        return reply.code(500).send({ error: 'Erreur interne du serveur' });
+      }
     }
-
-    return { wins: row.wins, losses: row.losses };
-  } catch (err) {
-    console.error('Erreur chargement stats:', err);
-    return reply.code(500).send({ error: 'Erreur interne du serveur' });
-  }
-});
-
-
-
+  });
 
   // GET /auth/me - Récupérer les informations utilisateur
   fastify.get('/me', {
@@ -35,56 +55,31 @@ fastify.get('/users/:id/stats', async (req, reply) => {
       try {
         const id = req.user.id;
         const user = dbApi.db.prepare(
-  'SELECT id, username, avatar, two_factor_enabled, wins, losses FROM users WHERE id = ?'
-).get(id);
-
+          'SELECT id, username, avatar, two_factor_enabled, wins, losses FROM users WHERE id = ?'
+        ).get(id);
 
         if (!user) {
           return reply.status(404).send({ error: 'Utilisateur non trouvé' });
         }
 
         return {
-  id: user.id,
-  username: user.username,
-  avatar: user.avatar || '/avatars/default.png',
-  twoFactorEnabled: !!user.two_factor_enabled,
-  wins: user.wins,
-  losses: user.losses
-};
-
+          id: user.id,
+          username: user.username,
+          avatar: user.avatar || '/avatars/default.png',
+          twoFactorEnabled: !!user.two_factor_enabled,
+          wins: user.wins,
+          losses: user.losses
+        };
       } catch (err) {
-  console.error('🔥 Erreur dans /auth/me :', err);
-  return reply.code(500).send({ error: 'Internal Server Error' });
-}
-
-    }
-  });
-
-  // POST /auth/register - Inscription utilisateur
-  fastify.post('/register', {
-    preHandler: [sqlInjectionProtection, xssProtection],
-    handler: async (request, reply) => {
-      try {
-        const { username, password } = request.body;
-        const userId = await AuthService.registerUser(username, password);
-
-        return reply.code(200).send({
-          success: true,
-          message: 'User registered successfully',
-          userId
-        });
-      } catch (error) {
-        return reply.code(400).send({
-          success: false,
-          error: error.message
-        });
+        console.error('🔥 Erreur dans /auth/me :', err);
+        return reply.code(500).send({ error: 'Internal Server Error' });
       }
     }
   });
 
   // POST /auth/login - Connexion utilisateur
   fastify.post('/login', {
-
+    preHandler: [SanitizeService.sanitize],
     handler: async (request, reply) => {
       try {
         const { username, password } = request.body;
@@ -115,7 +110,6 @@ fastify.get('/users/:id/stats', async (req, reply) => {
             username: user.username
           }
         });
-
       } catch (error) {
         return reply.code(401).send({
           success: false,
@@ -127,7 +121,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
   // PUT /auth/update - Modifier le nom d'utilisateur
   fastify.put('/update', {
-    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         const { username, newUsername } = request.body;
@@ -146,7 +140,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
   // PUT /auth/password - Modifier le mot de passe
   fastify.put('/password', {
-    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         const { username, newPassword } = request.body;
@@ -165,7 +159,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
   // POST /auth/2fa/setup - Génération du QR code pour activer le 2FA
   fastify.post('/2fa/setup', {
-    preHandler: authenticate,
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         const user = request.user;
@@ -187,7 +181,6 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
         const qrCode = await qrcode.toDataURL(secret.otpauth_url);
         return reply.send({ qrCode });
-
       } catch (err) {
         return reply.code(500).send({ error: 'Failed to setup 2FA' });
       }
@@ -196,7 +189,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
   // POST /auth/2fa/verify - Vérification du token pour activer le 2FA
   fastify.post('/2fa/verify', {
-    preHandler: [sqlInjectionProtection, xssProtection, authenticate],
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         const { token } = request.body;
@@ -232,6 +225,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
 
   // POST /auth/2fa/verify-login - Vérification du 2FA pendant le login
   fastify.post('/2fa/verify-login', {
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       try {
         const { userId, token: code } = request.body;
@@ -272,7 +266,6 @@ fastify.get('/users/:id/stats', async (req, reply) => {
             username: user.username
           }
         });
-
       } catch (err) {
         return reply.code(500).send({ error: 'Internal server error' });
       }
@@ -280,172 +273,164 @@ fastify.get('/users/:id/stats', async (req, reply) => {
   });
 
   // === FRIENDSHIP ROUTES ===
+  fastify.post('/friends/add', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (req, reply) => {
+      const { username } = req.body;
+      const userId = req.user.id;
 
-fastify.post('/friends/add', {
-  preHandler: [authenticate],
-  handler: async (req, reply) => {
-    const { username } = req.body;
-    const userId = req.user.id;
-
-    if (!username) {
-      return reply.code(400).send({ error: 'Username is required' });
-    }
-
-    const friend = dbApi.db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-    if (!friend) {
-      return reply.code(404).send({ error: 'User not found' });
-    }
-
-    if (friend.id === userId) {
-      return reply.code(400).send({ error: 'Cannot add yourself as a friend' });
-    }
-
-    const exists = dbApi.db.prepare(`
-      SELECT 1 FROM friends
-      WHERE user_id = ? AND friend_id = ?
-    `).get(userId, friend.id);
-
-    if (exists) {
-      return reply.code(400).send({ error: 'Friend already added' });
-    }
-
-    dbApi.db.prepare(`
-      INSERT INTO friends (user_id, friend_id, status)
-      VALUES (?, ?, 'accepted')
-    `).run(userId, friend.id);
-
-    return reply.send({ success: true, message: 'Friend added successfully' });
-  }
-});
-
-fastify.get('/friends', {
-  preHandler: [authenticate],
-  handler: async (request, reply) => {
-    try {
-      const userId = request.user.id;
-      console.log('Fetching friends for user ID:', userId);
-
-      const rows = dbApi.db.prepare(`
-  SELECT u.id, u.username,
-         CASE
-           WHEN u.avatar IS NOT NULL AND u.avatar != ''
-           THEN '/avatars/' || u.avatar
-           ELSE '/avatars/default.png'
-         END AS avatar
-  FROM friends f
-  JOIN users u ON u.id = f.friend_id
-  WHERE f.user_id = ?
-`).all(userId);
-
-
-      console.log('Friends found:', rows);
-      return reply.send(rows);
-    } catch (err) {
-      console.error('❌ Error fetching friends:', err);  // 👈 LOG PRÉCIS
-      return reply.code(500).send({ error: 'Failed to fetch friends' });
-    }
-  }
-});
-
-// … dans la fonction authRoutes(fastify, options) …
-fastify.get('/auth/friends', { preHandler: authenticate }, async (req, reply) => {
-  try {
-    const userId = req.user.id;
-    const rows = dbApi.db.prepare(`
-      SELECT
-        u.id,
-        u.username,
-        CASE WHEN u.avatar IS NOT NULL AND u.avatar != ''
-             THEN u.avatar
-             ELSE 'default.png'
-        END AS avatar
-      FROM friends f
-      JOIN users u ON u.id = f.friend_id
-      WHERE f.user_id = ?
-    `).all(userId);
-    return reply.send(rows);
-  } catch (err) {
-    console.error('Erreur dans /auth/friends:', err);
-    reply.code(500).send({ error: 'Erreur serveur' });
-  }
-});
-
-
-fastify.get(
-  '/blocked',
-  { preHandler: [authenticate] },
-  async (request, reply) => {
-    const blockerId = request.user.id;
-    const rows = dbApi.db
-      .prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?')
-      .all(blockerId);
-    const blockedIds = rows.map(r => r.blocked_id);
-    return reply.code(200).send(blockedIds);
-  }
-);
-
-// ––– Bloquer (POST /auth/block) –––
-fastify.post(
-  '/block',
-  { preHandler: [authenticate] },
-  async (request, reply) => {
-    const blockerId = request.user.id;
-    const { blockedId } = request.body;
-    if (!blockedId) return reply.code(400).send({ error: 'blockedId required' });
-    try {
-      dbApi.db
-        .prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)')
-        .run(blockerId, blockedId);
-      return reply.code(201).send({ message: 'User blocked successfully' });
-    } catch (err) {
-      console.error(err);
-      return reply.code(500).send({ error: 'Internal server error' });
-    }
-  }
-);
-
-
-fastify.post(
-  '/unblock',
-  { preHandler: [authenticate] },
-  async (request, reply) => {
-    const currentUserId = request.user.id;
-    const { unblockId } = request.body;
-    if (!unblockId) return reply.code(400).send({ error: 'unblockId required' });
-    try {
-      const result = dbApi.db
-        .prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?')
-        .run(currentUserId, unblockId);
-      if (result.changes === 0) {
-        return reply.code(404).send({ message: 'No blocking relationship found' });
+      if (!username) {
+        return reply.code(400).send({ error: 'Username is required' });
       }
-      return reply.code(200).send({ message: 'User unblocked successfully' });
-    } catch (err) {
-      console.error(err);
-      return reply.code(500).send({ error: 'Internal server error' });
+
+      const friend = dbApi.db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+      if (!friend) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      if (friend.id === userId) {
+        return reply.code(400).send({ error: 'Cannot add yourself as a friend' });
+      }
+
+      const exists = dbApi.db.prepare(`
+        SELECT 1 FROM friends
+        WHERE user_id = ? AND friend_id = ?
+      `).get(userId, friend.id);
+
+      if (exists) {
+        return reply.code(400).send({ error: 'Friend already added' });
+      }
+
+      dbApi.db.prepare(`
+        INSERT INTO friends (user_id, friend_id, status)
+        VALUES (?, ?, 'accepted')
+      `).run(userId, friend.id);
+
+      return reply.send({ success: true, message: 'Friend added successfully' });
     }
-  }
-);
+  });
 
+  fastify.get('/friends', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
+      try {
+        const userId = request.user.id;
+        console.log('Fetching friends for user ID:', userId);
 
-fastify.delete('/friends/remove', {
-  preHandler: [authenticate],
-  handler: async (req, reply) => {
-    const { friendId } = req.body;
-    const userId = req.user.id;
+        const rows = dbApi.db.prepare(`
+          SELECT u.id, u.username,
+                 CASE
+                   WHEN u.avatar IS NOT NULL AND u.avatar != ''
+                   THEN '/avatars/' || u.avatar
+                   ELSE '/avatars/default.png'
+                 END AS avatar
+          FROM friends f
+          JOIN users u ON u.id = f.friend_id
+          WHERE f.user_id = ?
+        `).all(userId);
 
-    if (!friendId) {
-      return reply.code(400).send({ error: 'friendId is required' });
+        console.log('Friends found:', rows);
+        return reply.send(rows);
+      } catch (err) {
+        console.error('❌ Error fetching friends:', err);
+        return reply.code(500).send({ error: 'Failed to fetch friends' });
+      }
     }
+  });
 
-    const result = dbApi.db.prepare(`
-      DELETE FROM friends WHERE user_id = ? AND friend_id = ?
-    `).run(userId, friendId);
+  fastify.get('/auth/friends', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (req, reply) => {
+      try {
+        const userId = req.user.id;
+        const rows = dbApi.db.prepare(`
+          SELECT
+            u.id,
+            u.username,
+            CASE WHEN u.avatar IS NOT NULL AND u.avatar != ''
+                 THEN u.avatar
+                 ELSE 'default.png'
+            END AS avatar
+          FROM friends f
+          JOIN users u ON u.id = f.friend_id
+          WHERE f.user_id = ?
+        `).all(userId);
+        return reply.send(rows);
+      } catch (err) {
+        console.error('Erreur dans /auth/friends:', err);
+        reply.code(500).send({ error: 'Erreur serveur' });
+      }
+    }
+  });
 
-    return reply.send({ success: true, removed: result.changes > 0 });
-  }
-});
+  fastify.get('/blocked', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
+      const blockerId = request.user.id;
+      const rows = dbApi.db
+        .prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?')
+        .all(blockerId);
+      const blockedIds = rows.map(r => r.blocked_id);
+      return reply.code(200).send(blockedIds);
+    }
+  });
 
+  fastify.post('/block', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
+      const blockerId = request.user.id;
+      const { blockedId } = request.body;
+      if (!blockedId) return reply.code(400).send({ error: 'blockedId required' });
+      try {
+        dbApi.db
+          .prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)')
+          .run(blockerId, blockedId);
+        return reply.code(201).send({ message: 'User blocked successfully' });
+      } catch (err) {
+        console.error(err);
+        return reply.code(500).send({ error: 'Internal server error' });
+      }
+    }
+  });
+
+  fastify.post('/unblock', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
+      const currentUserId = request.user.id;
+      const { unblockId } = request.body;
+      if (!unblockId) return reply.code(400).send({ error: 'unblockId required' });
+      try {
+        const result = dbApi.db
+          .prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?')
+          .run(currentUserId, unblockId);
+        if (result.changes === 0) {
+          return reply.code(404).send({ message: 'No blocking relationship found' });
+        }
+        return reply.code(200).send({ message: 'User unblocked successfully' });
+      } catch (err) {
+        console.error(err);
+        return reply.code(500).send({ error: 'Internal server error' });
+      }
+    }
+  });
+
+  fastify.delete('/friends/remove', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (req, reply) => {
+      const { friendId } = req.body;
+      const userId = req.user.id;
+
+      if (!friendId) {
+        return reply.code(400).send({ error: 'friendId is required' });
+      }
+
+      const result = dbApi.db.prepare(`
+        DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+      `).run(userId, friendId);
+
+      return reply.send({ success: true, removed: result.changes > 0 });
+    }
+  });
 }
 
 module.exports = authRoutes;
