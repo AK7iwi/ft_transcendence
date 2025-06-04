@@ -10,8 +10,6 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
-    volumes:
-      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
@@ -35,7 +33,6 @@ services:
     env_file: .env
     volumes:
       - auth_data:/data
-      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
@@ -59,7 +56,6 @@ services:
     env_file: .env
     volumes:
       - user_data:/data
-      - ./core/src/back/security:/usr/src/app/security
     networks:
       - transcendence
     restart: unless-stopped
