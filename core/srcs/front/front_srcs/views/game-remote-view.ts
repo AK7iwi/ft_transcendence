@@ -60,49 +60,65 @@ class GameRemoteView extends HTMLElement {
   }
 
   private render() {
-    this.innerHTML = `
-      <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
-        <!-- En‐tête : noms et score -->
-        <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
-          <span id="player1-label" class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
-            Player 1
-          </span>
-          <span id="score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
-            0 - 0
-          </span>
-          <span id="player2-label" class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
-            Player 2
-          </span>
-        </div>
+  this.innerHTML = `
+    <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
+      <!-- En‐tête : noms et score -->
+      <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
+        <span
+          id="player1-label"
+          class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
+                 text-slate-900 rounded-full text-sm font-semibold z-10"
+        >
+          Player 1
+        </span>
+        <span
+          id="score"
+          class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                 text-white rounded-full text-2xl font-bold mx-20 z-10"
+        >
+          0 - 0
+        </span>
+        <span
+          id="player2-label"
+          class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
+                 text-slate-900 rounded-full text-sm font-semibold z-10"
+        >
+          Player 2
+        </span>
+      </div>
 
-        <!-- Canevas Pong -->
-        <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-          <div class="bg-white rounded-xl overflow-hidden">
-            <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
-          </div>
-        </div>
-
-        <!-- Instructions touches -->
-        <div class="flex flex-wrap justify-center gap-4 mt-6">
-          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
-            Both players :
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
-          </span>
-          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm rounded-full shadow-md">
-            </span>
+      <!-- Canevas Pong -->
+      <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <div class="bg-white rounded-xl overflow-hidden">
+          <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
         </div>
       </div>
-    `;
 
-    // On récupère et configure le canevas
-    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
+      <!-- Instructions touches -->
+      <div class="flex flex-wrap justify-center gap-4 mt-6 z-10">
+        <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                     text-white text-sm rounded-full shadow-md">
+          Both players :
+          <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">
+            W
+          </span>
+          <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">
+            S
+          </span>
+        </span>
+      </div>
+    </div>
+  `;
 
-    // Initialisation des dimensions et dessin blanc + “Press ENTER to Start”
-    this.resizeCanvas();
-    this.drawInitialScreen();
-  }
+  // Récupérer le <canvas> et son contexte
+  this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+  this.ctx = this.canvas.getContext('2d')!;
+
+  // Dimensionner et dessiner l’écran initial
+  this.resizeCanvas();
+  this.drawInitialScreen();
+}
+
 
   private initWebSocket(sessionId: string, playerId: string) {
     const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
@@ -113,13 +129,14 @@ class GameRemoteView extends HTMLElement {
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        this.socket?.send(
-          JSON.stringify({ type: 'auth', payload: { token } })
-        );
-      }
-    };
+  const token = localStorage.getItem('token');
+  console.log('[FRONT] WebSocket ouvert, token =', token);
+  if (token) {
+    this.socket.send(JSON.stringify({ type: 'auth', payload: { token } }));
+    console.log('[FRONT] Envoi “auth” au serveur');
+  }
+};
+
 
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -137,6 +154,40 @@ class GameRemoteView extends HTMLElement {
     // Redimensionner le canvas si la fenêtre change de taille
     window.addEventListener('resize', this.resizeCanvas);
   }
+
+  // private initWebSocket(sessionId: string, playerId: string) {
+  //   const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+  //   const baseUrl = API_BASE_URL.replace(/^https?/, wsProtocol) + '/ws';
+  //   const wsUrl = `${baseUrl}?sessionId=${sessionId}&playerId=${playerId}`;
+
+  //   console.log('[DEBUG] Tentative WebSocket sur :', wsUrl);
+  //   this.socket = new WebSocket(wsUrl);
+
+  //   this.socket.onopen = () => {
+  //     const token = localStorage.getItem('token');
+  //     if (token) {
+  //       this.socket?.send(
+  //         JSON.stringify({ type: 'auth', payload: { token } })
+  //       );
+  //     }
+  //   };
+
+  //   this.socket.onmessage = (event) => {
+  //     const data = JSON.parse(event.data);
+  //     this.handleMessage(data);
+  //   };
+
+  //   this.socket.onclose = (ev) => {
+  //     console.log('🔌 WebSocket closed, code =', ev.code, 'reason =', ev.reason);
+  //   };
+
+  //   this.socket.onerror = (err) => {
+  //     console.error('WebSocket error:', err);
+  //   };
+
+  //   // Redimensionner le canvas si la fenêtre change de taille
+  //   window.addEventListener('resize', this.resizeCanvas);
+  // }
 
   private handleMessage(data: any) {
     if (data.type === 'state') {

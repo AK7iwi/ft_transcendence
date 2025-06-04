@@ -252,15 +252,12 @@ function recordGameResult(winnerId, loserId) {
 
 function getUserById(userId) {
   const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
-  return stmt.get(userId); // renvoie { username } ou undefined
+  return stmt.get(userId);
 }
 
 
 
-
-
-module.exports.getUserById = getUserById;
-module.exports.updateUser = updateUser;
+// module.exports.updateUser = updateUser;
 
 
 // Initialize DB
@@ -272,6 +269,7 @@ updateAllWinLossCounts(); // <-- ajoute cette ligne
 module.exports = {
     db,
     initializeDatabase,
+     getUserById,
     getUserByUsername,
     getUserByUsernameforMat,
     createUser,
