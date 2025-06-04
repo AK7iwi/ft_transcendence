@@ -32,6 +32,10 @@ clean:
 
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
 fclean: clean-certs
+	@echo "Stopping and removing all containers..."
+	-docker stop $(docker ps -aq) 2>/dev/null || true
+	-docker rm $(docker ps -aq) 2>/dev/null || true
+	@echo "Cleaning up Docker environment..."
 	docker compose -f ./docker-compose.yml down -v
 	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
 	-docker system prune -af --volumes
