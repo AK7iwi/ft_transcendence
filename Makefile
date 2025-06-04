@@ -4,6 +4,7 @@ all: generate-certs build start
 setup-scripts:
 	@echo "Scripts directory setup..."
 	@chmod +x ./core/scripts/generate-certs.sh
+	@chmod +x ./core/scripts/clean-certs.sh
 
 # Generate SSL certificates
 generate-certs: setup-scripts
@@ -30,13 +31,18 @@ clean:
 	docker compose -f ./docker-compose.yml down
 
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
-fclean:
+fclean: clean-certs
 	docker compose -f ./docker-compose.yml down -v
 	-docker volume rm $(docker volume ls -qf "name=sqlite_data") || true
 	-docker system prune -af --volumes
 	@clear
 
+# Clean certificates
+clean-certs: setup-scripts
+	@echo "Cleaning certificate directories..."
+	@./core/scripts/clean-certs.sh
+
 # Clean puis rebuild
 re: clean all
 
-.PHONY: all logs clean fclean re
+.PHONY: all logs clean fclean re clean-certs
