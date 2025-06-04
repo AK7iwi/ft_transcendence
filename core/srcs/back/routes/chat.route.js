@@ -1,9 +1,10 @@
 const authenticate = require('../middleware/authenticate');
 const { db } = require('../db');
+const SanitizeService = require('../middleware/security.middleware');
 
 async function chatRoutes(fastify, options) {
   fastify.post('/chat/message', {
-    preHandler: authenticate,
+    preHandler: [SanitizeService.sanitize, authenticate],
     handler: async (request, reply) => {
       const { receiverId, content } = request.body;
       const senderId = request.user.id;

@@ -1,19 +1,19 @@
 // routes/profile.routes.js
 const fp = require('fastify-plugin');
+const SanitizeService = require('../middleware/security.middleware');
+const authenticate = require('../middleware/authenticate');
 
 module.exports = fp(async (fastify, opts) => {
   const { db } = require('../db');
-  const { authenticate } = fastify;
 
   // ─── 1) Historique du profil connecté ───────────────────────────────────────
-  fastify.get(
-    '/profile/history',
-    { preHandler: authenticate },
-    async (request, reply) => {
+  fastify.get('/profile/history', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
       try {
         const userId = request.user.id;
 
-        // 1.1) Matchs “locaux” (game_results)
+        // 1.1) Matchs "locaux" (game_results)
         const localStmt = db.prepare(`
           SELECT
             gr.id                          AS match_id,
@@ -29,7 +29,7 @@ module.exports = fp(async (fastify, opts) => {
           WHERE gr.winner_id = ? OR gr.loser_id = ?
         `);
 
-        // 1.2) Matchs “à distance” (remote_games)
+        // 1.2) Matchs "à distance" (remote_games)
         const remoteStmt = db.prepare(`
           SELECT
             rg.id                           AS match_id,
@@ -49,7 +49,7 @@ module.exports = fp(async (fastify, opts) => {
           WHERE rg.player1_id = ? OR rg.player2_id = ?
         `);
 
-        // 1.3) Matchs “tournoi” (tournament_matches + games)
+        // 1.3) Matchs "tournoi" (tournament_matches + games)
         const tournamentStmt = db.prepare(`
           SELECT
             g.id                         AS match_id,
@@ -93,36 +93,35 @@ module.exports = fp(async (fastify, opts) => {
         );
 
         // 1.4) Fusion + tri + filtrage (on ne veut que les matches avec user_score non-null)
-        const allMatches = [ ...locals, ...remotes, ...tournaments ]
+        const allMatches = [...locals, ...remotes, ...tournaments]
           .map(r => ({
-            match_id:       r.match_id,
-            played_at:      r.played_at,
-            result:         r.result,
-            opponent:       r.opponent,
-            user_score:     r.user_score,
+            match_id: r.match_id,
+            played_at: r.played_at,
+            result: r.result,
+            opponent: r.opponent,
+            user_score: r.user_score,
             opponent_score: r.opponent_score
           }))
-          .filter(r => r.user_score !== null) // on ne remonte que les lignes où user_score n’est pas null
+          .filter(r => r.user_score !== null) // on ne remonte que les lignes où user_score n'est pas null
           .sort((a, b) => new Date(b.played_at) - new Date(a.played_at));
 
         return reply.code(200).send(allMatches);
       } catch (err) {
         request.log.error(err);
-        return reply.code(500).send({ error: 'Impossible de charger l’historique.' });
+        return reply.code(500).send({ error: 'Impossible de charger l\'historique.' });
       }
     }
-  );
+  });
 
-  // ─── 2) Historique d’un ami (sur son profil) ─────────────────────────────────
-  fastify.get(
-    '/auth/users/:id/history',
-    { preHandler: authenticate },
-    async (request, reply) => {
+  // ─── 2) Historique d'un ami (sur son profil) ─────────────────────────────────
+  fastify.get('/auth/users/:id/history', {
+    preHandler: [SanitizeService.sanitize, authenticate],
+    handler: async (request, reply) => {
       try {
-        // On récupère ici l’ID de l’ami (paramètre dans l’URL)
+        // On récupère ici l'ID de l'ami (paramètre dans l'URL)
         const friendId = Number(request.params.id);
 
-        // 2.1) Matchs “locaux” (game_results) de l’ami
+        // 2.1) Matchs "locaux" (game_results) de l'ami
         const localStmt = db.prepare(`
           SELECT
             gr.id                          AS match_id,
@@ -138,7 +137,7 @@ module.exports = fp(async (fastify, opts) => {
           WHERE gr.winner_id = ? OR gr.loser_id = ?
         `);
 
-        // 2.2) Matchs “à distance” (remote_games) de l’ami
+        // 2.2) Matchs "à distance" (remote_games) de l'ami
         const remoteStmt = db.prepare(`
           SELECT
             rg.id                          AS match_id,
@@ -158,7 +157,7 @@ module.exports = fp(async (fastify, opts) => {
           WHERE rg.player1_id = ? OR rg.player2_id = ?
         `);
 
-        // 2.3) Matchs “tournoi” (tournament_matches + games) de l’ami
+        // 2.3) Matchs "tournoi" (tournament_matches + games) de l'ami
         const tournamentStmt = db.prepare(`
           SELECT
             g.id                         AS match_id,
@@ -181,8 +180,8 @@ module.exports = fp(async (fastify, opts) => {
         `);
 
         // Exécution des trois requêtes pour friendId
-        const locals     = localStmt.all(friendId, friendId, friendId, friendId, friendId);
-        const remotes    = remoteStmt.all(
+        const locals = localStmt.all(friendId, friendId, friendId, friendId, friendId);
+        const remotes = remoteStmt.all(
           friendId, // winner_id ?
           friendId, // player1_id ?
           friendId, // player1_id ?
@@ -202,13 +201,13 @@ module.exports = fp(async (fastify, opts) => {
         );
 
         // Fusion + tri + filtrage (uniquement user_score non-null)
-        const allMatches = [ ...locals, ...remotes, ...tournaments ]
+        const allMatches = [...locals, ...remotes, ...tournaments]
           .map(r => ({
-            match_id:       r.match_id,
-            played_at:      r.played_at,
-            result:         r.result,
-            opponent:       r.opponent,
-            user_score:     r.user_score,
+            match_id: r.match_id,
+            played_at: r.played_at,
+            result: r.result,
+            opponent: r.opponent,
+            user_score: r.user_score,
             opponent_score: r.opponent_score
           }))
           .filter(r => r.user_score !== null)
@@ -217,8 +216,8 @@ module.exports = fp(async (fastify, opts) => {
         return reply.code(200).send(allMatches);
       } catch (err) {
         request.log.error(err);
-        return reply.code(500).send({ error: 'Impossible de charger l’historique de cet utilisateur.' });
+        return reply.code(500).send({ error: 'Impossible de charger l\'historique de cet utilisateur.' });
       }
     }
-  );
+  });
 });
