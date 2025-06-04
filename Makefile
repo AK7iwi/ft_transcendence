@@ -13,11 +13,6 @@ generate-certs: setup-scripts
 	@echo "Generating SSL certificates..."
 	@./core/scripts/generate-certs.sh
 
-# Clean certificates and security files
-clean-certs: setup-scripts
-	@echo "Cleaning certificates and security files..."
-	@./core/scripts/clean-certs.sh
-
 # Build and start containers
 build:
 	@echo "Build containers..."
@@ -33,16 +28,32 @@ logs:
 	docker logs back
 	docker logs front
 
+# Stop and remove all containers
+clean-containers:
+	@echo "Stopping and removing all containers..."
+	-docker stop $(shell docker ps -aq) 2>/dev/null || true
+	-docker rm $(shell docker ps -aq) 2>/dev/null || true
+
+# Clean certificates and security files
+clean-certs: setup-scripts
+	@echo "Cleaning certificates and security files..."
+	@./core/scripts/clean-certs.sh
+
+# Clean Docker system (images, volumes, networks)
+clean-docker:
+	@echo "Cleaning Docker system..."
+	docker compose -f docker-compose.yml down -v
+	-docker system prune -af
+
 # Clean up containers
 clean:
 	docker compose -f docker-compose.yml down
+	@clear
 
-fclean: clean-certs
-	docker compose -f docker-compose.yml down -v;
-	-docker system prune -af
+fclean: clean-containers clean-certs clean-docker
 	@clear
 
 # Rebuild everything
-re: fclean all
+re: clean all
 
-.PHONY: all logs generate-certs clean-certs clean fclean re build start setup-scripts
+.PHONY: all logs generate-certs clean-certs clean-containers clean-docker clean fclean re build start setup-scripts
