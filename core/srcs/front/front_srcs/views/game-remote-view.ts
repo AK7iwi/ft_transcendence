@@ -107,6 +107,11 @@ class GameRemoteView extends HTMLElement {
           </span>
         </span>
       </div>
+
+      <!-- Nouvelle ligne d’information sous “Both players: W/S” -->
+      <p class="mt-2 text-gray-200 text-sm">
+        No pause in this game mode, first to 5 wins!
+      </p>
     </div>
   `;
 
@@ -118,6 +123,7 @@ class GameRemoteView extends HTMLElement {
   this.resizeCanvas();
   this.drawInitialScreen();
 }
+
 
 
   private initWebSocket(sessionId: string, playerId: string) {
