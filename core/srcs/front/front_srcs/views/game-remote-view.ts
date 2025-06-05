@@ -1,4 +1,5 @@
 // game-remote-view.ts
+import { navigateTo } from '@/app';
 import { API_BASE_URL } from '../config';
 
 interface GameState {
@@ -45,7 +46,7 @@ class GameRemoteView extends HTMLElement {
 		const leaveBtn = this.querySelector('#leave-button') as HTMLButtonElement | null;
 		if (leaveBtn) {
 			leaveBtn.addEventListener('click', () => {
-				window.location.href = '/chat';
+				navigateTo('/chat');
 			});
 		}
 

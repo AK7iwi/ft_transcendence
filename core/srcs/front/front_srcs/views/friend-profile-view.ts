@@ -1,6 +1,7 @@
 
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
+import { navigateTo } from '../app';
 
 class FriendProfileView {
   	private user = { username: '', avatar: '' };
@@ -184,7 +185,7 @@ class FriendProfileView {
   		`;
 
   		this.container.querySelector('#back-button')?.addEventListener('click', () => {
-    		window.location.href = '/chat';
+    		navigateTo('/chat');
   		});
 	}
 }

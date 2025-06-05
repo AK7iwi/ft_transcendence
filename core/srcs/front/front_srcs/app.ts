@@ -1,6 +1,4 @@
 import './styles.css';
-
-// Views
 import './views/home-view.ts';
 import './views/game-view.ts';
 import './views/gamelog-view.ts';
@@ -15,16 +13,71 @@ import './views/login-view.ts';
 import './views/register-view.ts';
 import './views/navbar-view.ts';
 import './views/footer-view.ts';
-
 import { WebSocketService } from './services/websocket-service';
+import { API_BASE_URL } from './config';
 
-// WebSocket init
-const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
+// Si on est en dev local, on vide le localStorage
+function isLocalDevHost(): boolean {
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+    return true;
+  }
+  const privateIPv4 = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
+  return privateIPv4.test(host);
+}
+
+if (isLocalDevHost()) {
+  console.log('[DEV] Vider le localStorage automatiquement');
+  localStorage.clear();
+}
+
+// Initialisation du WebSocket à partir de API_BASE_URL
+const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+const wsUrl      = `${wsProtocol}${API_BASE_URL.substring(API_BASE_URL.indexOf('://'))}/ws`;
+const wsService  = new WebSocketService(wsUrl);
+
 export default wsService;
+// import { WebSocketService } from './services/websocket-service';
+// import { API_BASE_URL } from './config';
 
-// ---- ROUTER ---- //
 
+// // WebSocket init
+// const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+// const wsService = new WebSocketService(`${protocol}${window.location.hostname}:3000/ws`);
+// export default wsService;
+
+// // simple, au démarrage de l’app (avant de monter le router, etc.)
+// // if (window.location.hostname === 'localhost') {
+//   //   localStorage.clear();
+//   // }
+  
+  
+// function isLocalDevHost(): boolean {
+//   const host = window.location.hostname;
+
+//   // 1a. localhost, 127.0.0.1, ::1
+//   if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+//     return true;
+//   }
+
+//   // 1b. Plage IPv4 privée 10.x.x.x, 192.168.x.x, 172.16.x.x – 172.31.x.x
+//   // On utilise un simple regex pour les IPv4 privées
+//   const privateIPv4 = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
+//   if (privateIPv4.test(host)) {
+//     return true;
+//   }
+
+//   // Si vous avez d’autres cas (ex : un DNS local spécifique), ajoutez-les ici.
+//   return false;
+// }
+
+// if (isLocalDevHost()) {
+//   console.log('[DEV] Vider le localStorage automatiquement');
+//   localStorage.clear();
+// }
+
+
+  // ---- ROUTER ---- //
 type Route = {
   path: string;
   component: string;
@@ -49,6 +102,7 @@ const routes: Route[] = [
 function navigateTo(path: string) {
   history.pushState({}, '', path);
   renderRoute();
+  window.dispatchEvent(new Event('popstate'));
 }
 
 function renderRoute() {
@@ -157,7 +211,7 @@ class PongApp extends HTMLElement {
     localStorage.removeItem('token');
     this.updateLinks();
     this.toggleAuthButtons();
-    window.location.href = '/';
+    navigateTo('/');
   }
 
   setupRouter() {
@@ -166,3 +220,5 @@ class PongApp extends HTMLElement {
 }
 
 customElements.define('pong-app', PongApp);
+
+export { navigateTo };

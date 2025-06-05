@@ -1,4 +1,5 @@
 import ApiService from '../services/api.service';
+import { navigateTo } from '../app';
 
 function clearSessionStorage() {
 	localStorage.removeItem('token');
@@ -68,7 +69,7 @@ class LoginView extends HTMLElement {
 
 			const profile = await ApiService.getProfile();
 			localStorage.setItem('user', JSON.stringify(profile));
-			window.location.href = '/profile';
+			navigateTo('/profile');
 		} catch (error: any) {
 				this.signInError = error.message || 'Login failed';
 				this.render();
@@ -82,7 +83,7 @@ class LoginView extends HTMLElement {
     	e.preventDefault();
     	try {
       		await ApiService.verify2FA(this.code2FA);
-      		window.location.href = '/profile';
+      		navigateTo('/profile');
     	} catch (err: any) {
       		this.signInError = err.message || '2FA failed';
       		this.render();

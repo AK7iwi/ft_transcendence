@@ -1,5 +1,6 @@
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
+import { navigateTo } from '@/app';
 
 class ProfileView extends HTMLElement {
 	constructor() {
@@ -94,7 +95,7 @@ class ProfileView extends HTMLElement {
   	private logout() {
     	localStorage.removeItem('token');
     	localStorage.removeItem('user');
-    	window.location.href = '/';
+    	navigateTo('/');
   	}
 
   	private async loadMatchHistory() {
