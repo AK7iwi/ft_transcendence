@@ -106,6 +106,20 @@ db.exec(`CREATE TABLE IF NOT EXISTS game_results (
   FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (loser_id) REFERENCES users(id) ON DELETE CASCADE
 );`);
+db.exec(`
+  CREATE TRIGGER IF NOT EXISTS increment_stats_after_insert
+  AFTER INSERT ON game_results
+  FOR EACH ROW
+  BEGIN
+    UPDATE users
+    SET wins = wins + 1
+    WHERE id = NEW.winner_id;
+
+    UPDATE users
+    SET losses = losses + 1
+    WHERE id = NEW.loser_id;
+  END;
+`);
 db.exec(`CREATE TABLE IF NOT EXISTS remote_games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   player1_id INTEGER NOT NULL,
@@ -262,7 +276,6 @@ function getUserById(userId) {
 
 // Initialize DB
 initializeDatabase();
-updateAllWinLossCounts(); // <-- ajoute cette ligne
 
 
 // Export custom API

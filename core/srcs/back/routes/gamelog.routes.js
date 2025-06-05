@@ -1,25 +1,39 @@
-//gamelog-route.js
-const { db, recordGameResult } = require('../db');
+// → routes/gamelog.routes.js
+
+const { db } = require('../db');
 const authenticate = require('../middleware/authenticate');
 
 async function gameLogRoutes(fastify, options) {
-  fastify.post('/game/result', {
-    preHandler: [authenticate],
-    handler: async (req, reply) => {
+  // On est à l’intérieur d’une fonction où 'fastify' est bien défini
+  fastify.post(
+    '/game/result',
+    {
+      preHandler: [authenticate],
+    },
+    async (req, reply) => {
       const { winnerId, loserId } = req.body;
 
-      if ((!winnerId && !loserId) || (winnerId && loserId && winnerId === loserId)) {
+      // Validation : il faut exactement winnerId ou loserId, pas les deux
+      if (
+        (typeof winnerId !== 'number' && typeof loserId !== 'number') ||
+        (typeof winnerId === 'number' && typeof loserId === 'number' && winnerId === loserId)
+      ) {
         return reply.status(400).send({ error: 'Missing or invalid winnerId/loserId' });
       }
 
       try {
-        if (winnerId && !loserId) {
+        if (typeof winnerId === 'number' && typeof loserId !== 'number') {
+          // Si seul winnerId fourni
           db.prepare(`UPDATE users SET wins = wins + 1 WHERE id = ?`).run(winnerId);
-        } else if (loserId && !winnerId) {
+        } else if (typeof loserId === 'number' && typeof winnerId !== 'number') {
+          // Si seul loserId fourni
           db.prepare(`UPDATE users SET losses = losses + 1 WHERE id = ?`).run(loserId);
         } else {
-          // cas normal avec les deux
-          db.prepare(`INSERT INTO game_results (winner_id, loser_id) VALUES (?, ?)`).run(winnerId, loserId);
+          // Cas bilatéral (match “officiel” avec les deux IDs)
+          db.prepare(`INSERT INTO game_results (winner_id, loser_id) VALUES (?, ?)`).run(
+            winnerId,
+            loserId
+          );
           db.prepare(`UPDATE users SET wins = wins + 1 WHERE id = ?`).run(winnerId);
           db.prepare(`UPDATE users SET losses = losses + 1 WHERE id = ?`).run(loserId);
         }
@@ -30,8 +44,7 @@ async function gameLogRoutes(fastify, options) {
         return reply.status(500).send({ error: 'Internal server error' });
       }
     }
-  });
+  );
 }
-
 
 module.exports = gameLogRoutes;
