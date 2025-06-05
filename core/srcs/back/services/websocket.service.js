@@ -57,45 +57,60 @@ class GameSession {
     paddles.player2.y = Math.max(0, Math.min(332, paddles.player2.y));
         if (ball.x <= 0) {
       score.player2 += 1;
-      if (score.player2 >= this.state.endScore) {
-        this.state.isGameOver = true;
-        this.state.winner = 'Player 2';
-        setTimeout(() => this.fullReset(), 3000);
-      } else {
-        this.state.waitingForStart = true;
-        this.state.countdown = 3;
-        const countdownInterval = setInterval(() => {
-          this.state.countdown--;
-          if (this.state.countdown <= 0) {
-            clearInterval(countdownInterval);
-            this.state.waitingForStart = false;
-            this.state.countdown = null;
-            this.resetBall('right');
-          }
-        }, 1000);
-      }
+      // Dans update(), au lieu de “Player 2” :
+    if (score.player2 >= endScore) {
+      this.state.isGameOver = true;
+      // Bien récupérer l’ID du player2 depuis this (pas “session.player2”)
+      const row = getUserById(this.player2);
+      this.state.winner = row?.username || 'Player 2';
+      // Pas d’autre code, on sort tout de suite :
+      setTimeout(() => this.fullReset(), 3000);
+      return;
     }
 
-    if (ball.x + ball.size >= 768) {
-      score.player1 += 1;
-      if (score.player1 >= this.state.endScore) {
-        this.state.isGameOver = true;
-        this.state.winner = 'Player 1';
-        setTimeout(() => this.fullReset(), 3000);
-      } else {
-        this.state.waitingForStart = true;
-        this.state.countdown = 3;
-        const countdownInterval = setInterval(() => {
-          this.state.countdown--;
-          if (this.state.countdown <= 0) {
-            clearInterval(countdownInterval);
-            this.state.waitingForStart = false;
-            this.state.countdown = null;
-            this.resetBall('left');
-          }
-        }, 1000);
+    // Sinon, relance un 3-2-1 avant de remettre la balle
+    this.state.waitingForStart = true;
+    this.state.countdown = 3;
+    const countdownInterval = setInterval(() => {
+      this.state.countdown--;
+      if (this.state.countdown <= 0) {
+        clearInterval(countdownInterval);
+        this.state.waitingForStart = false;
+        this.state.countdown = null;
+        this.resetBall('right');
       }
+    }, 1000);
+
+    return;
+  }
+
+  // 6) Si la balle sort à droite → point pour le joueur 1
+  if (ball.x + ball.size >= 768) {
+    score.player1 += 1;
+
+    if (score.player1 >= endScore) {
+      this.state.isGameOver = true;
+      const row = getUserById(this.player1);
+      this.state.winner = row?.username || 'Player 1';
+      setTimeout(() => this.fullReset(), 3000);
+      return;
     }
+
+    this.state.waitingForStart = true;
+    this.state.countdown = 3;
+    const countdownInterval = setInterval(() => {
+      this.state.countdown--;
+      if (this.state.countdown <= 0) {
+        clearInterval(countdownInterval);
+        this.state.waitingForStart = false;
+        this.state.countdown = null;
+        this.resetBall('left');
+      }
+    }, 1000);
+
+    return;
+  }
+
 
   }
 

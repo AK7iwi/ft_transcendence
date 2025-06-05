@@ -45,6 +45,12 @@ class GameRemoteView extends HTMLElement {
 
     // Affichage HTML complet avant d’ouvrir la WS
     this.render();
+    const leaveBtn = this.querySelector('#leave-button') as HTMLButtonElement | null;
+  if (leaveBtn) {
+    leaveBtn.addEventListener('click', () => {
+      window.location.href = '/chat';
+    });
+  }
 
     // Initialiser WS APRÈS avoir inséré le DOM
     this.initWebSocket(this.sessionId, String(this.playerId));
@@ -112,6 +118,12 @@ class GameRemoteView extends HTMLElement {
       <p class="mt-2 text-gray-200 text-sm">
         No pause in this game mode, first to 5 wins!
       </p>
+      <button
+        id="leave-button"
+        class="px-4 py-2 bg-gradient-to-r from-red-400 via-red-500 to-red-600 text-white rounded-full hover:opacity-90 transition hidden"
+      >
+        Leave the game
+      </button>
     </div>
   `;
 
@@ -195,37 +207,43 @@ class GameRemoteView extends HTMLElement {
   //   window.addEventListener('resize', this.resizeCanvas);
   // }
 
-  private handleMessage(data: any) {
-    if (data.type === 'state') {
-      this.currentState = data.payload as GameState;
+ private handleMessage(data: any) {
+  if (data.type === 'state') {
+    this.currentState = data.payload as GameState;
 
-      // 1) Mettre à jour les labels “Player 1” et “Player 2” avec les vrais noms
-      const player1Label = this.querySelector(
-        '#player1-label'
-      ) as HTMLSpanElement | null;
-      const player2Label = this.querySelector(
-        '#player2-label'
-      ) as HTMLSpanElement | null;
-      if (player1Label) player1Label.textContent = data.payload.player1Name;
-      if (player2Label) player2Label.textContent = data.payload.player2Name;
+    // 1) Mettre à jour les labels et le score
+    const player1Label = this.querySelector('#player1-label') as HTMLSpanElement | null;
+    const player2Label = this.querySelector('#player2-label') as HTMLSpanElement | null;
+    if (player1Label) player1Label.textContent = data.payload.player1Name;
+    if (player2Label) player2Label.textContent = data.payload.player2Name;
 
-      // 2) Mettre à jour le score en haut
-      const scoreEl = this.querySelector('#score') as HTMLSpanElement | null;
-      if (scoreEl) {
-        scoreEl.textContent = `${data.payload.score.player1} - ${data.payload.score.player2}`;
-      }
+    const scoreEl = this.querySelector('#score') as HTMLSpanElement | null;
+    if (scoreEl) {
+      scoreEl.textContent = `${data.payload.score.player1} - ${data.payload.score.player2}`;
+    }
 
-      // 3) Dessiner le contenu du canevas
-      if (this.currentState) {
-        this.drawGame(this.currentState);
+    // 2) Afficher ou cacher le bouton Leave selon isGameOver
+    const leaveBtn = this.querySelector('#leave-button') as HTMLButtonElement | null;
+    if (leaveBtn) {
+      if (data.payload.isGameOver) {
+        leaveBtn.classList.remove('hidden');
+      } else {
+        leaveBtn.classList.add('hidden');
       }
     }
 
-    if (data.type === 'opponent_disconnected') {
-      console.warn('⚠️ Opponent disconnected');
-      this.drawDisconnected(data.message);
+    // 3) Dessiner le canevas
+    if (this.currentState) {
+      this.drawGame(this.currentState);
     }
   }
+
+  if (data.type === 'opponent_disconnected') {
+    console.warn('⚠️ Opponent disconnected');
+    this.drawDisconnected(data.message);
+  }
+}
+
 
 
 private drawInitialScreen() {
@@ -387,16 +405,16 @@ private drawInitialScreen() {
 
   // 4b) Écran « isGameOver »
   if (isGameOver) {
-    this.ctx.fillStyle = 'black';
+    this.ctx.fillStyle = 'white';
     this.ctx.fillRect(0, 0, virtWidth, virtHeight);
 
-    this.ctx.fillStyle = 'white';
+    this.ctx.fillStyle = 'black';
     this.ctx.font = '36px Arial';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText(`${winner} Wins!`, virtWidth / 2, virtHeight / 2 - 30);
+    this.ctx.fillText(`${winner} wins!`, virtWidth / 2, virtHeight / 2 - 30);
 
     this.ctx.font = '24px Arial';
-    this.ctx.fillText('Press ENTER to Play Again', virtWidth / 2, virtHeight / 2 + 30);
+    this.ctx.fillText('You can leave the room and invite your firend to rematch !', virtWidth / 2, virtHeight / 2 + 30);
 
     this.ctx.restore();
     return;
