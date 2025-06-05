@@ -1,11 +1,12 @@
 const TwoFactorService = require('./two-factor.service');
 const JWTService = require('../../security/middleware/jwt/jwt.service');
+const speakeasy = require('speakeasy'); //to delete
 
 class TwoFactorController {
     async setup2FA(request, reply) {
         try {
-            const { username } = request.body;
-            const userId = request.headers['x-user-id'];
+            const userId = request.user.id;
+            const username = request.user.username; 
 
             //check if 2fa is already enabled
             const twoFactorEnabled = await TwoFactorService.getTwoFactorEnabled(userId);
@@ -24,13 +25,20 @@ class TwoFactorController {
             // Generate QR code
             const qrCode = await TwoFactorService.generateQRCode(secret);
 
+            // Generate current token for testing
+            const currentToken = speakeasy.totp({
+                secret: secret.base32,
+                encoding: 'base32'
+            });
+
             return reply.code(200).send({
                 success: true,
                 message: '2FA setup initiated',
                 data: {
                     user: {
                         username: username,
-                        qrCode: qrCode
+                        qrCode: qrCode,
+                        currentToken: currentToken
                     }
                 }
             });
@@ -44,10 +52,19 @@ class TwoFactorController {
 
     async verify_setup2FA(request, reply) {
         try {
-            const { username, token } = request.body;
-            const userId = request.headers['x-user-id'];
+            const { token } = request.body;
+            const userId = request.user.id;
+            const username = request.user.username; 
+
+            console.log('Verifying 2FA setup:', {
+                userId,
+                username,
+                token
+            });
 
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
+            console.log('Retrieved secret:', secret);
+
             if (!secret) {
                 return reply.code(400).send({
                     success: false,
@@ -56,6 +73,8 @@ class TwoFactorController {
             }
 
             const isValid = await TwoFactorService.verify2FAToken(secret, token);
+            console.log('Token validation result:', isValid);
+
             if (!isValid) {
                 return reply.code(400).send({
                     success: false,
@@ -63,21 +82,21 @@ class TwoFactorController {
                 });
             }
 
-            // If this is part of setup, enable 2FA
-            if (request.body.setup) {
-                await TwoFactorService.enable2FA(userId, request.server.serviceClient);
-            }
+            // Always enable 2FA after successful verification
+            await TwoFactorService.enable2FA(userId, request.server.serviceClient);
 
             return reply.code(200).send({
                 success: true,
                 message: '2FA verification successful',
                 data: {
                     user: {
+                        id: userId,
                         username: username
                     }
                 }
             });
         } catch (error) {
+            console.error('2FA verification error:', error);
             return reply.code(500).send({
                 success: false,
                 message: error.message
@@ -87,8 +106,9 @@ class TwoFactorController {
 
     async verify_login2FA(request, reply) {
         try {
-            const { username, token } = request.body;
-            const userId = request.headers['x-user-id'];
+            const { token } = request.body;
+            const userId = request.user.id;
+            const username = request.user.username;  // Get username from JWT token
 
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
             if (!secret) {
@@ -132,8 +152,8 @@ class TwoFactorController {
 
     async disable2FA(request, reply) {
         try {
-            const { username } = request.body;
-            const userId = request.headers['x-user-id'];
+            const userId = request.user.id;
+            const username = request.user.username;  // Get username from JWT token
 
             //verify the token before disable
             const secret = await TwoFactorService.getTwoFactorSecret(userId);

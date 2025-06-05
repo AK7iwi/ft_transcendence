@@ -122,7 +122,8 @@ const authSchema = {
                                 type: 'object',
                                 properties: {
                                     username: { type: 'string' },
-                                    qrCode: { type: 'string' }
+                                    qrCode: { type: 'string' },
+                                    currentToken: { type: 'string' }
                                 }
                             }
                         }
@@ -165,7 +166,7 @@ const authSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    username: { type: 'string' }
+                                    id: { type: 'string' }
                                 }
                             }
                         }
@@ -222,8 +223,10 @@ const authSchema = {
     disable2FA: {
         body: {
             type: 'object',
-            required: [],
-            properties: {}
+            required: ['token'],
+            properties: {
+                token: { type: 'string', minLength: 6, maxLength: 6 }
+            }
         },
         response: {
             200: {
@@ -232,13 +235,10 @@ const authSchema = {
                     success: { type: 'boolean' },
                     message: { type: 'string' },
                     data: {
-                        type: 'object',
-                        properties: {
-                            user: {
-                                type: 'object',
-                                properties: {
-                                    username: { type: 'string' }
-                                }
+                        user: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string' }
                             }
                         }
                     }

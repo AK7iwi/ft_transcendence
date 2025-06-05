@@ -3,14 +3,15 @@ const UpdateService = require('./update.service');
 class UpdateController {
     async updateUsername(request, reply) {
         try {
-            const { currentUsername, newUsername } = request.body;
-            const updatedUser = await UpdateService.updateUsername(currentUsername, newUsername, request.server.serviceClient);
+            const currentUsername = request.user.username;
+            const { newUsername } = request.body;
+            await UpdateService.updateUsername(currentUsername, newUsername, request.server.serviceClient);
             
             return reply.code(200).send({
               success: true,
               message: 'User updated successfully',
               data: {
-                username: updatedUser.username
+                username: newUsername
               }
             });
           } catch (error) {
@@ -24,14 +25,15 @@ class UpdateController {
 
     async updatePassword(request, reply) {
         try {
-            const { username, newPassword } = request.body;
-            const updatedUser = await UpdateService.updatePassword(username, newPassword, request.server.serviceClient);
+            const username = request.user.username;
+            const { newPassword } = request.body;
+            await UpdateService.updatePassword(username, newPassword, request.server.serviceClient);
             
             return reply.code(200).send({
               success: true,
               message: 'Password updated successfully',
               data: {
-                username: updatedUser.username
+                username: username
               }
             });
           } catch (error) {

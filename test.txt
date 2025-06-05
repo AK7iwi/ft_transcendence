@@ -62,8 +62,25 @@ curl -k -X POST \
   "https://localhost:3000/auth/2fa/setup"
 
 
+curl -k -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"token": "123456"}' \
+  "https://localhost:3000/auth/2fa/verify-setup"
 
-  
+  curl -k -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"token": "123456", "userId": "YOUR_USER_ID"}' \
+  "https://localhost:3000/auth/2fa/verify-login"
+
+
+curl -k -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{"token": "123456"}' \
+  "https://localhost:3000/auth/2fa/disable"
+
+
 SQL injection: 
 
 curl -k -v -X POST \

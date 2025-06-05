@@ -60,9 +60,10 @@ module.exports = async function (fastify, opts) {
                     request.body,
                     {
                         headers: {
-                            'X-User-Id': request.user.id
+                            'Authorization': request.headers.authorization
                         }
                     }
+
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -87,7 +88,7 @@ module.exports = async function (fastify, opts) {
                     request.body,
                     {
                         headers: {
-                            'X-User-Id': request.user.id
+                            'Authorization': request.headers.authorization
                         }
                     }
                 );
@@ -106,17 +107,12 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/verify-login', {
         schema: authSchema.verify_login2FA,
-        preHandler: [SanitizeService.sanitize],
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-login`,
-                    request.body,
-                    {
-                        headers: {
-                            'X-User-Id': request.body.userId
-                        }
-                    }
+                    request.body
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -141,7 +137,7 @@ module.exports = async function (fastify, opts) {
                     request.body,
                     {
                         headers: {
-                            'X-User-Id': request.user.id
+                            'Authorization': request.headers.authorization
                         }
                     }
                 );

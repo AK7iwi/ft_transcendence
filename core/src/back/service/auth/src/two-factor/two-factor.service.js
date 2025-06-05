@@ -29,13 +29,23 @@ class TwoFactorService {
 
     static async verify2FAToken(secret, token) {
         try {
-            return speakeasy.totp.verify({
+            console.log('Verifying token:', {
+                secret,
+                token,
+                encoding: 'base32'
+            });
+
+            const result = speakeasy.totp.verify({
                 secret: secret,
                 encoding: 'base32',
                 token: token,
                 window: 1 // Allow 30 seconds clock skew
             });
+
+            console.log('Verification result:', result);
+            return result;
         } catch (error) {
+            console.error('Token verification error:', error);
             throw new Error('Failed to verify token');
         }
     }

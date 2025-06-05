@@ -2,14 +2,8 @@ const updateSchema = {
     updateUsername: {
         body: {
             type: 'object',
-            required: ['currentUsername', 'newUsername'],
+            required: ['newUsername'],
             properties: {
-                currentUsername: {
-                    type: 'string',
-                    minLength: 3,
-                    maxLength: 20,
-                    pattern: '^[a-zA-Z0-9_-]+$'
-                },
                 newUsername: {
                     type: 'string',
                     minLength: 3,
@@ -23,14 +17,8 @@ const updateSchema = {
     updatePassword: {
         body: {
             type: 'object', 
-            required: ['username', 'newPassword'],
+            required: ['newPassword'],
             properties: {
-                username: {
-                    type: 'string',
-                    minLength: 3,
-                    maxLength: 20,
-                    pattern: '^[a-zA-Z0-9_-]+$'
-                },
                 newPassword: {
                     type: 'string',
                     minLength: 8,

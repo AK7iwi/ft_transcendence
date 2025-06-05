@@ -13,7 +13,7 @@ module.exports = async function (fastify, opts) {
                     `${process.env.USER_SERVICE_URL}/user/me`,
                     {
                         headers: {
-                            'X-User-Id': request.user.id
+                            'Authorization': request.headers.authorization
                         }
                     }
                 );
@@ -38,7 +38,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/user/username`,
-                    request.body
+                    request.body,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {
@@ -61,7 +66,12 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/user/password`,
-                    request.body
+                    request.body,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
                 );
                 return reply.code(200).send(response);
             } catch (error) {
