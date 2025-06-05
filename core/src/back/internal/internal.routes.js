@@ -8,6 +8,17 @@ module.exports = async function (fastify, opts) {
         handler: InternalController.createUser
     });
 
+    // Update username (internal)
+    fastify.put('/internal/updateUsername', {
+        schema: internalSchema.updateUsername,
+        handler: InternalController.updateUsername
+    });
+
+    // Update password (internal)
+    fastify.put('/internal/updatePassword', {
+        schema: internalSchema.updatePassword,
+        handler: InternalController.updatePassword
+    });
 
     fastify.post('/internal/secret2FA', {
         schema: internalSchema.secret2FA,
@@ -25,7 +36,4 @@ module.exports = async function (fastify, opts) {
         schema: internalSchema.disable2FA,
         handler: InternalController.disable2FA
     });
-    
-    
-    
 };

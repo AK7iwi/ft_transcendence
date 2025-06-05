@@ -9,6 +9,22 @@ class InternalService {
         }
     }
 
+    static async updateUsername(currentUsername, newUsername) {
+        try {
+            await DbModel.updateUsername(currentUsername, newUsername);
+        } catch (error) {
+            throw new Error(`Failed to update username: ${error.message}`);
+        }
+    }
+
+    static async updatePassword(username, hashedPassword) {
+        try {
+            await DbModel.updatePassword(username, hashedPassword);
+        } catch (error) {
+            throw new Error(`Failed to update password: ${error.message}`);
+        }
+    }
+
     static async secret2FA(userId, secret) {
         try {
             await DbModel.secret2FA(userId, secret);
