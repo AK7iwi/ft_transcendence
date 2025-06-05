@@ -4,7 +4,7 @@ services:
     container_name: gateway
     image: gateway
     build:
-      context: ./core/src/back/gateway
+      context: ./core/src/back/src/gateway
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -25,7 +25,7 @@ services:
     container_name: auth-service
     image: auth-service
     build:
-      context: ./core/src/back/service/auth
+      context: ./core/src/back/src/service/auth
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -48,7 +48,7 @@ services:
     container_name: user-service
     image: user-service
     build:
-      context: ./core/src/back/service/user 
+      context: ./core/src/back/src/service/user 
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:
@@ -69,7 +69,7 @@ services:
     container_name: friend-service
     image: friend-service
     build:
-      context: ./core/src/back/service/friend
+      context: ./core/src/back/src/service/friend
       dockerfile: Dockerfile
     working_dir: /usr/src/app
     ports:

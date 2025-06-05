@@ -9,7 +9,6 @@ class TwoFactorController {
 
             //check if 2fa is already enabled
             const twoFactorEnabled = await TwoFactorService.getTwoFactorEnabled(userId);
-            console.log(twoFactorEnabled);
             if (twoFactorEnabled) {
                 return reply.code(400).send({
                     success: false,
