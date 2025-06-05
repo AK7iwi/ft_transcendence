@@ -68,7 +68,9 @@ class DbModel {
     static async enable2FA(userId) {
         const stmt = db.prepare(`
             UPDATE user_profiles 
-            SET two_factor_enabled = 1
+            SET two_factor_enabled = 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
         `);
         return stmt.run(userId);
     }

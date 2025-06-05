@@ -19,6 +19,37 @@ const internalSchema = {
             },
             additionalProperties: false
         }
+    },
+    secret2FA: {
+        body: {
+            type: 'object',
+            required: ['userId', 'secret'],
+            properties: {
+                userId: { type: 'number' },
+                secret: { type: 'string' }
+            },
+            additionalProperties: false
+        }
+    },
+    enable2FA: {
+        body: {
+            type: 'object',
+            required: ['userId'],
+            properties: {
+                userId: { type: 'number' }
+            },
+            additionalProperties: false
+        }
+    },
+    disable2FA: {
+        body: {
+            type: 'object',
+            required: ['userId'],
+            properties: {
+                userId: { type: 'number' }
+            },
+            additionalProperties: false
+        }
     }
 }
 

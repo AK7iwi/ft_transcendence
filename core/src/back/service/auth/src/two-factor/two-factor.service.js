@@ -29,6 +29,10 @@ class TwoFactorService {
 
     static async verify2FAToken(secret, token) {
         try {
+            if (!secret) {
+                throw new Error('No 2FA secret found');
+            }
+
             console.log('Verifying token:', {
                 secret,
                 token,
@@ -66,13 +70,15 @@ class TwoFactorService {
 
     static async enable2FA(userId, serviceClient) {
         try {
-            //send enable 2fa to user
+            // First enable 2FA in the user service
             await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/enable2FA`, {
                 userId: userId
             }); 
 
             return await DbModel.enable2FA(userId);
+
         } catch (error) {
+            console.error('Enable 2FA error:', error);
             throw new Error('Failed to enable 2FA');
         }
     }
