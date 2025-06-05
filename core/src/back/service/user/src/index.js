@@ -19,7 +19,7 @@ initializeDatabase();
 // Register routes
 app.register(userRoutes, { prefix: '/user' });
 app.register(updateRoutes, { prefix: '/user' });
-app.register(internalRoutes, { prefix: '/user' });
+app.register(internalRoutes, { prefix: '/user/internal' });
 
 // Test endpoint
 app.get('/', async (request, reply) => {

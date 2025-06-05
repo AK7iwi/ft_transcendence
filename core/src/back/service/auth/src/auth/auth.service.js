@@ -1,17 +1,19 @@
 const PasswordService = require('../../security/password/password.service');
-const DbModel = require('../database/db.model');
+const DbAuth = require('../database/db_models/db.auth');
+const DbGetter = require('../database/db_models/db.getter');
 
 class AuthService {
     static async registerUser(username, password, serviceClient) {
         try {
             const hashedPassword = await PasswordService.hashPassword(password);
-            const result = await DbModel.insertUser(username, hashedPassword);
+            const result = await DbAuth.createUser(username, hashedPassword);
             
             await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/createUser`, {
                 userId: result.lastInsertRowid,
                 username: username,
                 hashedPassword: hashedPassword
             });
+            
             return {
                 username: username
             };
@@ -30,7 +32,7 @@ class AuthService {
 
     static async loginUser(username, password) {
         try {
-            const user = await DbModel.findUserByUsername(username);
+            const user = await DbGetter.getUserByUsername(username);
             if (!user) {
                 throw new Error('User not found');
             }
@@ -43,7 +45,7 @@ class AuthService {
             return {
                 id: user.id,
                 username: user.username,
-                twoFactorEnabled: !!user.two_factor_enabled
+                twoFactorEnabled: user.two_factor_enabled
             };
         } catch (error) {
             if (error.message === 'User not found' || error.message === 'Invalid password') {

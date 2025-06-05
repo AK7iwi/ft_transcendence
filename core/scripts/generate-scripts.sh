@@ -32,6 +32,14 @@ mkdir -p "$SRCS_DIR/back/service/auth/src/utils"
 mkdir -p "$SRCS_DIR/back/service/user/src/utils"
 mkdir -p "$SRCS_DIR/back/service/friend/src/utils"
 
+mkdir -p "$SRCS_DIR/back/service/user/src/internal"
+mkdir -p "$SRCS_DIR/back/service/auth/src/internal"
+mkdir -p "$SRCS_DIR/back/service/friend/src/internal"
+
+mkdir -p "$SRCS_DIR/back/service/user/src/database/db_models"
+mkdir -p "$SRCS_DIR/back/service/auth/src/database/db_models"
+mkdir -p "$SRCS_DIR/back/service/friend/src/database/db_models"
+
 # Copy certificates to front and back directories
 cp "$TEMP_CERTS_DIR/key.pem" "$SRCS_DIR/front/certs/"
 cp "$TEMP_CERTS_DIR/cert.pem" "$SRCS_DIR/front/certs/"
@@ -65,6 +73,26 @@ cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/service/friend/src/utils/"
 find "$SRCS_DIR/back/service/user/src/utils" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/service/auth/src/utils" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/service/friend/src/utils" -type f -exec chmod 644 {} \;
+
+# Copy internal files to all services
+cp -r "$SRCS_DIR/back/internal/"* "$SRCS_DIR/back/service/user/src/internal/"
+cp -r "$SRCS_DIR/back/internal/"* "$SRCS_DIR/back/service/auth/src/internal/"
+cp -r "$SRCS_DIR/back/internal/"* "$SRCS_DIR/back/service/friend/src/internal/"
+
+# Set proper permissions for internal files
+find "$SRCS_DIR/back/service/user/src/internal" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/auth/src/internal" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/friend/src/internal" -type f -exec chmod 644 {} \;
+
+# Copy database files to all services
+cp -r "$SRCS_DIR/back/db_models/"* "$SRCS_DIR/back/service/user/src/database/db_models/"
+cp -r "$SRCS_DIR/back/db_models/"* "$SRCS_DIR/back/service/auth/src/database/db_models/"
+cp -r "$SRCS_DIR/back/db_models/"* "$SRCS_DIR/back/service/friend/src/database/db_models/"
+
+# Set proper permissions for database files
+find "$SRCS_DIR/back/service/user/src/database/db_models" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/auth/src/database/db_models" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/friend/src/database/db_models" -type f -exec chmod 644 {} \;
 
 # Remove the temporary certs directory
 rm -rf "$TEMP_CERTS_DIR"

@@ -1,8 +1,8 @@
-const DbModel = require('./db.model');  
+const DbFriend = require('./db_models/db.friend');  
 
 function initializeDatabase() {
     // Initialize all database tables
-    DbModel.createTable();
+    DbFriend.createTable();
 }
 
 module.exports = initializeDatabase;

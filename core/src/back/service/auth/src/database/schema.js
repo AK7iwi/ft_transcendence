@@ -1,8 +1,8 @@
-const DbModel = require('./db.model');  
+const DbAuth = require('./db_models/db.auth');  
 
 function initializeDatabase() {
     // Initialize all database tables
-    DbModel.createTable();
+    DbAuth.createTable();
 }
 
 module.exports = initializeDatabase;

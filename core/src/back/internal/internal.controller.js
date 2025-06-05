@@ -60,10 +60,10 @@ class InternalController {
         }
     }
 
-    async secret2FA(request, reply) {
+    async update2FASecret(request, reply) {
         try {
             const { userId, secret } = request.body;
-            await InternalService.secret2FA(userId, secret);
+            await InternalService.update2FASecret(userId, secret);
             
             return reply.code(200).send({
                 success: true,

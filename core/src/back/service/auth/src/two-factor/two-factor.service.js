@@ -1,6 +1,7 @@
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
-const DbModel = require('../database/db.model');
+const DbUpdate = require('../database/db_models/db.update');
+const DbGetter = require('../database/db_models/db.getter');
 
 class TwoFactorService {
     static async generateSecret(username) {
@@ -57,12 +58,12 @@ class TwoFactorService {
     static async store2FASecret(userId, secret, serviceClient) {
         try {
             //send secret to user
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/secret2FA`, {
+            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/update2FASecret`, {
                 userId: userId,
                 secret: secret
             });
 
-            return await DbModel.update2FASecret(userId, secret);
+            return await DbUpdate.update2FASecret(userId, secret);
         } catch (error) {
             throw new Error('Failed to store 2FA secret');
         }
@@ -75,7 +76,7 @@ class TwoFactorService {
                 userId: userId
             }); 
 
-            return await DbModel.enable2FA(userId);
+            return await DbUpdate.enable2FA(userId);
 
         } catch (error) {
             console.error('Enable 2FA error:', error);
@@ -90,7 +91,7 @@ class TwoFactorService {
                 userId: userId
             });
 
-            return await DbModel.disable2FA(userId);
+            return await DbUpdate.disable2FA(userId);
         } catch (error) {
             throw new Error('Failed to disable 2FA');
         }
@@ -98,7 +99,7 @@ class TwoFactorService {
 
     static async getTwoFactorEnabled(userId) {
         try {
-            const enabled = await DbModel.getTwoFactorEnabled(userId);
+            const enabled = await DbGetter.getTwoFactorEnabled(userId);
             return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
         } catch (error) {
             throw new Error('Failed to get 2FA enabled');
@@ -107,7 +108,7 @@ class TwoFactorService {
 
     static async getTwoFactorSecret(userId) {
         try {
-            return await DbModel.getTwoFactorSecret(userId);
+            return await DbGetter.getTwoFactorSecret(userId);
         } catch (error) {
             throw new Error('Failed to get 2FA secret');
         }

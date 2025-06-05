@@ -61,7 +61,7 @@ const internalSchema = {
             additionalProperties: false
         }
     },
-    secret2FA: {
+    update2FASecret: {
         body: {
             type: 'object',
             required: ['userId', 'secret'],

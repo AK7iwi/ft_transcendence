@@ -1,31 +1,3 @@
-
-
-TEST:
-
-Login sans etre register
-Register X 2
-
-
-DB COMMAND:
-
-# Connect to user service container
-docker exec -it user-service sh
-
-# Inside the container, connect to SQLite database
-sqlite3 /data/db.sqlite
-
-# List all user profiles
-SELECT * FROM user_profiles;
-
-# Exit SQLite
-.quit
-
-# Exit container
-exit
-
-
--------------------------------------------------------------------------------
-
 HTTPS:
 
 curl -k -X POST \

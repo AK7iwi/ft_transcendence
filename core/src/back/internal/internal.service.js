@@ -1,9 +1,9 @@
-const DbModel = require('../database/db.model');
+const DbUpdate = require('../database/db_models/db.update');
 
 class InternalService {
     static async createUser(userId, username, hashedPassword) {
         try {
-            await DbModel.createUser(userId, username, hashedPassword);
+            await DbUpdate.createUser(userId, username, hashedPassword);
         } catch (error) {
             throw new Error(`Failed to create user: ${error.message}`);
         }
@@ -11,7 +11,7 @@ class InternalService {
 
     static async updateUsername(currentUsername, newUsername) {
         try {
-            await DbModel.updateUsername(currentUsername, newUsername);
+            await DbUpdate.updateUsername(currentUsername, newUsername);
         } catch (error) {
             throw new Error(`Failed to update username: ${error.message}`);
         }
@@ -19,15 +19,15 @@ class InternalService {
 
     static async updatePassword(username, hashedPassword) {
         try {
-            await DbModel.updatePassword(username, hashedPassword);
+            await DbUpdate.updatePassword(username, hashedPassword);
         } catch (error) {
             throw new Error(`Failed to update password: ${error.message}`);
         }
     }
 
-    static async secret2FA(userId, secret) {
+    static async update2FASecret(userId, secret) {
         try {
-            await DbModel.secret2FA(userId, secret);
+            await DbUpdate.update2FASecret(userId, secret);
         } catch (error) {
             throw new Error(`Failed to create user: ${error.message}`);
         }
@@ -35,7 +35,7 @@ class InternalService {
 
     static async enable2FA(userId) {
         try {
-            await DbModel.enable2FA(userId);
+            await DbUpdate.enable2FA(userId);
         } catch (error) {
             throw new Error(`Failed to enable 2FA: ${error.message}`);
         }
@@ -43,7 +43,7 @@ class InternalService {
 
     static async disable2FA(userId) {
         try {
-            await DbModel.disable2FA(userId);   
+            await DbUpdate.disable2FA(userId);   
         } catch (error) {
             throw new Error(`Failed to disable 2FA: ${error.message}`);
         }

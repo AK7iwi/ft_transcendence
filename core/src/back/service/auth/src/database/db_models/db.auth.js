@@ -1,9 +1,9 @@
-const db = require('./connection');
+const db = require('../connection');
 
-class DbModel {
+class DbAuth {
     static async createTable() {
         const stmt = db.prepare(`
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
@@ -15,6 +15,15 @@ class DbModel {
         `);
         stmt.run();
     }
+
+    //Create user
+    static async createUser(username, password) {
+        const stmt = db.prepare(`
+            INSERT INTO user_profiles (username, password)
+            VALUES (?, ?)
+        `);
+        return stmt.run(username, password);
+    }
 }
 
-module.exports = DbModel;
+module.exports = DbAuth;

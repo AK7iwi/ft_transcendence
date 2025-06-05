@@ -1,10 +1,10 @@
 const PasswordService = require('../../security/password/password.service');
-const DbModel = require('../database/db.model');
+const DbUpdate = require('../database/db_models/db.update');
 
 class UpdateService {
     static async updateUsername(currentUsername, newUsername, serviceClient) {
         try {
-            const result = await DbModel.updateUsername(currentUsername, newUsername);
+            const result = await DbUpdate.updateUsername(currentUsername, newUsername);
             if (!result.changes) {
                 throw new Error('User not found or username unchanged');
             }
@@ -26,7 +26,7 @@ class UpdateService {
     static async updatePassword(username, newPassword, serviceClient) {
         try {
             const hashedPassword = await PasswordService.hashPassword(newPassword);
-            const result = await DbModel.updatePassword(username, hashedPassword);
+            const result = await DbUpdate.updatePassword(username, hashedPassword);
 
             if (!result.changes) {
                 throw new Error('User not found');
