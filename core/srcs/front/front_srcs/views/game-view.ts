@@ -82,7 +82,7 @@ private ballCountdownTimer: number | null = null;
 
 
   private updateScoreDisplay() {
-    const scoreEl = document.getElementById('score');
+    const scoreEl = this.querySelector('#score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
