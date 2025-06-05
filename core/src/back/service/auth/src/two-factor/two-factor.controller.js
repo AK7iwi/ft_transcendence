@@ -1,6 +1,5 @@
 const TwoFactorService = require('./two-factor.service');
 const JWTService = require('../../security/middleware/jwt/jwt.service');
-const speakeasy = require('speakeasy'); //to delete
 
 class TwoFactorController {
     async setup2FA(request, reply) {
@@ -25,20 +24,13 @@ class TwoFactorController {
             // Generate QR code
             const qrCode = await TwoFactorService.generateQRCode(secret);
 
-            // Generate current token for testing
-            const currentToken = speakeasy.totp({
-                secret: secret.base32,
-                encoding: 'base32'
-            });
-
             return reply.code(200).send({
                 success: true,
                 message: '2FA setup initiated',
                 data: {
                     user: {
                         username: username,
-                        qrCode: qrCode,
-                        currentToken: currentToken
+                        qrCode: qrCode
                     }
                 }
             });
@@ -108,7 +100,7 @@ class TwoFactorController {
         try {
             const { token } = request.body;
             const userId = request.user.id;
-            const username = request.user.username;  // Get username from JWT token
+            const username = request.user.username;
 
             const secret = await TwoFactorService.getTwoFactorSecret(userId);
             if (!secret) {

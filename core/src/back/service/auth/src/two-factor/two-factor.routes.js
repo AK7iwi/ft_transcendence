@@ -20,7 +20,6 @@ module.exports = async function (fastify, opts) {
     // Verify 2FA
     fastify.post('/2fa/verify-login', {
         schema: twoFactorSchema.verify_login2FA,
-        preHandler: [JWTAuthentication.verifyJWTToken],
         handler: TwoFactorController.verify_login2FA
     });
 

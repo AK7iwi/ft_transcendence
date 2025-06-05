@@ -22,9 +22,15 @@ chmod 644 "$TEMP_CERTS_DIR/cert.pem"
 # Create necessary directories
 mkdir -p "$SRCS_DIR/front/certs"
 mkdir -p "$SRCS_DIR/back/gateway/certs"
+
 mkdir -p "$SRCS_DIR/back/gateway/security"
 mkdir -p "$SRCS_DIR/back/service/auth/security"
 mkdir -p "$SRCS_DIR/back/service/user/security"
+mkdir -p "$SRCS_DIR/back/service/friend/security"
+
+mkdir -p "$SRCS_DIR/back/service/auth/src/utils"
+mkdir -p "$SRCS_DIR/back/service/user/src/utils"
+mkdir -p "$SRCS_DIR/back/service/friend/src/utils"
 
 # Copy certificates to front and back directories
 cp "$TEMP_CERTS_DIR/key.pem" "$SRCS_DIR/front/certs/"
@@ -42,11 +48,23 @@ chmod 644 "$SRCS_DIR/front/certs/cert.pem"
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/gateway/security/"
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/service/auth/security/"
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/service/user/security/"
+cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/service/friend/security/"
 
 # Set proper permissions for security files
 find "$SRCS_DIR/back/gateway/security" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/service/auth/security" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/service/user/security" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/friend/security" -type f -exec chmod 644 {} \;
+
+# Copy utils files to all services
+cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/service/user/src/utils/"
+cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/service/auth/src/utils/"
+cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/service/friend/src/utils/"
+
+# Set proper permissions for utils files
+find "$SRCS_DIR/back/service/user/src/utils" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/auth/src/utils" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/service/friend/src/utils" -type f -exec chmod 644 {} \;
 
 # Remove the temporary certs directory
 rm -rf "$TEMP_CERTS_DIR"

@@ -65,7 +65,27 @@ services:
       timeout: 5s
       retries: 3
 
-      
+  friend-service:
+    container_name: friend-service
+    image: friend-service
+    build:
+      context: ./core/src/back/service/friend
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    ports:
+      - "3003:3003"
+    env_file: .env
+    volumes:
+      - friend_data:/data
+    networks:
+      - transcendence
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   # Game Service
   # game-service:
   #   container_name: game-service
@@ -157,6 +177,7 @@ networks:
 volumes:
   auth_data:
   user_data:
+  friend_data:
   # game_data:
   # tournament_data:
   # chat_data:
