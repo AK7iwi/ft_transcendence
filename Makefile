@@ -50,6 +50,7 @@ clean:
 
 # Arrête tout, supprime volumes, cache Docker et fichiers persistants
 fclean: clean-containers clean-certs clean-docker
+	@clear
 
 # Clean puis rebuild
 re: clean all
