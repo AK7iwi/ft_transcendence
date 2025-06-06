@@ -1,6 +1,6 @@
-
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
+import { navigateTo } from '@/app';
 
 interface Conversation {
   id: string;
@@ -150,7 +150,7 @@ private async loadConversations() {
     const friends = await ApiService.getFriends();
     const blockedIds = await ApiService.getBlockedUsers();
 
-    this.conversations = friends.map(f => {
+    this.conversations = friends.map((f: any) => {
       let raw = f.avatar || "";
 
 
@@ -186,7 +186,7 @@ private async loadConversations() {
     this.websocket = new WebSocket(wsUrl);
 
     this.websocket.addEventListener('open', () => {
-      console.log('[WS] Connection ouverte');
+      console.log('[WS] Open connection');
       const token = localStorage.getItem('token');
       if (token) {
 
@@ -207,32 +207,32 @@ private async loadConversations() {
 
           if (String(senderId) === this.selectedConversationId) {
             const senderName =
-              this.conversations.find(c => c.id === String(senderId))?.name || 'Inconnu';
+              this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown';
             this.messages.push({ author: senderName, text, me: false });
             this.render();
           } else {
 
 
             console.log(
-              `[WS] Nouveau DM de ${senderId}, mais conversation ${
+              `[WS] New DM of ${senderId}, but conversation ${
                 this.selectedConversationId
-              } n’est pas ouverte`
+              } is not open`
             );
           }
         }
 
       } catch (err) {
-        console.error('[WS] Erreur en traitant le message:', err);
+        console.error('[WS] Error processing message:', err);
       }
     });
 
     this.websocket.addEventListener('close', () => {
-      console.warn('[WS] WebSocket fermé');
+      console.warn('[WS] WebSocket closed');
       this.websocket = null;
     });
 
     this.websocket.addEventListener('error', (err) => {
-      console.error('[WS] WebSocket erreur:', err);
+      console.error('[WS] WebSocket error:', err);
     });
   }
 
@@ -257,26 +257,26 @@ private async loadConversations() {
     console.log('[INVITE] inviteToPlay friendId=', friendId);
 
     if (!friendId) {
-      console.warn('[INVITE] Pas de friendId sélectionné');
+      console.warn('[INVITE] No friendId selected');
       return;
     }
     if (!this.currentUserId) {
-      console.warn('[INVITE] Pas d’utilisateur courant connu');
+      console.warn('[INVITE] No known current user');
       return;
     }
     if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
-      console.warn('[INVITE] WebSocket non prêt ou non connecté');
+      console.warn('[INVITE] WebSocket not ready or not connected');
       return;
     }
 
     const gameUrl = `/game-remote?id=${this.currentUserId}`;
     const invitationMessage = `
       <div>
-        🎮 <strong>Invitation à jouer à Pong !</strong><br/>
+        🎮 <strong>Invitation to play Pong!</strong><br/>
         <button
           data-link="${gameUrl}"
           class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
-          ▶ Jouer avec moi
+          ▶ Play with me
         </button>
       </div>
     `;
@@ -290,11 +290,11 @@ private async loadConversations() {
       },
     };
     this.websocket.send(JSON.stringify(payload));
-    console.log('[INVITE] envoyée sur WebSocket:', payload);
+    console.log('[INVITE] sent over WebSocket:', payload);
 
 
     this.messages.push({
-      author: 'Vous',
+      author: 'You',
       text: invitationMessage.trim(),
       me: true,
     });
@@ -308,14 +308,14 @@ private async loadConversations() {
     }
     const toUserId = Number(this.selectedConversationId);
     if (!toUserId) {
-      console.warn('[sendMessage] Pas de conversation sélectionnée');
+      console.warn('[sendMessage] No conversation selected');
       return;
     }
 
     try {
 
       await ApiService.sendMessage({ receiverId: toUserId, content: text });
-      console.log('[sendMessage] REST API renvoyé OK');
+      console.log('[sendMessage] REST API returned OK');
 
 
       const payload = {
@@ -327,18 +327,18 @@ private async loadConversations() {
       };
       if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
         this.websocket.send(JSON.stringify(payload));
-        console.log('[sendMessage] Envoyé sur WebSocket:', payload);
+        console.log('[sendMessage] Sent over WebSocket:', payload);
       } else {
-        console.warn('[sendMessage] WS non ouvert, impossible d’envoyer le DM');
+        console.warn('[sendMessage] WS not opened, unable to send DM');
       }
 
 
-      this.messages.push({ author: 'Vous', text, me: true });
+      this.messages.push({ author: 'You', text, me: true });
       this.inputText = '';
       this.render();
     } catch (err) {
-      console.error('[sendMessage] Erreur envoi:', err);
-      this.flashMessage = 'Échec de l’envoi du message.';
+      console.error('[sendMessage] Sending error:', err);
+      this.flashMessage = 'Failed to send message.';
       this.flashType = 'error';
       this.render();
       setTimeout(() => {
@@ -352,7 +352,7 @@ private async loadConversations() {
   private async handleBlockUser() {
   const blockedId = Number(this.selectedConversationId);
   if (!blockedId) {
-    console.warn('[blockUser] Pas de conversation sélectionnée');
+    console.warn('[blockUser] No conversation selected');
     return;
   }
   try {
@@ -364,7 +364,7 @@ private async loadConversations() {
     if (conv) conv.blocked = true;
 
 
-    this.flashMessage = 'Utilisateur bloqué avec succès.';
+    this.flashMessage = 'User successfully blocked.';
     this.flashType = 'success';
     this.render();
 
@@ -376,7 +376,7 @@ private async loadConversations() {
     }, 3000);
   } catch (err) {
     console.error('[blockUser] failed:', err);
-    this.flashMessage = 'Impossible de bloquer l’utilisateur.';
+    this.flashMessage = 'Unable to block user.';
     this.flashType = 'error';
     this.render();
     setTimeout(() => {
@@ -390,7 +390,7 @@ private async loadConversations() {
 private async handleUnblockUser() {
   const unblockId = Number(this.selectedConversationId);
   if (!unblockId) {
-    console.warn('[unblockUser] Pas de conversation sélectionnée');
+    console.warn('[unblockUser] No conversation selected');
     return;
   }
   try {
@@ -402,7 +402,7 @@ private async handleUnblockUser() {
     if (conv) conv.blocked = false;
 
 
-    this.flashMessage = 'Utilisateur débloqué avec succès.';
+    this.flashMessage = 'User successfully unblocked.';
     this.flashType = 'success';
     this.render();
 
@@ -414,7 +414,7 @@ private async handleUnblockUser() {
     }, 3000);
   } catch (err) {
     console.error('[unblockUser] failed:', err);
-    this.flashMessage = 'Impossible de débloquer l’utilisateur.';
+    this.flashMessage = 'Unable to unblock user.';
     this.flashType = 'error';
     this.render();
     setTimeout(() => {
@@ -428,7 +428,7 @@ private async handleUnblockUser() {
 
   private viewFriendProfile(friendId?: string) {
     if (!friendId) return;
-    window.location.href = `/friend-profile?id=${friendId}`;
+    navigateTo(`/friend-profile?id=${friendId}`);
   }
 
   render() {
@@ -484,13 +484,13 @@ private async handleUnblockUser() {
                        id="unblock-button"
                        class="px-3 py-1 bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white rounded-full hover:opacity-90 transition"
                      >
-                       Débloquer
+                       Unblock
                      </button>`
                   : `<button
                        id="block-button"
                        class="px-3 py-1 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full hover:opacity-90 transition"
                      >
-                       Bloquer
+                       Block
                      </button>`;
 
                 return `
@@ -504,13 +504,13 @@ private async handleUnblockUser() {
                       id="invite-button"
                       class="px-3 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 transition"
                     >
-                      Inviter
+                      Invite
                     </button>
                     <button
                       id="profile-button"
                       class="px-3 py-1 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full hover:opacity-90 transition"
                     >
-                      Profil
+                      Profile
                     </button>
                     ${blockButtonHTML}
                   </div>
@@ -523,7 +523,7 @@ private async handleUnblockUser() {
                   ${
                     this.messages.length === 0
                       ? `<div class="flex-1 flex items-center justify-center text-gray-400 italic">
-                          Pas de messages
+                          No messages
                         </div>`
                       : this.messages
                           .map((msg) => `
@@ -546,7 +546,7 @@ private async handleUnblockUser() {
                   <input
                     id="input-message"
                     type="text"
-                    placeholder="Tapez votre message…"
+                    placeholder="Type your message..."
                     class="flex-1 px-4 py-2 rounded-l bg-white text-black focus:outline-none"
                     value="${this.inputText}"
                     autocomplete="off"
@@ -556,14 +556,14 @@ private async handleUnblockUser() {
                     type="submit"
                     class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r hover:opacity-90 transition"
                   >
-                    Envoyer
+                    Send
                   </button>
                 </form>
                 `;
               })()
             : `
             <div class="flex-1 flex items-center justify-center text-gray-400 italic">
-              Sélectionne une conversation pour démarrer
+              Select a conversation to start
             </div>
           `
         }

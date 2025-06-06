@@ -197,9 +197,26 @@ class SettingsView extends HTMLElement {
   	}
 
   	updateSetting(key: keyof GameSettings, value: string) {
-    	const parsed = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key) ? parseInt(value, 10) : value;
-    	this.settings = { ...this.settings, [key]: parsed };
-  	}
+		const isNumericField = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key);
+		if (isNumericField) {
+			const parsed = parseInt(value, 10);
+
+			// Bloque les valeurs non numériques ou ≤ 0
+			if (isNaN(parsed) || parsed <= 0) {
+				this.settingsErrorMessage = `Invalid value for "${key}". Please enter a positive number.`;
+				this.settingsSuccessMessage = '';
+				this.render();
+				return;
+			}
+			this.settings = { ...this.settings, [key]: parsed };
+		} else {
+			this.settings = { ...this.settings, [key]: value };
+		}
+		// Nettoie les anciens messages
+		this.settingsErrorMessage = '';
+		this.settingsSuccessMessage = '';
+		this.render();
+	}
 
   	saveSettings() {
     	try {
@@ -210,7 +227,7 @@ class SettingsView extends HTMLElement {
       		this.settingsErrorMessage = 'Failed to save settings.';
       		this.settingsSuccessMessage = '';
     	}
-    		this.render();
+    	this.render();
   	}
 
   	async updateUsername() {
