@@ -1,3 +1,4 @@
+
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { navigateTo } from '@/app';
@@ -23,12 +24,23 @@ class ProfileView extends HTMLElement {
     super();
   }
 
+  // Méthode liée, pour pouvoir l’ajouter ET la retirer
+  private onGameFinished = () => {
+    ApiService.getProfile()
+      .then(data => {
+        this.wins = data.wins;
+        this.losses = data.losses;
+        // Si on veut aussi rafraîchir l’historique :
+        this.loadMatchHistory().then(() => this.render());
+      })
+      .catch(err => console.error('Failed to reload profile after game finish:', err));
+  };
+
   connectedCallback() {
     const token = localStorage.getItem('token');
     if (!token) return;
-    console.log('🟢 Token:', token);
 
-    // Charger le profil une première fois
+    // 1) Charger le profil initial
     ApiService.getProfile()
       .then(data => {
         this.user = {
@@ -42,37 +54,20 @@ class ProfileView extends HTMLElement {
         this.losses = data.losses;
 
         this.render();
-
-        // Charger l’historique
-        this.loadMatchHistory().then(() => {
-          this.render();
-        });
+        // Charger l’historique ensuite
+        this.loadMatchHistory().then(() => this.render());
       })
       .catch(err => {
         console.error('Failed to load profile:', err);
       });
 
-    // Écouter l’événement "game:finished" pour rafraîchir les stats à chaque partie finie
-    window.addEventListener('game:finished', () => {
-      ApiService.getProfile()
-        .then(data => {
-          console.log('♻️ Profil rechargé après partie finie →', data);
-          this.wins = data.wins;
-          this.losses = data.losses;
-          // Si vous voulez aussi rafraîchir le matchHistory :
-          this.loadMatchHistory().then(() => {
-            this.render();
-          });
-        })
-        .catch(err => {
-          console.error('Failed to reload profile after game finish:', err);
-        });
-    });
+    // 2) Ajouter UNE SEULE fois l’écouteur "game:finished"
+    window.addEventListener('game:finished', this.onGameFinished);
   }
 
   disconnectedCallback() {
-    // Enlever l’écouteur quand on détruit le composant
-    window.removeEventListener('game:finished', this as any);
+    // Retirer la même référence qu’on avait passée à addEventListener
+    window.removeEventListener('game:finished', this.onGameFinished);
   }
 
   private showMessage(type: 'success' | 'error', message: string) {

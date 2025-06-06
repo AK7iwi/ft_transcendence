@@ -99,11 +99,20 @@ const routes: Route[] = [
   { path: '/profile', component: 'profile-view', protected: true },
 ];
 
+
 function navigateTo(path: string) {
-  history.pushState({}, '', path);
-  renderRoute();
-  window.dispatchEvent(new Event('popstate'));
+  if (window.location.pathname !== path) {	// new - (évite d’ajouter plusieurs fois la même page dans l’historique, empêche de re-render inutilement une page déjà affichée)
+    history.pushState({}, '', path);
+    renderRoute();
+    window.dispatchEvent(new Event('popstate'));
+  }
 }
+
+// function navigateTo(path: string) {
+//   history.pushState({}, '', path);
+//   renderRoute();
+//   window.dispatchEvent(new Event('popstate'));
+// }
 
 function renderRoute() {
   const main = document.querySelector('main');
@@ -123,6 +132,9 @@ function renderRoute() {
   }
 
   main.innerHTML = `<${route.component}></${route.component}>`;
+  // Force la mise à jour de la navbar (se déclenche après chaque changement de route, Met à jour dynamiquement sans reload)
+  const navbar = document.querySelector('navbar-view') as any;	// new
+  if (navbar?.update) navbar.update(); 							// new
 }
 
 // Listen to browser back/forward
@@ -140,85 +152,105 @@ document.addEventListener('click', (e) => {
 // ---- APP COMPONENT ---- //
 
 class PongApp extends HTMLElement {
-  constructor() {
-    super();
-  }
-
   connectedCallback() {
     document.body.className = 'bg-slate-900 text-white';
     this.innerHTML = `<p hidden>pong-app loaded</p>`;
-    this.updateLinks();
-    this.toggleAuthButtons();
-    this.setupRouter();
-  }
-
-  toggleAuthButtons() {
-    const authButtons = document.querySelector('#auth-buttons') as HTMLElement;
-    const token = localStorage.getItem('token');
-    if (authButtons) {
-      authButtons.style.display = token ? 'none' : 'flex';
-    }
-  }
-
-  updateLinks() {
-    const isAuthenticated = !!localStorage.getItem('token');
-    const navLinks = document.querySelector('#nav-links');
-
-    if (!navLinks) {
-      console.warn('❌ nav-links not found');
-      return;
-    }
-
-    navLinks.innerHTML = '';
-
-    const staticLinks: { href: string; label: string }[] = [];
-
-    const authLinks = isAuthenticated
-      ? [
-          { href: '/gamelog', label: 'Game' },
-          { href: '/tournament', label: 'Tournament' },
-          { href: '/chat', label: 'Chat' },
-          { href: '/friends', label: 'Friends' },
-          { href: '/settings', label: 'Settings' },
-          { href: '/profile', label: 'Profile' },
-        ]
-      : [];
-
-    const createLink = ({ href, label, onClick }: any) => {
-      const link = document.createElement('a');
-      link.href = href;
-      link.className =
-        'relative transition duration-300 ease-in-out ' +
-        'hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500 ' +
-        'after:content-[""] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
-        'hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500 ' +
-        'after:transition-all after:duration-300';
-      link.innerHTML = label;
-      if (onClick) {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          onClick();
-        });
-      }
-      return link;
-    };
-
-    staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
-    authLinks.forEach(link => navLinks.appendChild(createLink(link)));
+    renderRoute();
   }
 
   logout() {
     localStorage.removeItem('token');
-    this.updateLinks();
-    this.toggleAuthButtons();
     navigateTo('/');
-  }
-
-  setupRouter() {
-    renderRoute();
   }
 }
 
 customElements.define('pong-app', PongApp);
 
 export { navigateTo };
+
+
+
+
+// class PongApp extends HTMLElement {
+//   constructor() {
+//     super();
+//   }
+
+//   connectedCallback() {
+//     document.body.className = 'bg-slate-900 text-white';
+//     this.innerHTML = `<p hidden>pong-app loaded</p>`;
+//     this.updateLinks();
+//     this.toggleAuthButtons();
+//     this.setupRouter();
+//   }
+
+//   toggleAuthButtons() {
+//     const authButtons = document.querySelector('#auth-buttons') as HTMLElement;
+//     const token = localStorage.getItem('token');
+//     if (authButtons) {
+//       authButtons.style.display = token ? 'none' : 'flex';
+//     }
+//   }
+
+//   updateLinks() {
+//     const isAuthenticated = !!localStorage.getItem('token');
+//     const navLinks = document.querySelector('#nav-links');
+
+//     if (!navLinks) {
+//       console.warn('❌ nav-links not found');
+//       return;
+//     }
+
+//     navLinks.innerHTML = '';
+
+//     const staticLinks: { href: string; label: string }[] = [];
+
+//     const authLinks = isAuthenticated
+//       ? [
+//           { href: '/gamelog', label: 'Game' },
+//           { href: '/tournament', label: 'Tournament' },
+//           { href: '/chat', label: 'Chat' },
+//           { href: '/friends', label: 'Friends' },
+//           { href: '/settings', label: 'Settings' },
+//           { href: '/profile', label: 'Profile' },
+//         ]
+//       : [];
+
+//     const createLink = ({ href, label, onClick }: any) => {
+//       const link = document.createElement('a');
+//       link.href = href;
+//       link.className =
+//         'relative transition duration-300 ease-in-out ' +
+//         'hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500 ' +
+//         'after:content-[""] after:absolute after:left-0 after:bottom-0 after:w-0 ' +
+//         'hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500 ' +
+//         'after:transition-all after:duration-300';
+//       link.innerHTML = label;
+//       if (onClick) {
+//         link.addEventListener('click', (e) => {
+//           e.preventDefault();
+//           onClick();
+//         });
+//       }
+//       return link;
+//     };
+
+//     staticLinks.forEach(link => navLinks.appendChild(createLink(link)));
+//     authLinks.forEach(link => navLinks.appendChild(createLink(link)));
+//   }
+
+//   logout() {
+//     localStorage.removeItem('token');
+//     this.updateLinks();
+//     this.toggleAuthButtons();
+//     navigateTo('/');
+//   }
+
+//   setupRouter() {
+//     renderRoute();
+//   }
+// }
+
+// customElements.define('pong-app', PongApp);
+
+// export { navigateTo };

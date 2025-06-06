@@ -98,27 +98,36 @@ db.exec(`CREATE TABLE IF NOT EXISTS blocks (
     FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
 );`);
-db.exec(`CREATE TABLE IF NOT EXISTS game_results (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  winner_id INTEGER NOT NULL,
-  loser_id INTEGER NOT NULL,
-  played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (loser_id) REFERENCES users(id) ON DELETE CASCADE
-);`);
 db.exec(`
-  CREATE TRIGGER IF NOT EXISTS increment_stats_after_insert
+  DROP TABLE IF EXISTS game_results;
+  CREATE TABLE game_results (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    winner_id  INTEGER,
+    loser_id   INTEGER,
+    played_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (loser_id)  REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
+// (3) Définissez seulement ces deux UPDATE dans le trigger :
+db.exec(`
+  DROP TRIGGER IF EXISTS increment_stats_after_insert;
+
+CREATE TRIGGER increment_stats_after_insert
   AFTER INSERT ON game_results
   FOR EACH ROW
-  BEGIN
-    UPDATE users
+BEGIN
+  -- Si un winner_id a été fourni, on augmente “wins”
+  UPDATE users
     SET wins = wins + 1
     WHERE id = NEW.winner_id;
 
-    UPDATE users
+  -- Si un loser_id a été fourni (non NULL), on augmente “losses”
+  UPDATE users
     SET losses = losses + 1
     WHERE id = NEW.loser_id;
-  END;
+END;
 `);
 db.exec(`CREATE TABLE IF NOT EXISTS remote_games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,13 +265,13 @@ async function enableTwoFactor(username) {
   stmt.run(username);
 }
 
-function recordGameResult(winnerId, loserId) {
-  const stmt = db.prepare(`
-    INSERT INTO game_results (winner_id, loser_id)
-    VALUES (?, ?)
-  `);
-  stmt.run(winnerId, loserId);
-}
+// function recordGameResult(winnerId, loserId) {
+//   const stmt = db.prepare(`
+//     INSERT INTO game_results (winner_id, loser_id)
+//     VALUES (?, ?)
+//   `);
+//   stmt.run(winnerId, loserId);
+// }
 
 function getUserById(userId) {
   const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
@@ -290,6 +299,6 @@ module.exports = {
     updatePassword,
     storeTwoFactorSecret,
     enableTwoFactor,
-    recordGameResult,
+    // recordGameResult,
     saveRemoteGame,
 };
