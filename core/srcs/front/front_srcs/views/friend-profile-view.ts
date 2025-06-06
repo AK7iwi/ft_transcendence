@@ -1,4 +1,3 @@
-
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { navigateTo } from '../app';
@@ -136,7 +135,7 @@ class FriendProfileView {
 
     		<div class="bg-gray-900 pb-24">
       			<div class="mx-auto max-w-7xl px-6 lg:px-8">
-        			<h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Local Game Statistics</h3>
+        			<h3 class="mt-16 mb-4 text-center text-xl font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Total Game Statistics</h3>
         			<div class="mt-6 p-[2px] rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
           				<dl class="grid grid-cols-1 gap-0.5 overflow-hidden rounded-[15px] bg-gray-800 text-center sm:grid-cols-2 lg:grid-cols-4">
             				<div class="flex flex-col bg-white/5 p-8">
