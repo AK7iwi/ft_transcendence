@@ -15,6 +15,7 @@ interface GameState {
 	winner: string | null;
 	waitingForStart: boolean;
 	countdown: number | null;
+	isPaused: boolean;
 }
 
 const CANVAS_ASPECT_RATIO = 16 / 9;
@@ -110,11 +111,18 @@ class GameRemoteView extends HTMLElement {
 							S
 						</span>
 					</span>
+					<span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+											 text-white text-sm rounded-full shadow-md">
+						Pause :
+						<span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">
+							G
+						</span>
+					</span>
 				</div>
 
 				<!-- Nouvelle ligne d’information sous “Both players: W/S” -->
 				<p class="mt-6 text-gray-200 text-sm">
-					No pause in this game mode, first to 5 wins!
+					First to 5 wins!
 				</p>
 				<button
 					id="leave-button"
@@ -192,7 +200,11 @@ class GameRemoteView extends HTMLElement {
 				this.drawGame(this.currentState);
 			}
 		}
-
+		if (data.type === 'draw') {
+		if (this.currentState) {
+			this.drawGame(this.currentState);
+		}
+		}
 		if (data.type === 'opponent_disconnected') {
 			console.warn('⚠️ Opponent disconnected');
 			this.drawDisconnected(data.message);
@@ -254,6 +266,18 @@ class GameRemoteView extends HTMLElement {
 			this.keysPressed.add(e.key);
 			this.sendDirection();
 		}
+		if (e.key.toLowerCase() === 'g') {
+			this.socket?.send(
+				JSON.stringify({
+				type: 'game',
+				payload: {
+					action: 'pause',
+					playerId: this.playerId,
+					sessionId: this.sessionId
+				}
+				})
+			);
+		}
 	};
 
 	private handleKeyUp = (e: KeyboardEvent) => {
@@ -300,7 +324,7 @@ class GameRemoteView extends HTMLElement {
 	};
 
 	private drawGame(state: GameState) {
-		const { ball, paddles, isGameOver, winner, waitingForStart, countdown } = state;
+		const { ball, paddles, isGameOver, winner, waitingForStart, countdown, isPaused } = state;
 
 		const virtWidth = 768;
 		const virtHeight = 432;
@@ -327,7 +351,6 @@ class GameRemoteView extends HTMLElement {
 			this.ctx.restore();
 			return;
 		}
-
 		if (isGameOver) {
 			this.ctx.fillStyle = 'white';
 			this.ctx.fillRect(0, 0, virtWidth, virtHeight);
@@ -380,6 +403,16 @@ class GameRemoteView extends HTMLElement {
 		this.ctx.fillStyle = '#000000';
 		this.ctx.fill();
 		this.ctx.closePath();
+
+		if (isPaused) {
+			// this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+			// this.ctx.fillRect(0, 0, virtWidth, virtHeight);
+
+			this.ctx.font = 'bold 48px Arial';
+			this.ctx.fillStyle = '#000';
+			this.ctx.textAlign = 'center';
+			this.ctx.fillText('Paused', virtWidth / 2, virtHeight / 2 - 30);
+		}
 
 		this.ctx.restore();
 	}
