@@ -22,14 +22,15 @@ class GameSession {
       winner: null,
       endScore: 5,
       waitingForStart: true,
-      countdown: null
+      countdown: null,
+      isPaused: false
     };
   }
 
   update() {
-    const { ball, paddles, score, isGameOver, winner, endScore, waitingForStart, countdown } = this.state;
+    const { ball, paddles, score, isGameOver, winner, endScore, waitingForStart, countdown, isPaused } = this.state;
 
-    if (this.state.isGameOver || this.state.waitingForStart) return;
+    if (this.state.isGameOver || this.state.waitingForStart || this.state.isPaused) return;
     ball.x += ball.dx;
     ball.y += ball.dy;
     if (ball.y <= 0 || ball.y + ball.size >= 432) {
@@ -265,21 +266,21 @@ setInterval(() => {
           //      plus les deux pseudos au‐dessus ──
           const fullState = {
             ball:            session.state.ball,
-            paddles:        session.state.paddles,
+            paddles:         session.state.paddles,
             score:           session.state.score,
             isGameOver:      session.state.isGameOver,
             winner:          session.state.winner,
             waitingForStart: session.state.waitingForStart,
             countdown:       session.state.countdown,
+            isPaused:        session.state.isPaused,    
             player1Name,    // ← Pseudo du joueur 1
             player2Name     // ← Pseudo du joueur 2
           };
-
-          // ── 3. On envoie “fullState” (et non plus session.state tout seul) ──
-          ws.send(JSON.stringify({
-            type:    'state',
-            payload: fullState
-          }));
+        if (session.state.isPaused) {
+            ws.send(JSON.stringify({ type: 'draw' }));
+          } else {
+            ws.send(JSON.stringify({ type: 'state', payload: fullState }));
+          }
         } catch (err) {
           console.error(`[ERROR] Failed to send to user ${userId}:`, err);
         }
@@ -440,6 +441,25 @@ console.log('[BACK] handleAuth → userId déduit =', userId);
 
     if (action === 'input') {
       session.players.set(playerId, direction);
+    }
+
+    if (action === 'pause') {
+      session.state.isPaused = !session.state.isPaused;
+      for (const userId of session.players.keys()) {
+        const ws = this.onlineUsers.get(userId);
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const fullState = {
+            ...session.state,
+            player1Name: getUserById(session.player1)?.username || 'Player 1',
+            player2Name: getUserById(session.player2)?.username || 'Player 2'
+          };
+
+          ws.send(JSON.stringify({
+            type: 'state',
+            payload: fullState
+          }));
+        }
+      }
     }
 
     if (action === 'start' && session.state.waitingForStart && !session.state.countdown) {
