@@ -64,6 +64,7 @@ class GameSession {
       // Bien récupérer l’ID du player2 depuis this (pas “session.player2”)
       const row = getUserById(this.player2);
       this.state.winner = row?.username || 'Player 2';
+      recordGameResult(this.player2, this.player1);
       // Pas d’autre code, on sort tout de suite :
       setTimeout(() => this.fullReset(), 3000);
       return;
@@ -93,6 +94,7 @@ class GameSession {
       this.state.isGameOver = true;
       const row = getUserById(this.player1);
       this.state.winner = row?.username || 'Player 1';
+      recordGameResult(this.player1, this.player2);
       setTimeout(() => this.fullReset(), 3000);
       return;
     }
@@ -558,6 +560,15 @@ function isBlocked(senderId, receiverId) {
   `);
   const result = stmt.get(senderId, receiverId, receiverId, senderId);
   return !!result;
+}
+
+function recordGameResult(winnerId, loserId) {
+  const stmt = db.prepare(`
+    INSERT INTO game_results (winner_id, loser_id)
+    VALUES (?, ?)
+  `);
+  console.log(`[DB] Recorded game result: winner=${winnerId}, loser=${loserId}`);
+  stmt.run(winnerId, loserId);
 }
 
 module.exports = WebSocketService;
