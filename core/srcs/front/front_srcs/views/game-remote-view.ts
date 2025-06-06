@@ -111,11 +111,18 @@ class GameRemoteView extends HTMLElement {
 							S
 						</span>
 					</span>
+					<span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+											 text-white text-sm rounded-full shadow-md">
+						Pause :
+						<span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">
+							G
+						</span>
+					</span>
 				</div>
 
 				<!-- Nouvelle ligne d’information sous “Both players: W/S” -->
 				<p class="mt-6 text-gray-200 text-sm">
-					No pause in this game mode, first to 5 wins!
+					First to 5 wins!
 				</p>
 				<button
 					id="leave-button"
@@ -259,7 +266,7 @@ class GameRemoteView extends HTMLElement {
 			this.keysPressed.add(e.key);
 			this.sendDirection();
 		}
-		if (e.key.toLowerCase() === 'p') {
+		if (e.key.toLowerCase() === 'g') {
 			this.socket?.send(
 				JSON.stringify({
 				type: 'game',
