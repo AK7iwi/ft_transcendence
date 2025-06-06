@@ -20,19 +20,5 @@ rm -rf "$SRCS_DIR/back/src/service/auth/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/user/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/friend/src/utils"
 
-# Remove internal files
-rm -rf "$SRCS_DIR/back/src/service/user/src/internal"
-rm -rf "$SRCS_DIR/back/src/service/auth/src/internal"
-rm -rf "$SRCS_DIR/back/src/service/friend/src/internal"
-
-rm -rf "$SRCS_DIR/back/src/service/user/src/database/db_models/db.getter.js"
-rm -rf "$SRCS_DIR/back/src/service/user/src/database/db_models/db.update.js"
-
-rm -rf "$SRCS_DIR/back/src/service/auth/src/database/db_models/db.getter.js"
-rm -rf "$SRCS_DIR/back/src/service/auth/src/database/db_models/db.update.js"
-
-rm -rf "$SRCS_DIR/back/src/service/friend/src/database/db_models/db.getter.js"
-rm -rf "$SRCS_DIR/back/src/service/friend/src/database/db_models/db.update.js"
-
 
 echo "Cleaned up all certificates and security files"

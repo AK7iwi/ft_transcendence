@@ -1,10 +1,10 @@
 const fastify = require('fastify');
 require('dotenv').config();
+const ServiceClient = require('./utils/service-client');
 const initializeDatabase = require('./database/schema');
 const userRoutes = require('./user/user.routes');
 const updateRoutes = require('./update/update.routes');
 const internalRoutes = require('./internal/internal.routes');
-const ServiceClient = require('./utils/service-client');
 
 // Create Fastify instance
 const app = fastify({ logger: true });

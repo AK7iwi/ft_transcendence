@@ -5,10 +5,8 @@ class DbFriend {
         const stmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                two_factor_secret TEXT,
-                two_factor_enabled BOOLEAN DEFAULT 0,
+                user_id INTEGER NOT NULL,
+                friend_id INTEGER NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )

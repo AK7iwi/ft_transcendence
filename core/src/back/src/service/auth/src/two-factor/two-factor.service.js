@@ -1,7 +1,6 @@
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
-const DbUpdate = require('../database/db_models/db.update');
-const DbGetter = require('../database/db_models/db.getter');
+const DbAuth = require('../database/db.auth');
 
 class TwoFactorService {
     static async generateSecret(username) {
@@ -63,7 +62,7 @@ class TwoFactorService {
                 secret: secret
             });
 
-            return await DbUpdate.update2FASecret(userId, secret);
+            return await DbAuth.update2FASecret(userId, secret);
         } catch (error) {
             throw new Error('Failed to store 2FA secret');
         }
@@ -76,7 +75,7 @@ class TwoFactorService {
                 userId: userId
             }); 
 
-            return await DbUpdate.enable2FA(userId);
+            return await DbAuth.enable2FA(userId);
 
         } catch (error) {
             console.error('Enable 2FA error:', error);
@@ -91,7 +90,7 @@ class TwoFactorService {
                 userId: userId
             });
 
-            return await DbUpdate.disable2FA(userId);
+            return await DbAuth.disable2FA(userId);
         } catch (error) {
             throw new Error('Failed to disable 2FA');
         }
@@ -99,7 +98,7 @@ class TwoFactorService {
 
     static async getTwoFactorEnabled(userId) {
         try {
-            const enabled = await DbGetter.getTwoFactorEnabled(userId);
+            const enabled = await DbAuth.getTwoFactorEnabled(userId);
             return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
         } catch (error) {
             throw new Error('Failed to get 2FA enabled');
@@ -108,7 +107,7 @@ class TwoFactorService {
 
     static async getTwoFactorSecret(userId) {
         try {
-            return await DbGetter.getTwoFactorSecret(userId);
+            return await DbAuth.getTwoFactorSecret(userId);
         } catch (error) {
             throw new Error('Failed to get 2FA secret');
         }

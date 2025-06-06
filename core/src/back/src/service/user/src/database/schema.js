@@ -1,4 +1,4 @@
-const DbUser = require('./db_models/db.user');
+const DbUser = require('./db.user');
 
 function initializeDatabase() {
     // Initialize all database tables

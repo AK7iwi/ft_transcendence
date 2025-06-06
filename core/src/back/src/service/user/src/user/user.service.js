@@ -1,9 +1,9 @@
-const DbGetter = require('../database/db_models/db.getter');
+const DbUser = require('../database/db.user');
 
 class UserService {
     static async getUser(id) {
         try {
-            const user = await DbGetter.getUser(id);
+            const user = await DbUser.getUser(id);
 
             return {
                 id: user.user_id,

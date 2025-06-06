@@ -1,4 +1,4 @@
-const DbAuth = require('./db_models/db.auth');  
+const DbAuth = require('./db.auth');  
 
 function initializeDatabase() {
     // Initialize all database tables

@@ -1,6 +1,5 @@
 const PasswordService = require('../../security/password/password.service');
-const DbAuth = require('../database/db_models/db.auth');
-const DbGetter = require('../database/db_models/db.getter');
+const DbAuth = require('../database/db.auth');
 
 class AuthService {
     static async registerUser(username, password, serviceClient) {
@@ -32,7 +31,7 @@ class AuthService {
 
     static async loginUser(username, password) {
         try {
-            const user = await DbGetter.getUserByUsername(username);
+            const user = await DbAuth.getUserByUsername(username);
             if (!user) {
                 throw new Error('User not found');
             }
