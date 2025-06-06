@@ -216,25 +216,28 @@ async startTournament() {
   }
   
 private async recordMatchWinner(winnerNickname: string) {
+  // 1) Récupère le match courant dans le bracket
   const currentMatch = this.bracket[this.currentMatchIndex];
   const [nick1, nick2] = currentMatch.players;
   const loserNickname = (winnerNickname === nick1 ? nick2 : nick1);
 
+  // 2) On retrouve les IDs de chaque joueur
   const player1 = this.players.find(p => p.nickname === nick1)!;
   const player2 = this.players.find(p => p.nickname === nick2)!;
-
   const player1Id = player1.id;
   const player2Id = player2.id;
-  const score1     = this.score.player1;
-  const score2     = this.score.player2;
-  const winnerId   = (winnerNickname === nick1 ? player1Id : player2Id);
-  const loserId    = (winnerNickname === nick1 ? player2Id : player1Id);
 
-  // NE PAS OUBLIER DE CRÉER LE TOURNOI AVANT → this.currentTournamentId ne doit pas être null
-  const tournamentId = this.currentTournamentId!;
-  const round        = this.currentMatchIndex < 2 ? 1 : 2;
-  const matchNumber  = (this.currentMatchIndex % 2) + 1;
+  // 3) Les scores issus de la partie en cours
+  const score1   = this.score.player1;
+  const score2   = this.score.player2;
+  const winnerId = (winnerNickname === nick1 ? player1Id : player2Id);
+  const loserId  = (winnerNickname === nick1 ? player2Id : player1Id);
 
+  // 4) Calcul du round et du matchNumber
+  const round       = this.currentMatchIndex < 2 ? 1 : 2;
+  const matchNumber = (this.currentMatchIndex % 2) + 1;
+
+  // 5) On fait l’appel POST vers `/tournament/save-remote-game`
   try {
     await fetch(`${API_BASE_URL}/tournament/save-remote-game`, {
       method: 'POST',
@@ -242,10 +245,10 @@ private async recordMatchWinner(winnerNickname: string) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-     body: JSON.stringify({
-        tournamentId: this.currentTournamentId!,
-        round: this.currentMatchIndex < 2 ? 1 : 2,
-        matchNumber: (this.currentMatchIndex % 2) + 1,
+      body: JSON.stringify({
+        tournamentId:  this.currentTournamentId!,
+        round,
+        matchNumber,
         player1Id,
         player2Id,
         score1,
@@ -257,9 +260,8 @@ private async recordMatchWinner(winnerNickname: string) {
     console.error("Erreur en enregistrant le match de tournoi :", err);
   }
 
-  // continuation du bracket…
-  const currentScore = { p1: this.score.player1, p2: this.score.player2 };
-  this.matchScores[this.currentMatchIndex] = currentScore;
+  // 6) Mettre à jour le bracket en local
+  this.matchScores[this.currentMatchIndex] = { p1: score1, p2: score2 };
   if (this.currentMatchIndex < 2) {
     this.bracket[2].players.push(winnerNickname);
   }
@@ -268,13 +270,16 @@ private async recordMatchWinner(winnerNickname: string) {
   this.message     = `${winnerNickname} a gagné ${currentMatch.round} !`;
   this.messageType = 'success';
 
-if (this.currentMatchIndex >= this.bracket.length) {
+  // 7) Si tournoi terminé (3 matchs joués pour 4 joueurs), on affiche l’écran final
+  if (this.currentMatchIndex >= this.bracket.length) {
     this.isTournamentOver = true;
     this.tournamentWinner = winnerNickname;
-    // On force le rendu : render() appellera renderEndScreen()
     return this.render();
-}
+  }
+
+  // 8) Sinon, on relance le « game page » pour le match suivant
   this.resetGame();
+  this.toggleGameUI(false); // repasse à l’affichage du bracket
   this.render();
 }
 
@@ -648,7 +653,7 @@ private toggleGameUI(showGame: boolean) {
 
 
   private updateScoreDisplay() {
-    const scoreEl = document.getElementById('score');
+    const scoreEl = this.querySelector('#score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
@@ -815,53 +820,85 @@ private startBallCountdown() {
   }
 
   private updateGame() {
-    if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
-    if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
-    if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
-    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
-    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
-    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
+    // **ULTRA-PRÉCOCE** : si l’on a déjà envoyé le résultat, on ne fait plus rien
+    if (this.resultSent || !this.isBallActive || this.isGameOver) return;
+
+    // 1) Déplacement des paddles
+    if (this.keysPressed['w'] || this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['s'] || this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['o'] || this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['k'] || this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
+
+    // 2) Limiter les paddles dans le canvas
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-    if (this.isBallActive && !this.isGameOver) {
-      this.ball.x += this.ball.dx;
-      this.ball.y += this.ball.dy;
+    // 3) Déplacement de la balle
+    this.ball.x += this.ball.dx;
+    this.ball.y += this.ball.dy;
 
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
+   const halfSize = this.ball.size / 2;
+const prevX = this.ball.x - this.ball.dx;
 
-      const ballHitsPaddle = (p: any) =>
-        this.ball.y + this.ball.size / 2 >= p.y &&
-        this.ball.y - this.ball.size / 2 <= p.y + p.height;
-
-      if (
-        this.ball.dx < 0 &&
-        this.ball.x <= this.paddle1.x + this.paddle1.width &&
-        this.ball.x >= this.paddle1.x &&
-        ballHitsPaddle(this.paddle1)
-      ) {
-        this.ball.dx *= -1;
-      } else if (
-        this.ball.dx > 0 &&
-        this.ball.x + this.ball.size >= this.paddle2.x &&
-        this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-        ballHitsPaddle(this.paddle2)
-      ) {
-        this.ball.dx *= -1;
-      }
-
-      if (this.ball.x <= 0) {
-        this.score.player2++;
-        this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1] || 'Player 2') : this.resetBall(true);
-        this.updateScoreDisplay();
-      } else if (this.ball.x >= this.canvas.width) {
-        this.score.player1++;
-        this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0] || 'Player 1') : this.resetBall(true);
-        this.updateScoreDisplay();
-      }
+    // 4) Collision avec le haut / bas
+    if (this.ball.y - halfSize <= 0 || this.ball.y + halfSize >= this.canvas.height) {
+      this.ball.dy = -this.ball.dy;
     }
+
+    // 5) Collision avec le paddle gauche (player1)
+    if (
+      this.ball.x - halfSize <= this.paddle1.x + this.paddle1.width &&
+      this.ball.x - halfSize >= this.paddle1.x &&
+      this.ball.y + halfSize >= this.paddle1.y &&
+      this.ball.y - halfSize <= this.paddle1.y + this.paddle1.height
+    ) {
+      this.ball.dx = -this.ball.dx;
+      this.ball.x = this.paddle1.x + this.paddle1.width + halfSize;
+    }
+
+    // 6) Collision avec le paddle droit (player2)
+    if (
+      this.ball.x + halfSize >= this.paddle2.x &&
+      this.ball.x + halfSize <= this.paddle2.x + this.paddle2.width &&
+      this.ball.y + halfSize >= this.paddle2.y &&
+      this.ball.y - halfSize <= this.paddle2.y + this.paddle2.height
+    ) {
+      this.ball.dx = -this.ball.dx;
+      this.ball.x = this.paddle2.x - halfSize;
+    }
+
+
+    
+    if (
+  this.ball.dx < 0 &&                  // la balle VA vers la gauche
+  prevX - halfSize >= 0 &&             // au frame précédent, la balle était entièrement dans le terrain
+  this.ball.x - halfSize < 0           // et maintenant elle est partie sur x < 0
+) {
+  this.score.player2++;
+  this.updateScoreDisplay();
+  if (this.score.player2 >= this.settings.endScore) {
+    this.endGame(this.currentMatchPlayers[1] || 'Player 2');
+    return; // ← très important : on sort de updateGame()
+  }
+  this.resetBall(true);
+  return; // ← idem
+}
+
+// 2) But pour Player 1 (mur de droite)
+if (
+  this.ball.dx > 0 &&                                      // la balle VA vers la droite
+  prevX + halfSize <= this.canvas.width &&                 // au frame précédent, entièrement en jeu
+  this.ball.x + halfSize > this.canvas.width                // et maintenant x + halfSize a franchi width
+) {
+  this.score.player1++;
+  this.updateScoreDisplay();
+  if (this.score.player1 >= this.settings.endScore) {
+    this.endGame(this.currentMatchPlayers[0] || 'Player 1');
+    return; // ← très important
+  }
+  this.resetBall(true);
+  return;
+}
   }
 
   private drawCenteredText(text: string, size: number, y: number) {

@@ -1,5 +1,6 @@
-//gamelog-route.js
-const { db, recordGameResult } = require('../db');
+// → routes/gamelog.routes.js
+
+const { db } = require('../db');
 const authenticate = require('../middleware/authenticate');
 
 async function gameLogRoutes(fastify, options) {
@@ -8,30 +9,40 @@ async function gameLogRoutes(fastify, options) {
     handler: async (req, reply) => {
       const { winnerId, loserId } = req.body;
 
-      if ((!winnerId && !loserId) || (winnerId && loserId && winnerId === loserId)) {
-        return reply.status(400).send({ error: 'Missing or invalid winnerId/loserId' });
+      // Validation : on exige exactement l’un ou l’autre, pas les deux et pas aucun.
+      const hasWinner = typeof winnerId === 'number';
+      const hasLoser  = typeof loserId  === 'number';
+      if ((hasWinner && hasLoser) || (!hasWinner && !hasLoser)) {
+        return reply
+          .status(400)
+          .send({ error: 'Vous devez fournir soit winnerId, soit loserId (pas les deux).' });
       }
+      console.log('[DEBUG] inserting game_results:', {
+  winnerParam: hasWinner ? winnerId : null,
+  loserParam:  hasLoser  ? loserId  : null
+});
 
       try {
-        if (winnerId && !loserId) {
-          db.prepare(`UPDATE users SET wins = wins + 1 WHERE id = ?`).run(winnerId);
-        } else if (loserId && !winnerId) {
-          db.prepare(`UPDATE users SET losses = losses + 1 WHERE id = ?`).run(loserId);
-        } else {
-          // cas normal avec les deux
-          db.prepare(`INSERT INTO game_results (winner_id, loser_id) VALUES (?, ?)`).run(winnerId, loserId);
-          db.prepare(`UPDATE users SET wins = wins + 1 WHERE id = ?`).run(winnerId);
-          db.prepare(`UPDATE users SET losses = losses + 1 WHERE id = ?`).run(loserId);
-        }
+        // Insère dans game_results en laissant l’autre colonne à NULL
+        db.prepare(`
+          INSERT INTO game_results (winner_id, loser_id)
+          VALUES (?, ?)
+        `).run(
+          hasWinner ? winnerId : null,
+          hasLoser  ? loserId  : null
+        );
 
-        return reply.send({ message: 'Game result recorded and stats updated' });
+        return reply.send({
+          message: 'Résultat enregistré, stats mises à jour par trigger.'
+        });
       } catch (err) {
         console.error('Error recording game result:', err);
         return reply.status(500).send({ error: 'Internal server error' });
       }
     }
   });
-}
 
+
+}
 
 module.exports = gameLogRoutes;

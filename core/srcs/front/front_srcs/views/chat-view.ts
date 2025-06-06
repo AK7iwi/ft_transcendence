@@ -1,6 +1,7 @@
 
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
+import { navigateTo } from '@/app';
 
 interface Conversation {
   id: string;
@@ -150,7 +151,7 @@ private async loadConversations() {
     const friends = await ApiService.getFriends();
     const blockedIds = await ApiService.getBlockedUsers();
 
-    this.conversations = friends.map(f => {
+    this.conversations = friends.map((f: any) => {
       let raw = f.avatar || "";
 
 
@@ -428,7 +429,7 @@ private async handleUnblockUser() {
 
   private viewFriendProfile(friendId?: string) {
     if (!friendId) return;
-    window.location.href = `/friend-profile?id=${friendId}`;
+    navigateTo(`/friend-profile?id=${friendId}`);
   }
 
   render() {
