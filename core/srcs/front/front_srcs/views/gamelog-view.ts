@@ -10,23 +10,25 @@ class GamelogView extends HTMLElement {
   private score = { player1: 0, player2: 0 };
   private isGameStarted = false;
   private isGameOver = false;
-  private countdown = 0;
   private isBallActive = false;
   private isInitialCountdown = false;
   private isPaused = false;
-  private resultSent = false; // ← garde pour n’envoyer qu’une fois
-private winner: string = '';
+  private resultSent = false;
+  private winner: string = '';
+  private goalJustScored = false;
+
+  private countdown = 0;
+  private initialCountdownTimer: number | null = null;
+  private ballCountdownTimer: number | null = null;
   private keysPressed: Record<string, boolean> = {};
+
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
   private animationFrameId = 0;
   private gameLoop = false;
+
   private settingsService = SettingsService.getInstance();
-  private settings: GameSettings = JSON.parse(
-    JSON.stringify(this.settingsService.getSettings())
-  );
-  private initialCountdownTimer: number | null = null;
-  private ballCountdownTimer: number | null = null;
+  private settings: GameSettings = this.settingsService.getSettings();
 
   private paddle1 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
@@ -40,11 +42,11 @@ private winner: string = '';
   }
 
   connectedCallback() {
+    this.user = JSON.parse(localStorage.getItem('user') || '{}');
     this.render();
   }
 
   disconnectedCallback() {
-    // Annuler tous les timers et RAF
     if (this.initialCountdownTimer !== null) {
       clearInterval(this.initialCountdownTimer);
       this.initialCountdownTimer = null;
@@ -56,52 +58,37 @@ private winner: string = '';
     cancelAnimationFrame(this.animationFrameId);
   }
 
-  private render() {
-    // On récupère l’utilisateur connecté
-    this.user = JSON.parse(localStorage.getItem('user') || '{}');
+  render() {
     const playerName = this.user.username || 'Player 1';
-
     this.innerHTML = `
       <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-2 relative">
         <div class="relative flex justify-center items-center w-full max-w-[1000px] mb-4">
-          <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
-                       text-slate-900 rounded-full text-sm font-semibold">
+          <span class="absolute left-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
             ${playerName}
           </span>
-          <span class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-                       text-white rounded-full text-2xl font-bold mx-20" id="score">
+          <span id="score" class="px-8 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-full text-2xl font-bold mx-20">
             ${this.score.player1} - ${this.score.player2}
           </span>
-          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
-                       text-slate-900 rounded-full text-sm font-semibold">
+          <span class="absolute right-0 px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 rounded-full text-sm font-semibold">
             Player 2
           </span>
         </div>
 
-        <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px]
-                    bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <div class="w-4/5 max-w-[1000px] min-w-[300px] rounded-xl p-[5px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
           <div class="bg-white rounded-xl overflow-hidden">
             <canvas id="pongCanvas" class="w-full h-[60vh] min-h-[200px]"></canvas>
           </div>
         </div>
 
-        <div class="flex flex-wrap justify-center gap-4 mt-6">
-          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
-                       text-white text-sm rounded-full shadow-md">
-            Player 1:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
+        <div class="flex flex-wrap justify-center gap-4 mt-6 text-white text-sm">
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+            Player 1: <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span> <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
           </span>
-          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-                       text-white text-sm rounded-full shadow-md">
-            Pause:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+            Pause: <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
           </span>
-          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
-                       text-white text-sm rounded-full shadow-md">
-            Player 2:
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span>
-            <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">K</span>
+          <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
+            Player 2: <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span> <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">K</span>
           </span>
         </div>
       </div>
@@ -109,7 +96,6 @@ private winner: string = '';
 
     this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
-
     this.setupEventListeners();
     this.initGame();
     this.draw();
@@ -123,18 +109,17 @@ private winner: string = '';
   }
 
   private handleResize = () => {
-    if (this.isGameStarted) return;
+    if (this.isGameStarted) return; 
     if (!this.canvas) return;
     this.initGame();
     this.draw();
   };
 
   private setupEventListeners() {
-    // On capture keydown/keyup pour déplacer les paddles
     ['keydown', 'keyup'].forEach((event) =>
       window.addEventListener(event, (e: Event) => {
         const keyEvent = e as KeyboardEvent;
-        this.keysPressed[keyEvent.key] = event === 'keydown';
+        this.keysPressed[keyEvent.key] = (event === 'keydown');
         if (event === 'keydown') {
           this.handleKeyDown(keyEvent);
         }
@@ -144,9 +129,7 @@ private winner: string = '';
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      if (e.repeat || this.initialCountdownTimer !== null || this.isInitialCountdown) {
-        return;
-      }
+      if (e.repeat || this.initialCountdownTimer !== null || this.isInitialCountdown) return;
       if (this.isGameOver) {
         this.resetGame();
         return;
@@ -164,22 +147,15 @@ private winner: string = '';
 
   private togglePause() {
     this.isPaused = !this.isPaused;
-    this.isPaused
-      ? cancelAnimationFrame(this.animationFrameId)
-      : this.startGameLoop();
+    if (this.isPaused) {
+      cancelAnimationFrame(this.animationFrameId);
+    } else {
+      this.startGameLoop();
+    }
     this.draw();
   }
 
-  private updateGameSettings() {
-    this.paddle1.speed = this.settings.paddleSpeed;
-    this.paddle2.speed = this.settings.paddleSpeed;
-    this.ball.speed = this.settings.ballSpeed;
-    this.ball.dx = this.settings.ballSpeed;
-    this.ball.dy = this.settings.ballSpeed;
-  }
-
   private initGame() {
-    // Taille du canvas 16/9
     const container = this.canvas.parentElement!;
     let width = container.clientWidth;
     let height = width / CANVAS_ASPECT_RATIO;
@@ -190,34 +166,34 @@ private winner: string = '';
     this.canvas.width = width;
     this.canvas.height = height;
 
-    // Position initiale des paddles
-    this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
-    this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-    this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
-    this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
+    this.paddle1.x = width * PADDLE_MARGIN;
+    this.paddle1.y = (height - this.paddle1.height) / 2;
+    this.paddle2.x = width * (1 - PADDLE_MARGIN) - this.paddle2.width;
+    this.paddle2.y = (height - this.paddle2.height) / 2;
 
-    // Reset flags
-    this.resetBall(/* withCountdown = */ true);
+    this.resetBall(true);
     this.gameLoop = false;
     this.isGameStarted = false;
     this.isBallActive = false;
     this.updateGameSettings();
   }
 
-  private resetBall(withCountdown = true) {
-    // Recentrer la balle
+  private updateGameSettings() {
+    this.paddle1.speed = this.settings.paddleSpeed;
+    this.paddle2.speed = this.settings.paddleSpeed;
+    this.ball.speed = this.settings.ballSpeed;
+    this.ball.dx = this.settings.ballSpeed;
+    this.ball.dy = this.settings.ballSpeed;
+  }
+
+  private resetBall(withCountdown = true, scoredFor: 'player1' | 'player2' | null = null) {
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
-    const angle = ((Math.random() * 120 - 60) * Math.PI) / 180;
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-
-    // Recentre les paddles en Y
+    this.ball.dx = 0;
+    this.ball.dy = 0;
     this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    // Annuler tout ancien timer
     if (this.ballCountdownTimer !== null) {
       clearInterval(this.ballCountdownTimer);
       this.ballCountdownTimer = null;
@@ -225,10 +201,26 @@ private winner: string = '';
 
     if (withCountdown) {
       this.isBallActive = false;
-      this.startBallCountdown();
+      this.startBallCountdown(scoredFor);
     } else {
+      this.setBallDirection(scoredFor);
       this.isBallActive = true;
     }
+  }
+
+  private startBallCountdown(scoredFor: 'player1' | 'player2' | null = null) {
+    this.countdown = COUNTDOWN_START;
+    this.ballCountdownTimer = window.setInterval(() => {
+      this.countdown--;
+      this.draw();
+      if (this.countdown <= 0) {
+        clearInterval(this.ballCountdownTimer!);
+        this.ballCountdownTimer = null;
+        this.setBallDirection(scoredFor);
+        this.isBallActive = true;
+        console.log('[COUNTDOWN FINI] x=', this.ball.x, 'isBallActive:', this.isBallActive);
+      }
+    }, 1000);
   }
 
   private startInitialCountdown() {
@@ -244,39 +236,29 @@ private winner: string = '';
     this.initialCountdownTimer = window.setInterval(() => {
       this.countdown--;
       this.draw();
-
       if (this.countdown <= 0) {
         clearInterval(this.initialCountdownTimer!);
         this.initialCountdownTimer = null;
         this.isInitialCountdown = false;
-
         this.isGameStarted = true;
         this.gameLoop = true;
-
-        // On rend la balle active immédiatement
         this.resetBall(false);
         this.startGameLoop();
       }
     }, 1000);
   }
 
-  private startBallCountdown() {
-    this.countdown = COUNTDOWN_START;
-
-    this.ballCountdownTimer = window.setInterval(() => {
-      this.countdown--;
-      this.draw();
-
-      if (this.countdown <= 0) {
-        clearInterval(this.ballCountdownTimer!);
-        this.ballCountdownTimer = null;
-        this.isBallActive = true;
-      }
-    }, 1000);
+  private setBallDirection(scoredFor) {
+    const angle = ((Math.random() * 120) - 60) * (Math.PI / 180);
+    let dir = Math.random() > 0.5 ? 1 : -1;
+    if (scoredFor === 'player1') dir = -1;
+    if (scoredFor === 'player2') dir = 1;
+    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * dir;
+    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
+    console.log('[setBallDirection]', 'x:', this.ball.x, 'dx:', this.ball.dx, 'dir:', dir, 'scoredFor:', scoredFor);
   }
 
   private startGameLoop() {
-    // Ne rien faire si on est en pause / déjà game over / ou gameLoop à false
     if (!this.gameLoop || this.isPaused || this.isGameOver) return;
     this.updateGame();
     this.draw();
@@ -284,113 +266,103 @@ private winner: string = '';
   }
 
   private updateGame() {
-    // **ULTRA-PRÉCOCE** : si l’on a déjà envoyé le résultat, on ne fait plus rien
-    if (this.resultSent || !this.isBallActive || this.isGameOver) return;
+    if (this.isGameOver || this.resultSent) return;
+    if (!this.isBallActive) return;
+    if (this.goalJustScored) return;
 
-    // 1) Déplacement des paddles
     if (this.keysPressed['w'] || this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s'] || this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o'] || this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['k'] || this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
 
-    // 2) Limiter les paddles dans le canvas
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-    // 3) Déplacement de la balle
     this.ball.x += this.ball.dx;
     this.ball.y += this.ball.dy;
+    const halfSize = this.ball.size / 2;
 
-   const halfSize = this.ball.size / 2;
-const prevX = this.ball.x - this.ball.dx;
-
-    // 4) Collision avec le haut / bas
-    if (this.ball.y - halfSize <= 0 || this.ball.y + halfSize >= this.canvas.height) {
+    if (this.ball.y - halfSize <= 0) {
+      this.ball.y = halfSize;
+      this.ball.dy = -this.ball.dy;
+    } else if (this.ball.y + halfSize >= this.canvas.height) {
+      this.ball.y = this.canvas.height - halfSize;
       this.ball.dy = -this.ball.dy;
     }
 
-    // 5) Collision avec le paddle gauche (player1)
+    // Paddle collisions
     if (
       this.ball.x - halfSize <= this.paddle1.x + this.paddle1.width &&
       this.ball.x - halfSize >= this.paddle1.x &&
       this.ball.y + halfSize >= this.paddle1.y &&
       this.ball.y - halfSize <= this.paddle1.y + this.paddle1.height
     ) {
-      this.ball.dx = -this.ball.dx;
       this.ball.x = this.paddle1.x + this.paddle1.width + halfSize;
+      this.ball.dx = -this.ball.dx;
     }
-
-    // 6) Collision avec le paddle droit (player2)
     if (
       this.ball.x + halfSize >= this.paddle2.x &&
       this.ball.x + halfSize <= this.paddle2.x + this.paddle2.width &&
       this.ball.y + halfSize >= this.paddle2.y &&
       this.ball.y - halfSize <= this.paddle2.y + this.paddle2.height
     ) {
-      this.ball.dx = -this.ball.dx;
       this.ball.x = this.paddle2.x - halfSize;
+      this.ball.dx = -this.ball.dx;
     }
 
-
-    
-    if (
-  this.ball.dx < 0 &&                  // la balle VA vers la gauche
-  prevX - halfSize >= 0 &&             // au frame précédent, la balle était entièrement dans le terrain
-  this.ball.x - halfSize < 0           // et maintenant elle est partie sur x < 0
-) {
-  this.score.player2++;
-  console.log(
-    'DEBUG après but → player2=', this.score.player2,
-    'endScore=', this.settings.endScore
-  );
-  this.updateScoreDisplay();
-
-  if (this.score.player2 >= this.settings.endScore) {
-    this.endGame(false);
-    return;
-  }
-  this.resetBall(true);
-  return;
-}
-
-// 2) But pour Player 1 (mur de droite)
-if (
-  this.ball.dx > 0 &&                                      // la balle VA vers la droite
-  prevX + halfSize <= this.canvas.width &&                 // au frame précédent, entièrement en jeu
-  this.ball.x + halfSize > this.canvas.width                // et maintenant x + halfSize a franchi width
-) {
-  this.score.player1++;
-  console.log(
-    'DEBUG après but → player1=', this.score.player1,
-    'endScore=', this.settings.endScore
-  );
-  this.updateScoreDisplay();
-
-  if (this.score.player1 >= this.settings.endScore) {
-    this.endGame(true);
-    return;
-  }
-  this.resetBall(true);
-  return;
-}
-  }
-
-  private drawCenteredText(text: string, size: number, y: number) {
-    this.ctx.font = `bold ${size}px Arial`;
-    this.ctx.fillStyle = '#000';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(text, this.canvas.width / 2, y);
+    // Détection de but
+    // Bord gauche => but player2 (local only)
+    if (this.ball.x + halfSize < 0) {
+      if (!this.isBallActive) return;
+      this.goalJustScored = true;
+      this.isBallActive = false;
+      this.score.player2++;
+      this.updateScoreDisplay();
+      this.ball.x = this.canvas.width / 2;
+      this.ball.y = this.canvas.height / 2;
+      this.ball.dx = 0;
+      this.ball.dy = 0;
+      if (this.score.player2 >= this.settings.endScore) {
+        this.isGameOver = true;
+        this.resultSent = true;
+        this.endGame(false); // Player1 perd
+        return;
+      } else {
+        setTimeout(() => { this.goalJustScored = false; }, 10);
+        this.resetBall(true, 'player2');
+        return;
+      }
+    }
+    // Bord droit => but player1 (user connecté)
+    if (this.ball.x - halfSize > this.canvas.width) {
+      if (!this.isBallActive) return;
+      this.goalJustScored = true;
+      this.isBallActive = false;
+      this.score.player1++;
+      this.updateScoreDisplay();
+      this.ball.x = this.canvas.width / 2;
+      this.ball.y = this.canvas.height / 2;
+      this.ball.dx = 0;
+      this.ball.dy = 0;
+      if (this.score.player1 >= this.settings.endScore) {
+        this.isGameOver = true;
+        this.resultSent = true;
+        this.endGame(true); // Player1 gagne
+        return;
+      } else {
+        setTimeout(() => { this.goalJustScored = false; }, 10);
+        this.resetBall(true, 'player1');
+        return;
+      }
+    }
   }
 
   private draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Dessin des paddles
     this.ctx.fillStyle = this.settings.paddleColor;
     this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
     this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
 
-    // Dessin de la balle si active
     if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
       this.ctx.beginPath();
       this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
@@ -399,7 +371,6 @@ if (
       this.ctx.closePath();
     }
 
-    // Ligne centrale pointillée
     this.ctx.beginPath();
     this.ctx.setLineDash([5, 15]);
     this.ctx.moveTo(this.canvas.width / 2, 0);
@@ -408,7 +379,6 @@ if (
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
-    // Afficher « Game Over », « Paused », « Press ENTER » ou « countdown » selon l’état
     if (this.isGameOver) {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
       this.drawCenteredText('Press ENTER to Play Again', 24, this.canvas.height / 2 + 30);
@@ -423,73 +393,72 @@ if (
     } else if (!this.isBallActive && this.countdown > 0) {
       this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
+
+    if (!this.isGameStarted) {
+      requestAnimationFrame(() => this.draw());
+    }
   }
 
-// 2) On refactorise complètement endGame() pour ne plus comparer de chaîne « Player 1 » / « Player 2 » :
-private endGame(isUserWinner: boolean) {
-  // 1) Si on a déjà envoyé le résultat, on ne refait rien
-  if (this.resultSent) {
-    return;
-  }
-  this.resultSent = true;
-
-  // 2) Arrêter la balle et la boucle de jeu
-  this.isBallActive = false;
-  this.isGameStarted = false;
-  this.isPaused = false;
-  this.isGameOver = true;
-  this.gameLoop = false;
-  cancelAnimationFrame(this.animationFrameId);
-
-  // 3) Conserver la chaîne à afficher (« Vous avez gagné !» ou « Vous avez perdu »)
-  this.winner = isUserWinner ? 'Vous' : 'Player 2'
-
-  // 4) Construire un payload minimal : 
-  //    – si l’utilisateur a gagné, on envoie `winnerId = this.user.id`
-  //    – sinon, on envoie `loserId = this.user.id`
-  const payload: { winnerId?: number; loserId?: number } = {};
-  if (isUserWinner) {
-    payload.winnerId = this.user.id;
-  } else {
-    payload.loserId = this.user.id;
+  private drawCenteredText(text: string, size: number, y: number) {
+    this.ctx.font = `bold ${size}px Arial`;
+    this.ctx.fillStyle = '#000';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(text, this.canvas.width / 2, y);
   }
 
-  // 5) Envoyer UNE SEULE requête grâce au flag resultSent
-  fetch(`${API_BASE_URL}/game/result`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    },
-    body: JSON.stringify(payload),
+  // SEULEMENT player1 connecté va en DB, jamais le local player2
+  private endGame(isUserWinner: boolean) {
+    if (this.resultSent) {
+      console.log('[DEBUG] RESULT already sent, skip!');
+      return;
+    }
+    console.log('[ENDGAME] called! Score:', this.score);
+    this.resultSent = true;
+
+    this.isBallActive = false;
+    this.isGameStarted = false;
+    this.isPaused = false;
+    this.isGameOver = true;
+    this.gameLoop = false;
+    cancelAnimationFrame(this.animationFrameId);
+
+    this.winner = isUserWinner ? 'Player 1' : 'Player 2';
+
+    // ENVOI EN DB UNIQUEMENT POUR player1 CONNECTÉ
+    const payload: { winnerId?: number; loserId?: number } = {};
+    if (isUserWinner) {
+      payload.winnerId = this.user.id;
+    } else {
+      payload.loserId = this.user.id;
+    }
+   fetch(`${API_BASE_URL}/game/result`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  },
+  body: JSON.stringify(payload),
+})
+  .then(res => res.json())
+  .then(data => {
+    console.log('[FRONT] Réponse du serveur :', data, 'Payload:', payload);
   })
-    .then(res => {
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      console.log('✅ Résultat enregistré :', data);
-      this.dispatchEvent(new CustomEvent('game:finished', {
-        bubbles: true,
-        composed: true,
-        detail: { userWon: isUserWinner }
-      }));
-    })
-    .catch(err => {
-      console.error('❌ Échec fetch("/game/result") :', err.message);
-    });
-}
+  .catch(err => {
+    console.error('[FRONT] Erreur fetch("/game/result") :', err.message);
+  });
 
+  }
 
   private resetGame() {
-    // Tout remettre à zéro pour un nouveau match
+    console.log('[RESET GAME] scores:', this.score, 'gameOver:', this.isGameOver);
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
-    this.countdown = 0;
+    this.winner = '';
     this.isGameStarted = false;
     this.isBallActive = false;
     this.isInitialCountdown = false;
     this.gameLoop = false;
+    this.isPaused = false;
     this.resultSent = false;
 
     if (this.initialCountdownTimer !== null) {

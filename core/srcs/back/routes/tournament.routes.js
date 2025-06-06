@@ -1,6 +1,6 @@
 // routes/tournament.routes.js
 const fp = require('fastify-plugin');
-// const { getUserByUsernameforMat, recordGameResult, db } = require('../db');
+const { getUserByUsernameforMat, recordGameResult, db } = require('../db');
 
 module.exports = fp(async (fastify, opts) => {
   // --- 1) Validation du pseudo pour le tournoi ---
@@ -64,10 +64,8 @@ fastify.post(
       winnerId
     } = request.body;
 
-    // Validation basique (omise ici pour la concision)
-
     try {
-      // 1) Insérer dans remote_games
+      // 1) INSERT dans remote_games
       const insertRemote = db.prepare(`
         INSERT INTO remote_games
           (player1_id, player2_id, score1, score2, winner_id)
@@ -76,16 +74,14 @@ fastify.post(
       const remoteInfo = insertRemote.run(player1Id, player2Id, score1, score2, winnerId);
       const remoteGameId = remoteInfo.lastInsertRowid;
 
-      // 2) Insérer dans game_results → le trigger SQLite VA incrémenter wins/losses
+      // 2) INSERT dans game_results : le trigger fait l’incrément de wins/losses
       const loserId = (winnerId === player1Id ? player2Id : player1Id);
       db.prepare(`
         INSERT INTO game_results (winner_id, loser_id)
         VALUES (?, ?)
       `).run(winnerId, loserId);
 
-      // → **Ne plus jamais faire** de `UPDATE users SET wins=...` ou `UPDATE users SET losses=...` ici !
-
-      // 3) Insérer dans tournament_matches (si besoin)
+      // 3) INSERT dans tournament_matches
       const insertTMatch = db.prepare(`
         INSERT INTO tournament_matches
           (tournament_id, game_id, round, match_number)
@@ -100,8 +96,4 @@ fastify.post(
     }
   }
 );
-
-
-  // routes/tournament.routes.js
-
-});
+}

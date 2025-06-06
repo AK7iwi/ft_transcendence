@@ -41,6 +41,8 @@ async function gameLogRoutes(fastify, options) {
       }
     }
   });
+
+
 }
 
 module.exports = gameLogRoutes;
