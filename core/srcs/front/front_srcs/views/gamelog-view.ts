@@ -15,7 +15,7 @@ class GamelogView extends HTMLElement {
   private isInitialCountdown = false;
   private isPaused = false;
   private resultSent = false; // ← garde pour n’envoyer qu’une fois
-
+private winner: string = '';
   private keysPressed: Record<string, boolean> = {};
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
