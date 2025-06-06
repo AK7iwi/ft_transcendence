@@ -52,7 +52,6 @@ fastify.decorate('authenticate', authenticate);
 // Routes
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(avatarRoutes, { prefix: '/auth' });
-fastify.register(require('./routes/gamelog.routes'));
 // fastify.register(require('./routes/tournament.routes'), { prefix: '/tournament' });
 fastify.register(require('./routes/profile.routes'));
 

@@ -3,23 +3,24 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 
+
 const dbDir = process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : path.join(__dirname, 'data');
 if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+  fs.mkdirSync(dbDir, { recursive: true });
 }
 
 // Create database
 let db;
 try {
-    const dbPath = process.env.DB_PATH || path.join(dbDir, 'database.sqlite');
-    console.log('Initializing database at:', dbPath);
-    db = new Database(dbPath, { verbose: console.log });
-    db.pragma('foreign_keys = ON');
+  const dbPath = process.env.DB_PATH || path.join(dbDir, 'database.sqlite');
+  console.log('Initializing database at:', dbPath);
+  db = new Database(dbPath, { verbose: console.log });
+  db.pragma('foreign_keys = ON');
+  console.log('>>> SQLITE PATH:', dbPath);
 } catch (error) {
-    console.error('Failed to initialize database:', error);
-    process.exit(1);
+  console.error('Failed to initialize database:', error);
+  process.exit(1);
 }
-
 // Initialize tables
 function initializeDatabase() {
     try {
@@ -113,21 +114,14 @@ db.exec(`
 // (3) Définissez seulement ces deux UPDATE dans le trigger :
 db.exec(`
   DROP TRIGGER IF EXISTS increment_stats_after_insert;
-
 CREATE TRIGGER increment_stats_after_insert
   AFTER INSERT ON game_results
   FOR EACH ROW
 BEGIN
-  -- Si un winner_id a été fourni, on augmente “wins”
-  UPDATE users
-    SET wins = wins + 1
-    WHERE id = NEW.winner_id;
-
-  -- Si un loser_id a été fourni (non NULL), on augmente “losses”
-  UPDATE users
-    SET losses = losses + 1
-    WHERE id = NEW.loser_id;
+  UPDATE users SET wins = wins + 1 WHERE id = NEW.winner_id;
+  UPDATE users SET losses = losses + 1 WHERE id = NEW.loser_id;
 END;
+
 `);
 db.exec(`CREATE TABLE IF NOT EXISTS remote_games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -265,13 +259,13 @@ async function enableTwoFactor(username) {
   stmt.run(username);
 }
 
-// function recordGameResult(winnerId, loserId) {
-//   const stmt = db.prepare(`
-//     INSERT INTO game_results (winner_id, loser_id)
-//     VALUES (?, ?)
-//   `);
-//   stmt.run(winnerId, loserId);
-// }
+function recordGameResult(winnerId, loserId) {
+  const stmt = db.prepare(`
+    INSERT INTO game_results (winner_id, loser_id)
+    VALUES (?, ?)
+  `);
+  stmt.run(winnerId, loserId);
+}
 
 function getUserById(userId) {
   const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
@@ -299,6 +293,6 @@ module.exports = {
     updatePassword,
     storeTwoFactorSecret,
     enableTwoFactor,
-    // recordGameResult,
+    recordGameResult,
     saveRemoteGame,
 };
