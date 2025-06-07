@@ -185,11 +185,13 @@ async handleJoin(e: Event) {
   }
 
 private removePlayer(id: number) {
+  if (this.bracket.length > 0) return; // Ignore si tournoi lancé
   this.players = this.players.filter(p => p.id !== id);
   this.message = 'Player removed';
   this.messageType = 'success';
   this.render();
 }
+
 
   private resetTournament() {
     this.players = [];
@@ -447,11 +449,13 @@ private normalizeBallVelocity() {
         <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
       </div>
       <button
-        class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
-        data-player-id="${player.id}"
-      >
-        Remove
-      </button>
+  class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
+  data-player-id="${player.id}"
+  ${this.bracket.length > 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+>
+  Remove
+</button>
+
     </div>
   </div>
 `).join('')}
