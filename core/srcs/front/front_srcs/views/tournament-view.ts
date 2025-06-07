@@ -1,3 +1,4 @@
+import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
 import { API_BASE_URL } from '../config'; // adjust path as needed
 import type { GameSettings } from '../services/settings-service';
@@ -897,8 +898,5 @@ private togglePause() {
 }
 
 customElements.define('tournament-view', TournamentView);
-
-
-
 
 

@@ -283,13 +283,22 @@ function recordGameResultTournament(winnerId, loserId) {
   stmt.run(winnerId, loserId);
 }
 
-function recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent }) {
+function recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent, playedAt }) {
   const stmt = db.prepare(`
-    INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent, played_at)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(userId, opponent, result, scoreUser, scoreOpponent);
+  stmt.run(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
 }
+
+
+// function recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent }) {
+//   const stmt = db.prepare(`
+//     INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent)
+//     VALUES (?, ?, ?, ?, ?)
+//   `);
+//   stmt.run(userId, opponent, result, scoreUser, scoreOpponent);
+// }
 
 function getUserById(userId) {
   const stmt = db.prepare('SELECT username FROM users WHERE id = ?');

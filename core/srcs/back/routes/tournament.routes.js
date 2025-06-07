@@ -34,7 +34,7 @@ async function tournamentRoutes(fastify, options) {
       }
 
       try {
-        recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent });
+        recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent, playedAt: new Date().toISOString()});
         console.log(`[✅ DB] Match history recorded for user ${userId} vs ${opponent}`);
         return reply.send({ success: true });
       } catch (err) {
