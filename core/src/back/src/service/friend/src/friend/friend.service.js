@@ -2,11 +2,12 @@ const DbFriend = require('../database/db.friend');
 
 class FriendService {
     static async addFriend(userId, username) {
-        // Check if user exists
-        const friend = DbFriend.findUserByUsername(username);
-        if (!friend) {
-            throw new Error('User not found');
-        }
+        try {
+            // Check if user exists
+            const friend = await DbFriend.findUserByUsername(username);
+            if (!friend) {
+                throw new Error('User not found');
+            }
 
         // Check if trying to add self
         if (friend.id === userId) {
@@ -14,15 +15,21 @@ class FriendService {
         }
 
         // Check if friendship already exists
-        const exists = DbFriend.findFriendship(userId, friend.id);
+        const exists = await DbFriend.findFriendship(userId, friend.id);
         if (exists) {
             throw new Error('Friend already added');
         }
 
-        // Add friend
-        DbFriend.createFriendship(userId, friend.id);
+            // Add friend
+            await DbFriend.createFriendship(userId, friend.id);
 
-        return { success: true, message: 'Friend added successfully' };
+            return {
+                username: username
+            };
+
+        } catch (error) {
+            throw new Error(`Failed to add friend: ${error.message}`);
+        }
     }
 
 }

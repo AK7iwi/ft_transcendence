@@ -17,7 +17,8 @@ initializeDatabase();
 
 // Register routes
 app.register(friendRoutes, { prefix: '/friend' });
-app.register(internalRoutes, { prefix: '/internal' });
+app.register(internalRoutes, { prefix: '/friend/internal' });
+
 // Test endpoint
 app.get('/', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is running' });

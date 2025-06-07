@@ -5,7 +5,7 @@ class InternalService {
         try {
             await DbUser.createUser(userId, username, hashedPassword);
         } catch (error) {
-            throw new Error(`Failed to create user: ${error.message}`);
+            throw error;
         }
     }
 
@@ -13,7 +13,7 @@ class InternalService {
         try {
             await DbUser.update2FASecret(userId, secret);
         } catch (error) {
-            throw new Error(`Failed to create user: ${error.message}`);
+            throw error;
         }
     }
 
@@ -21,7 +21,7 @@ class InternalService {
         try {
             await DbUser.enable2FA(userId);
         } catch (error) {
-            throw new Error(`Failed to enable 2FA: ${error.message}`);
+            throw error;
         }
     }
 
@@ -29,7 +29,7 @@ class InternalService {
         try {
             await DbUser.disable2FA(userId);   
         } catch (error) {
-            throw new Error(`Failed to disable 2FA: ${error.message}`);
+            throw error;
         }
     }
 }

@@ -4,9 +4,14 @@ const friendSchema = {
             type: 'object',
             required: ['username'],
             properties: {
-                username: { type: 'string' }
+                username: {
+                    type: 'string',
+                    minLength: 3,
+                    maxLength: 20,
+                    pattern: '^[a-zA-Z0-9_-]+$'
+                }
             }
-        }
+        }   
     }
 };
 

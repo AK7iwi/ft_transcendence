@@ -4,10 +4,11 @@ const friendSchema = {
             type: 'object',
             required: ['username'],
             properties: {
-                username: { 
+                username: {
                     type: 'string',
                     minLength: 3,
-                    maxLength: 20
+                    maxLength: 20,
+                    pattern: '^[a-zA-Z0-9_-]+$'
                 }
             }
         },
@@ -16,7 +17,18 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             400: {

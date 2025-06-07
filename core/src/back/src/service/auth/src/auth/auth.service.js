@@ -12,10 +12,16 @@ class AuthService {
                 username: username,
                 hashedPassword: hashedPassword
             });
+
+            await serviceClient.post(`${process.env.FRIEND_SERVICE_URL}/friend/internal/createUser`, {
+                userId: result.lastInsertRowid,
+                username: username
+            });
             
             return {
                 username: username
             };
+            
         } catch (error) {
             if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
                 throw new Error('Username already exists');

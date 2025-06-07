@@ -3,8 +3,9 @@ const UpdateService = require('./update.service');
 class UpdateController {
     async updateUsername(request, reply) {
         try {
+          const { newUsername } = request.body;
             const currentUsername = request.user.username;
-            const { newUsername } = request.body;
+
             await UpdateService.updateUsername(currentUsername, newUsername, request.server.serviceClient);
             
             return reply.code(200).send({
