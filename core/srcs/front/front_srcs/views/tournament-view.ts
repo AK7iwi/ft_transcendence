@@ -65,6 +65,11 @@ class TournamentView extends HTMLElement {
   }
 
 async handleJoin(e: Event) {
+  if (this.players.length >= 4) {
+  this.message = 'Maximum 4 players in the tournament';
+  this.messageType = 'error';
+  return this.render();
+}
   e.preventDefault();
   this.message = '';
   this.messageType = '';
@@ -104,9 +109,10 @@ async handleJoin(e: Event) {
       id: data.id!,
       username,
       nickname,
-      avatar: data.avatar?.startsWith('/')
-        ? `${API_BASE_URL}${data.avatar}`
-        : (data.avatar || 'https://placehold.co/96x96?text=Avatar'),
+     avatar: data.avatar
+  ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
+  : `${API_BASE_URL}/avatars/default.png`,
+
       matchesPlayed: (data.wins ?? 0) + (data.losses ?? 0),
       winRatio: (data.wins ?? 0) + (data.losses ?? 0) > 0 ? (data.wins ?? 0) / ((data.wins ?? 0) + (data.losses ?? 0)) : null
     });
@@ -154,6 +160,13 @@ async handleJoin(e: Event) {
     this.messageType = 'success';
     this.render();
   }
+
+private removePlayer(id: number) {
+  this.players = this.players.filter(p => p.id !== id);
+  this.message = 'Player removed';
+  this.messageType = 'success';
+  this.render();
+}
 
   private resetTournament() {
     this.players = [];
@@ -351,25 +364,28 @@ async handleJoin(e: Event) {
 
             <form class="flex gap-2 mb-4" onsubmit="return false;">
               <input
-                type="text"
-                placeholder="Username"
-                value="${this.username}"
-                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-                name="username"
-              />
-              <input
-                type="text"
-                placeholder="Nickname"
-                value="${this.nickname}"
-                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-                name="nickname"
-              />
-              <button
-                type="submit"
-                class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
-              >
-                Join
-              </button>
+  type="text"
+  placeholder="Username"
+  value="${this.username}"
+  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+  name="username"
+  ${this.players.length >= 4 ? 'disabled' : ''}
+/>
+<input
+  type="text"
+  placeholder="Nickname"
+  value="${this.nickname}"
+  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+  name="nickname"
+  ${this.players.length >= 4 ? 'disabled' : ''}
+/>
+<button
+  type="submit"
+  class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
+  ${this.players.length >= 4 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+>
+  Join
+</button>
             </form>
 
             ${this.message ? `
@@ -382,22 +398,28 @@ async handleJoin(e: Event) {
         <!-- Full width player cards -->
         <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
           ${this.players.map(player => `
-            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
-                <img
-                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
-                  alt="Avatar of ${player.nickname}"
-                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-                />
-                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
-                <div class="text-white text-sm space-y-1 w-full">
-                  <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
-                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-          `).join('')}
+  <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+    <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+      <img
+        src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+        alt="Avatar of ${player.nickname}"
+        class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+      />
+      <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+      <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+      <div class="text-white text-sm space-y-1 w-full">
+        <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
+        <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
+      </div>
+      <button
+        class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
+        data-player-id="${player.id}"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+`).join('')}
         </div>
 
         ${this.bracket.length === 0 ? `
@@ -452,7 +474,12 @@ async handleJoin(e: Event) {
 
     </main>
   `;
-
+this.querySelectorAll('.remove-player-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const id = Number((btn as HTMLElement).getAttribute('data-player-id'));
+    this.removePlayer(id);
+      });
+});
   // Attach event listeners after setting innerHTML
   this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
   this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
