@@ -13,11 +13,12 @@ class ProfileView extends HTMLElement {
 
   private matchHistory: Array<{
     match_id: number;
-    played_at: string;
-    result: 'win' | 'loss';
+    user_id: number;
     opponent: string;
-    user_score: number | null;
-    opponent_score: number | null;
+    result: 'win' | 'loss';
+    score_user: number;
+    score_opponent: number;
+    played_at: string;
   }> = [];
 
   constructor() {
@@ -119,7 +120,19 @@ class ProfileView extends HTMLElement {
   private async loadMatchHistory() {
     try {
       const data = await ApiService.getMatchHistory();
+      console.log('[DEBUG] Raw match history data:', data);
       this.matchHistory = data;
+      this.matchHistory.forEach(m => {
+        console.log('[MATCH]', {
+        match_id: m.match_id,
+        user_id: m.user_id,
+        opponent: m.opponent,
+        result: m.result,
+        score_user: m.score_user,
+        score_opponent: m.score_opponent,
+        played_at: m.played_at
+      });
+    });
     } catch (err) {
       console.error('Error loading match history:', err);
     }
@@ -139,10 +152,7 @@ class ProfileView extends HTMLElement {
 
     const historyRows = this.matchHistory
       .map(m => {
-        const scoreText =
-          m.user_score == null || m.opponent_score == null
-            ? '—'
-            : `${m.user_score} – ${m.opponent_score}`;
+        const scoreText = `${m.score_user} – ${m.score_opponent}`;
         const resultColor = m.result === 'win' ? 'text-green-400' : 'text-red-400';
         return `
           <tr class="border-b border-gray-700 hover:bg-gray-800">

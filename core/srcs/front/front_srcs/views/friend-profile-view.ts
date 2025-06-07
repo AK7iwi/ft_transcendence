@@ -10,14 +10,14 @@ class FriendProfileView {
   	private losses: number = 0;
   	private winRate: number = 0;
 
-  	private matchHistory: Array<{
-    	match_id: number;
-    	played_at: string;
-    	result: 'win' | 'loss';
-    	opponent: string;
-    	user_score: number | null;
-    	opponent_score: number | null;
-  	}> = [];
+	private matchHistory: Array<{
+	match_id: number;
+	played_at: string;
+	result: 'win' | 'loss';
+	opponent: string;
+	user_score: number;
+	opponent_score: number;
+	}> = [];
 
   	private container: HTMLElement;
 
@@ -68,14 +68,21 @@ class FriendProfileView {
     	}
   	}
 
-  	private async loadMatchHistory(friendId: number) {
-    	try {
-      		const data = await ApiService.getUserMatchHistory(friendId);
-      		this.matchHistory = data;
-    	} catch (err) {
-      		console.error('Error loading history friend:', err);
-    	}
-  	}
+	private async loadMatchHistory(friendId: number) {
+	try {
+		const data = await ApiService.getUserMatchHistory(friendId);
+		this.matchHistory = data.map(m => ({
+		match_id: m.match_id,
+		played_at: m.played_at,
+		result: m.result,
+		opponent: m.opponent,
+		user_score: m.score_user,
+		opponent_score: m.score_opponent
+		}));
+	} catch (err) {
+		console.error('Error loading history friend:', err);
+	}
+	}
 
   	public render() {
   		const total = this.wins + this.losses;

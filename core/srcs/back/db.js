@@ -54,7 +54,17 @@ function initializeDatabase() {
             status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
-
+        // mat : db for history
+        db.exec(`CREATE TABLE IF NOT EXISTS match_history (
+          match_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id         INTEGER NOT NULL,
+          opponent        TEXT NOT NULL,
+          result          TEXT CHECK(result IN ('win', 'loss')) NOT NULL,
+          score_user      INTEGER NOT NULL,
+          score_opponent  INTEGER NOT NULL,
+          played_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );`)
         db.exec(`CREATE TABLE IF NOT EXISTS tournament_matches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tournament_id INTEGER,
@@ -265,13 +275,21 @@ async function enableTwoFactor(username) {
   stmt.run(username);
 }
 
-// function recordGameResult(winnerId, loserId) {
-//   const stmt = db.prepare(`
-//     INSERT INTO game_results (winner_id, loser_id)
-//     VALUES (?, ?)
-//   `);
-//   stmt.run(winnerId, loserId);
-// }
+function recordGameResultTournament(winnerId, loserId) {
+  const stmt = db.prepare(`
+    INSERT INTO game_results (winner_id, loser_id)
+    VALUES (?, ?)
+  `);
+  stmt.run(winnerId, loserId);
+}
+
+function recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent }) {
+  const stmt = db.prepare(`
+    INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  stmt.run(userId, opponent, result, scoreUser, scoreOpponent);
+}
 
 function getUserById(userId) {
   const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
@@ -299,6 +317,7 @@ module.exports = {
     updatePassword,
     storeTwoFactorSecret,
     enableTwoFactor,
-    // recordGameResult,
+    recordGameResultTournament,
+    recordMatchHistory,
     saveRemoteGame,
 };

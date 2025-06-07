@@ -299,7 +299,7 @@ static async verify2FA(code: string) {
 
 
 // mat
-static async validateUsername(username: string): Promise<{ valid: boolean; message?: string }> {
+static async validateUsername(username: string): Promise<{ valid: boolean; message?: string; id?: number; avatar?: string;}> {
   const res = await fetch(`${this.baseUrl}/tournament/validate-username`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -449,23 +449,26 @@ static async getUserById(id: string) {
         Authorization: `Bearer ${token}`
       }
     });
+
     if (!res.ok) {
       throw new Error(`Erreur ${res.status}`);
     }
+
     return (await res.json()) as Array<{
       match_id: number;
-      played_at: string;
-      result: 'win' | 'loss';
+      user_id: number;
       opponent: string;
-      user_score: number | null;
-      opponent_score: number | null;
+      result: 'win' | 'loss';
+      score_user: number;
+      score_opponent: number;
+      played_at: string;
     }>;
   }
 
 
 
 
-static async getUserMatchHistory(userId: number) {
+  static async getUserMatchHistory(userId: number) {
     const token = this.getToken();
     const res = await fetch(`${this.baseUrl}/auth/users/${userId}/history`, {
       headers: {
@@ -473,17 +476,19 @@ static async getUserMatchHistory(userId: number) {
         Authorization: `Bearer ${token}`
       }
     });
+
     if (!res.ok) {
       throw new Error(`Erreur ${res.status} en récupérant l’historique utilisateur`);
     }
+
     return (await res.json()) as Array<{
       match_id: number;
-      played_at: string;
-      result: 'win' | 'loss';
+      user_id: number;
       opponent: string;
-      user_score: number | null;
-      opponent_score: number | null;
+      result: 'win' | 'loss';
+      score_user: number;
+      score_opponent: number;
+      played_at: string;
     }>;
   }
 }
-

@@ -14,15 +14,15 @@ class TournamentView extends HTMLElement {
   private message = '';
   private messageType: 'success' | 'error' | '' = '';
   private isTournamentOver = false;
-  private tournamentWinner = '';
-  private currentTournamentId: number | null = null;
+
   // private players: { username: string; nickname: string }[] = [];
   private players: Array<{
-    id: number; 
+    id: number;
     username: string;
     nickname: string;
     avatar?: string;
-    winRatio?: number;
+    matchesPlayed?: number | null;
+    winRatio?: number | null;
   }> = [];
 
   private bracket: { round: string; players: string[]; winner?: string }[] = [];
@@ -40,11 +40,6 @@ class TournamentView extends HTMLElement {
   private isBallActive = false;
   private isInitialCountdown = false;
   private isPaused = false;
-private listenersAttached = false;
-
-private initialCountdownTimer: number | null = null;
-private ballCountdownTimer:     number | null = null;
-
 
   private keysPressed: Record<string, boolean> = {};
   private canvas!: HTMLCanvasElement;
@@ -70,127 +65,95 @@ private ballCountdownTimer:     number | null = null;
   }
 
 async handleJoin(e: Event) {
-    e.preventDefault();
-    this.message = '';
-    this.messageType = '';
+  e.preventDefault();
+  this.message = '';
+  this.messageType = '';
 
-    const username = this.username.trim();
-    const nickname = this.nickname.trim();
+  const username = this.username.trim();
+  const nickname = this.nickname.trim();
 
-    if (!username || !nickname) {
-      this.message = 'Username and nickname are required';
-      this.messageType = 'error';
-      return this.render();
-    }
-    if (this.players.some(p => p.username === username)) {
-      this.message = 'This user is already registered';
-      this.messageType = 'error';
-      return this.render();
-    }
-
-    try {
-      // 1) Validation côté API
-      const data = await ApiService.validateUsername(username) as {
-        valid: boolean;
-        message?: string;
-        avatar?: string;
-        id?: number;
-      };
-      if (!data.valid) {
-        this.message = data.message || 'User not found';
-        this.messageType = 'error';
-        return this.render();
-      }
-
-      // 2) Récupérer les stats (wins / losses) de ce joueur par son ID
-      const stats = await ApiService.getUserStats(data.id!);
-      const wins = stats.wins || 0;
-      const losses = stats.losses || 0;
-      const totalGames = wins + losses;
-      // winRatio entre 0 et 1, arrondi à 2 décimales
-      const winRatio = totalGames > 0
-        ? Math.round((wins / totalGames) * 100) / 100
-        : 0;
-
-      // 3) Construire l’URL de l’avatar (identique à ProfileView)
-      const avatarUrl = data.avatar
-        ? (data.avatar.startsWith('/') 
-            ? `${API_BASE_URL}${data.avatar}` 
-            : data.avatar)
-        : (`${API_BASE_URL}/avatars/default.png`);
-
-      // 4) Ajouter au tableau des joueurs avec le winRatio
-      this.players.push({
-        id: data.id!,
-        username,
-        nickname,
-        avatar: avatarUrl,
-        winRatio
-      });
-
-      // 5) Réinitialiser les champs du formulaire et afficher le message
-      this.username = '';
-      this.nickname = '';
-      this.message = 'Player registered';
-      this.messageType = 'success';
-      this.render();
-    }
-    catch (err) {
-      console.error('[handleJoin] Error:', err);
-      this.message = 'Failed to validate user';
-      this.messageType = 'error';
-      this.render();
-    }
-  }
-  
-async startTournament() {
-  if (this.players.length !== 4) {
-    this.message = 'Exactly 4 players required to start';
+  if (!username || !nickname) {
+    this.message = 'Username and nickname are required';
     this.messageType = 'error';
     return this.render();
   }
 
-  // → CRÉER LE TOURNOI
+  if (this.players.some(p => p.username === username)) {
+    this.message = 'This user is already registered';
+    this.messageType = 'error';
+    return this.render();
+  }
+
   try {
-    const response = await fetch(`${API_BASE_URL}/tournament/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        name: 'Mon tournoi 4 joueurs'
-      })
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create tournament');
+    const data = await ApiService.validateUsername(username) as {
+      valid: boolean;
+      message?: string;
+      avatar?: string;
+      id?: number;
+      wins?: number;
+      losses?: number;
+    };
+
+    if (!data.valid) {
+      this.message = data.message || 'User not found';
+      this.messageType = 'error';
+      return this.render();
     }
-    const json = await response.json();
-    this.currentTournamentId = json.id; // ← on garde l’ID
+
+    this.players.push({
+      id: data.id!,
+      username,
+      nickname,
+      avatar: data.avatar?.startsWith('/')
+        ? `${API_BASE_URL}${data.avatar}`
+        : (data.avatar || 'https://placehold.co/96x96?text=Avatar'),
+      matchesPlayed: (data.wins ?? 0) + (data.losses ?? 0),
+      winRatio: (data.wins ?? 0) + (data.losses ?? 0) > 0 ? (data.wins ?? 0) / ((data.wins ?? 0) + (data.losses ?? 0)) : null
+    });
+
+    console.log('[✅ PLAYER JOINED]', {
+      id: data.id,
+      username,
+      nickname,
+      avatar: this.players[this.players.length - 1].avatar,
+      winRatio: this.players[this.players.length - 1].winRatio,
+    });
+
+    this.username = '';
+    this.nickname = '';
+    this.message = 'Player registered';
+    this.messageType = 'success';
+    this.render();
   } catch (err) {
-    console.error('[startTournament] Error creating tournament', err);
-    this.message = 'Failed to create tournament';
+    console.error('[handleJoin] Error:', err);
+    this.message = 'Failed to validate user';
     this.messageType = 'error';
-    return this.render();
+    this.render();
   }
-
-  // → INITIALISATION DU BRACKET EN LOCAL
-  this.bracket = [
-    { round: 'Semi-Final 1', players: [this.players[0].nickname, this.players[1].nickname] },
-    { round: 'Semi-Final 2', players: [this.players[2].nickname, this.players[3].nickname] },
-    { round: 'Final',        players: [] }
-  ];
-  this.matchScores = [
-    { p1: 0, p2: 0 },
-    { p1: 0, p2: 0 },
-    { p1: 0, p2: 0 }
-  ];
-  this.message = 'Tournament started!';
-  this.messageType = 'success';
-  this.render();
 }
+  
+  startTournament() {
+    if (this.players.length !== 4) {
+      this.message = 'Exactly 4 players required to start';
+      this.messageType = 'error';
+      return this.render();
+    }
+    
+    this.bracket = [
+      { round: 'Semi-Final 1', players: [this.players[0].nickname, this.players[1].nickname] },
+      { round: 'Semi-Final 2', players: [this.players[2].nickname, this.players[3].nickname] },
+      { round: 'Final', players: [] }
+    ];
 
-
+    this.matchScores = [
+      { p1: 0, p2: 0 },
+      { p1: 0, p2: 0 },
+      { p1: 0, p2: 0 }
+    ];
+    this.message = 'Tournament started!';
+    this.messageType = 'success';
+    this.render();
+  }
 
   private resetTournament() {
     this.players = [];
@@ -207,7 +170,6 @@ async startTournament() {
     this.gameLoop = false;
     this.isPaused = false;
     this.isTournamentOver = false;
-    this.tournamentWinner = '';
     this.render();
   }
 
@@ -215,140 +177,35 @@ async startTournament() {
     this[field] = (e.target as HTMLInputElement).value;
   }
   
-private async recordMatchWinner(winnerNickname: string) {
-  const currentMatch = this.bracket[this.currentMatchIndex];
-  const [nick1, nick2] = currentMatch.players;
-  const loserNickname = (winnerNickname === nick1 ? nick2 : nick1);
-
-  const player1 = this.players.find(p => p.nickname === nick1)!;
-  const player2 = this.players.find(p => p.nickname === nick2)!;
-
-  const player1Id = player1.id;
-  const player2Id = player2.id;
-  const score1     = this.score.player1;
-  const score2     = this.score.player2;
-  const winnerId   = (winnerNickname === nick1 ? player1Id : player2Id);
-  const loserId    = (winnerNickname === nick1 ? player2Id : player1Id);
-
-  // NE PAS OUBLIER DE CRÉER LE TOURNOI AVANT → this.currentTournamentId ne doit pas être null
-  const tournamentId = this.currentTournamentId!;
-  const round        = this.currentMatchIndex < 2 ? 1 : 2;
-  const matchNumber  = (this.currentMatchIndex % 2) + 1;
-
-  try {
-    await fetch(`${API_BASE_URL}/tournament/save-remote-game`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-     body: JSON.stringify({
-        tournamentId: this.currentTournamentId!,
-        round: this.currentMatchIndex < 2 ? 1 : 2,
-        matchNumber: (this.currentMatchIndex % 2) + 1,
-        player1Id,
-        player2Id,
-        score1,
-        score2,
-        winnerId
-      })
-    });
-  } catch (err) {
-    console.error("Erreur en enregistrant le match de tournoi :", err);
+  private recordMatchWinner(winner: string) {
+    // Set winner nickname in bracket for current match
+    const currentMatch = this.bracket[this.currentMatchIndex];
+    currentMatch.winner = winner;
+    
+      // Capture final score
+    const currentScore = {
+      p1: this.score.player1,
+      p2: this.score.player2
+    };
+    this.matchScores[this.currentMatchIndex] = currentScore;
+    if (this.currentMatchIndex < 2) {
+      // Advance winner to Final
+      this.bracket[2].players.push(winner);
+    }
+    
+    this.currentMatchIndex++;
+    this.currentMatchPlayers = this.bracket[this.currentMatchIndex]?.players || [];
+    
+    this.message = `${winner} won ${currentMatch.round}!`;
+    this.messageType = 'success';
+    console.log('Updated matchScores:', this.matchScores);
+    console.log(`Updated Match Index ${this.currentMatchIndex} vs Bracket.length ${this.bracket.length}`);
+    if (this.currentMatchIndex >= this.bracket.length)
+      this.isTournamentOver = true;
+    this.resetGame();
+    this.render();
   }
-
-  // continuation du bracket…
-  const currentScore = { p1: this.score.player1, p2: this.score.player2 };
-  this.matchScores[this.currentMatchIndex] = currentScore;
-  if (this.currentMatchIndex < 2) {
-    this.bracket[2].players.push(winnerNickname);
-  }
-  this.currentMatchIndex++;
-  this.currentMatchPlayers = this.bracket[this.currentMatchIndex]?.players || [];
-  this.message     = `${winnerNickname} a gagné ${currentMatch.round} !`;
-  this.messageType = 'success';
-
-if (this.currentMatchIndex >= this.bracket.length) {
-    this.isTournamentOver = true;
-    this.tournamentWinner = winnerNickname;
-    // On force le rendu : render() appellera renderEndScreen()
-    return this.render();
-}
-  this.resetGame();
-  this.render();
-}
-
-
-
-
-// private async recordMatchWinner(winnerNickname: string) {
-//   // 1) Identifier les deux nicknames et trouver leurs IDs (grâce à this.players qui contient désormais `id`)
-//   const currentMatch = this.bracket[this.currentMatchIndex];
-//   const [nick1, nick2] = currentMatch.players;
-//   const loserNickname = (winnerNickname === nick1 ? nick2 : nick1);
-
-//   const player1 = this.players.find(p => p.nickname === nick1);
-//   const player2 = this.players.find(p => p.nickname === nick2);
-//   if (!player1 || !player2) {
-//     console.error("Impossible de retrouver l'un des joueurs dans this.players");
-//     return;
-//   }
-
-//   // 2) Construire les IDs et scores
-//   const player1Id = player1.id;
-//   const player2Id = player2.id;
-//   const score1     = this.score.player1;
-//   const score2     = this.score.player2;
-//   const winnerId   = (winnerNickname === nick1 ? player1Id : player2Id);
-//   const loserId    = (winnerNickname === nick1 ? player2Id : player1Id);
-
-//   // 3) Calculer tournamentId, round et matchNumber (que vous aurez stockés au démarrage du tournoi)
-//   //    Supposons que vous avez fait, dans startTournament, un appel API pour créer le tournoi
-//   //    et stocker l’ID retourné en this.currentTournamentId.
-//   const tournamentId = this.currentTournamentId!;
-//   const round        = this.currentMatchIndex < 2 ? 1 : 2;
-//   const matchNumber  = (this.currentMatchIndex % 2) + 1; // 1 ou 2
-
-//   // 4) Appeler l’API `/tournament/save-remote-game` en lui passant tout le nécessaire
-//   try {
-//     await fetch(`${API_BASE_URL}/tournament/save-remote-game`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Authorization': `Bearer ${localStorage.getItem('token')}`
-//       },
-//       body: JSON.stringify({
-//         tournamentId,
-//         round,
-//         matchNumber,
-//         player1Id,
-//         player2Id,
-//         score1,
-//         score2,
-//         winnerId
-//       })
-//     });
-//   } catch (err) {
-//     console.error("Erreur en enregistrant le match de tournoi :", err);
-//   }
-
-//   // 5) Continuer la logique du bracket (affichage, scores, etc.)
-//   const currentScore = { p1: this.score.player1, p2: this.score.player2 };
-//   this.matchScores[this.currentMatchIndex] = currentScore;
-//   if (this.currentMatchIndex < 2) {
-//     this.bracket[2].players.push(winnerNickname);
-//   }
-//   this.currentMatchIndex++;
-//   this.currentMatchPlayers = this.bracket[this.currentMatchIndex]?.players || [];
-//   this.message     = `${winnerNickname} a gagné ${currentMatch.round} !`;
-//   this.messageType = 'success';
-
-//   // 6) Réinitialiser le jeu et rerendre l’UI
-//   this.resetGame();
-//   this.render();
-// }
-
-
+  
   private renderNextMatch() {
     if (this.bracket.length === 0 || this.currentMatchIndex >= this.bracket.length) return '';
 
@@ -371,27 +228,38 @@ if (this.currentMatchIndex >= this.bracket.length) {
   }
 
   private renderEndScreen() {
-  if (!this.isTournamentOver || !this.tournamentWinner) return '';
-  const winner = this.players.find(p => p.nickname === this.tournamentWinner);
+    console.log('tournament over, endscreen');
+    if (!this.isTournamentOver) return '';
+    const finalMatch = this.bracket[this.bracket.length - 1];
+    const winnerNickname = finalMatch?.winner;
+    if (!winnerNickname) {
+      console.warn('[⚠️ End Screen] No winner found in bracket.');
+      return '';
+    }
+    const winner = this.players.find(p => p.nickname === winnerNickname);
+    if (!winner) {
+      console.warn('[⚠️ End Screen] Winner player object not found.');
+      return '';
+    }
 
-  return `
-    <div class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-80px)] p-8 text-white space-y-6">
-      <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-        🏆 Tournament Champion!
-      </h2>
-      <img
-        src="${winner?.avatar || `${API_BASE_URL}/avatars/default.png`}"
-        alt="${this.tournamentWinner}'s avatar"
-        class="w-32 h-32 rounded-full border-4 border-white"
-      />
-      <h3 class="text-2xl font-semibold">${this.tournamentWinner}</h3>
-      <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
-        New Tournament
-      </button>
-    </div>
-  `;
-}
-
+    return `
+      <div class="flex flex-col items-center justify-center text-center min-h-[calc(100vh-80px)] p-8 text-white space-y-6">
+        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          🏆 Tournament Champion!
+        </h2>
+        <img
+          src="${winner.avatar || 'https://placehold.co/128x128?text=Avatar'}"
+          alt="${winner.nickname}'s avatar"
+          class="w-32 h-32 rounded-full border-4 border-white"
+        />
+        <h3 class="text-4xl font-semibold mb-2">${winner.nickname}</h3>
+        <p class="text-gray-400 text-normal mb-3">@${winner.username}</p>
+        <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
+          New Tournament
+        </button>
+      </div>
+    `;
+  }
 
   private renderBracket() {
     if (this.bracket.length === 0) return '';
@@ -411,12 +279,13 @@ if (this.currentMatchIndex >= this.bracket.length) {
               return `
                 <div class="rounded-lg p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 w-48">
                   <div class="bg-gray-900 rounded-lg flex flex-col overflow-hidden">
-                   <div class="flex justify-between px-4 py-2 text-center 
-						${isWinnerTop ? 'bg-gradient-to-r from-purple-700 to-pink-600 text-white pb-4' : ''}">
-						<span>${match.players[0] || 'TBD'}</span>
-						<span>${scores.p1}</span>
-					</div>
-
+                    <div
+                      class="flex justify-between px-4 py-2 text-center"
+                      style="${isWinnerTop ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-bottom: calc(0.5rem + 4px);' : ''}"
+                    >
+                      <span>${match.players[0] || 'TBD'}</span>
+                      <span>${scores.p1}</span>
+                    </div>
 
                     <div class="relative w-full border-t-2 border-gray-900 my-1">
                       <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 px-2 text-xs text-gray-300 font-bold rounded border border-gray-300">
@@ -424,12 +293,13 @@ if (this.currentMatchIndex >= this.bracket.length) {
                       </span>
                     </div>
 
-                    <div class="flex justify-between px-4 py-2 text-center 
-						${isWinnerBottom ? 'bg-gradient-to-r from-purple-700 to-pink-600 text-white pt-4' : ''}">
-						<span>${match.players[1] || 'TBD'}</span>
-						<span>${scores.p2}</span>
-					</div>
-
+                    <div
+                      class="flex justify-between px-4 py-2 text-center"
+                      style="${isWinnerBottom ? 'background: linear-gradient(to right, #7f00ff, #e100ff); color: white; padding-top: calc(0.5rem + 2px);' : ''}"
+                    >
+                      <span>${match.players[1] || 'TBD'}</span>
+                      <span>${scores.p2}</span>
+                    </div>
                   </div>
                 </div>
               `;
@@ -466,6 +336,7 @@ if (this.currentMatchIndex >= this.bracket.length) {
 
   render() {
     if (this.isTournamentOver) {
+      console.log(`state = isTournamentOver = ${this.isTournamentOver}`);
       this.innerHTML = this.renderEndScreen();
       this.querySelector('.new-tournament-btn')?.addEventListener('click', this.resetTournament.bind(this));
       return;
@@ -473,10 +344,10 @@ if (this.currentMatchIndex >= this.bracket.length) {
     this.innerHTML = `
       <main class="w-full mx-auto p-8">
 
-        <div id="form-wrapper" class="max-w-xl mx-auto p-8 space-y-6 ${this.bracket.length > 0 ? 'hidden' : 'block'}">
-  			<div id="tournament-ui">
-    			<h2 class="text-3xl font-bold text-center">Tournament</h2>
-
+        <!-- Limited width for inputs and join -->
+        <div class="max-w-xl mx-auto p-8 space-y-6" id="form-wrapper" style="display: ${this.bracket.length > 0 ? 'none' : 'block'};">
+          <div id="tournament-ui">
+            <h2 class="text-3xl font-bold text-center">Tournament</h2>
 
             <form class="flex gap-2 mb-4" onsubmit="return false;">
               <input
@@ -508,29 +379,25 @@ if (this.currentMatchIndex >= this.bracket.length) {
           </div> <!-- tournament-ui -->
         </div> <!-- form-wrapper -->
 
-        <div class="grid grid-cols-[repeat(auto-fit,_minmax(150px,_200px))] gap-2 mb-6 px-8 justify-center mx-auto">
-  ${this.players.map(player => `
-    <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-      <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
-
-      <img
-        src="${player.avatar || `${API_BASE_URL}/avatars/default.png`}"
-        alt="Avatar of ${player.nickname}"
-        class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-      />
-      <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-      <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
-      <div class="text-white text-sm space-y-1 w-full"></div>
-      <button
-        class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
-        data-player-id="${player.id}"
-      >
-        Remove
-      </button>
-    </div>
-  </div>
-`).join('')}
-
+        <!-- Full width player cards -->
+        <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
+          ${this.players.map(player => `
+            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+                <img
+                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+                  alt="Avatar of ${player.nickname}"
+                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+                />
+                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+                <div class="text-white text-sm space-y-1 w-full">
+                  <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
+                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
 
         ${this.bracket.length === 0 ? `
@@ -591,55 +458,30 @@ if (this.currentMatchIndex >= this.bracket.length) {
   this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
   this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
   this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
-  this.querySelectorAll('.remove-player-btn')?.forEach(button => {
-  button.addEventListener('click', (e) => {
-    const id = Number((button as HTMLElement).getAttribute('data-player-id'));
-    this.removePlayer(id);
-  });
-});
-
   this.querySelector('.play-match-button')?.addEventListener('click', () => {
     this.toggleGameUI(true);
   });
 }
 
-private removePlayer(id: number) {
-  this.players = this.players.filter(p => p.id !== id);
-  this.message = 'Player removed';
-  this.messageType = 'success';
-  this.render();
-}
+  private toggleGameUI(showGame: boolean) {
+    const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
+    const gameUI = this.querySelector('#game-ui') as HTMLElement;
+    if (!tournamentUI || !gameUI) return;
 
-
-private toggleGameUI(showGame: boolean) {
-  const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
-  const gameUI = this.querySelector('#game-ui') as HTMLElement;
-  if (!tournamentUI || !gameUI) return;
-
-  if (showGame) {
-    tournamentUI.style.display = 'none';
-    gameUI.style.display = 'block';
-
-    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
-
-    // ✅ Attache les listeners une seule fois
-    if (!this.listenersAttached) {
+    if (showGame) {
+      tournamentUI.style.display = 'none';
+      gameUI.style.display = 'block';
+      // Initialize canvas and game only here
+      this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+      this.ctx = this.canvas.getContext('2d')!;
       this.setupEventListeners();
-      this.listenersAttached = true;
+      this.initGame();
+      this.draw();
+    } else {
+      tournamentUI.style.display = 'block';
+      gameUI.style.display = 'none';
     }
-
-    // ✅ Active le focus clavier sur le canvas
-    this.canvas.tabIndex = 0;
-    this.canvas.focus();
-
-    this.initGame();
-    this.draw();
-  } else {
-    tournamentUI.style.display = 'block';
-    gameUI.style.display = 'none';
   }
-}
 
 
 
@@ -648,7 +490,7 @@ private toggleGameUI(showGame: boolean) {
 
 
   private updateScoreDisplay() {
-    const scoreEl = this.querySelector('#score');
+    const scoreEl = document.getElementById('score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
     }
@@ -666,41 +508,33 @@ private toggleGameUI(showGame: boolean) {
     this.draw();
   };
 
-private setupEventListeners() {
-  ['keydown', 'keyup'].forEach((event) =>
-    window.addEventListener(event, (e: Event) => {
-      const keyEvent = e as KeyboardEvent;
-      this.keysPressed[keyEvent.key] = event === 'keydown';
-      if (event === 'keydown') this.handleKeyDown(keyEvent);
-    })
-  );
-}
+  private setupEventListeners() {
+    ['keydown', 'keyup'].forEach((event) =>
+      window.addEventListener(event, (e) => {
+        ['w', 's', 'o', 'k'].includes(e.key);
+        this.keysPressed[e.key] = event === 'keydown';
+        if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
+      })
+    );
+  }
 
   private handleKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Enter') {
-    if (e.repeat || this.initialCountdownTimer !== null || this.isInitialCountdown) return;
-
-    if (this.isGameOver) {
-      this.resetGame();
-      return;
-    }
-
-    if (!this.isGameStarted) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
+      this.togglePause();
+    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
+      this.isInitialCountdown = true;
       this.countdown = COUNTDOWN_START;
       this.startInitialCountdown();
-    }
-    return;
-  }
-
-  if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
-    this.togglePause();
-  }
-}
-
-  private togglePause() {
-    this.isPaused = !this.isPaused;
-    this.isPaused ? cancelAnimationFrame(this.animationFrameId) : this.startGameLoop();
-    this.draw();
+    } else if (e.key === 'Enter' && this.isGameOver) {
+        if (this.currentMatchIndex >= this.bracket.length) {
+          this.isTournamentOver = true;
+          this.render(); // Shows end screens
+        } else {
+          this.toggleGameUI(false);
+          this.resetGame();
+          this.render();
+        }
+      }
   }
 
   private updateGameSettings() {
@@ -734,78 +568,43 @@ private setupEventListeners() {
     this.updateGameSettings();
   }
 
-private resetBall(withCountdown = true) {
-  this.ball.x = this.canvas.width / 2;
-  this.ball.y = this.canvas.height / 2;
-  const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-  const direction = Math.random() > 0.5 ? 1 : -1;
-  this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-  this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-
-  // paddles recentrés
-  this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
-  this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
-
-  // clear ancien timer
-  if (this.ballCountdownTimer !== null) {
-    clearInterval(this.ballCountdownTimer);
-    this.ballCountdownTimer = null;
-  }
-
-  if (withCountdown) {
+  private resetBall() {
+    this.ball.x = this.canvas.width / 2;
+    this.ball.y = this.canvas.height / 2;
+    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
+    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
     this.isBallActive = false;
     this.startBallCountdown();
-  } else {
-    this.isBallActive = true;
-  }
-}
-
-
-private startInitialCountdown() {
-  if (this.initialCountdownTimer !== null) {
-    clearInterval(this.initialCountdownTimer);
-    this.initialCountdownTimer = null;
   }
 
-  if (this.isInitialCountdown) return;
+  private startInitialCountdown() {
+    const interval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(interval);
+        this.isGameStarted = true;
+        this.gameLoop = true;
+        this.isBallActive = true;
+        this.isInitialCountdown = false;
+        this.startGameLoop();
+      }
+      this.draw();
+    }, 1000);
+  }
 
-  this.isInitialCountdown = true;
-  this.countdown = COUNTDOWN_START;
-
-  this.initialCountdownTimer = window.setInterval(() => {
-    this.countdown--;
-    this.draw();
-
-    if (this.countdown <= 0) {
-      clearInterval(this.initialCountdownTimer!);
-      this.initialCountdownTimer = null;
-      this.isInitialCountdown = false;
-
-      this.isGameStarted = true;
-      this.gameLoop = true;
-
-      this.resetBall(false);   // ⛔️ ne relance pas un 2nd countdown
-      this.startGameLoop();    // ✅ start loop
-    }
-  }, 1000);
-}
-
-
-private startBallCountdown() {
-  this.countdown = COUNTDOWN_START;
-
-  this.ballCountdownTimer = window.setInterval(() => {
-    this.countdown--;
-    this.draw();
-
-    if (this.countdown <= 0) {
-      clearInterval(this.ballCountdownTimer!);
-      this.ballCountdownTimer = null;
-      this.isBallActive = true;
-    }
-  }, 1000);
-}
-
+  private startBallCountdown() {
+    this.countdown = COUNTDOWN_START;
+    const interval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(interval);
+        this.isBallActive = true;
+      }
+      this.draw();
+    }, 1000);
+  }
 
   private startGameLoop() {
     if (!this.gameLoop || this.isPaused) return;
@@ -819,10 +618,6 @@ private startBallCountdown() {
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
-    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
-    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
-    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
-    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
@@ -854,14 +649,15 @@ private startBallCountdown() {
 
       if (this.ball.x <= 0) {
         this.score.player2++;
-        this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1] || 'Player 2') : this.resetBall(true);
+        this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1], this.currentMatchPlayers[0]) : this.resetBall();
         this.updateScoreDisplay();
       } else if (this.ball.x >= this.canvas.width) {
         this.score.player1++;
-        this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0] || 'Player 1') : this.resetBall(true);
+        this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0], this.currentMatchPlayers[1]) : this.resetBall();
         this.updateScoreDisplay();
       }
     }
+    console.log('[BALL SPEED]', Math.hypot(this.ball.dx, this.ball.dy));
   }
 
   private drawCenteredText(text: string, size: number, y: number) {
@@ -909,40 +705,93 @@ private startBallCountdown() {
       this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
 
-    if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
+    // if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
   }
 
-  private endGame(winner: string) {
+  private endGame(winner: string, loser: string) {
     this.isGameOver = true;
     this.winner = winner;
     this.gameLoop = false;
     cancelAnimationFrame(this.animationFrameId);
+
+    const winnerPlayer = this.players.find(p => p.nickname === winner);
+    const loserPlayer = this.players.find(p => p.nickname === loser);
+
+    if (winnerPlayer && loserPlayer) {
+      const scoreP1 = this.score.player1;
+      const scoreP2 = this.score.player2;
+
+      // Save winner/loser result
+      fetch(`${API_BASE_URL}/tournament/game-result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          winnerId: winnerPlayer.id,
+          loserId: loserPlayer.id
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to record game result');
+        return res.json();
+      })
+      .then(data => {
+        if (!data.success) console.error('[❌ API] Failed to save result');
+      })
+      .catch(err => {
+        console.error('[❌ Fetch Error]', err);
+      });
+
+      // Save match history for winner
+      fetch(`${API_BASE_URL}/tournament/match-history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: winnerPlayer.id,
+          opponent: loserPlayer.username,
+          result: 'win',
+          scoreUser: winnerPlayer.nickname === this.currentMatchPlayers[0] ? scoreP1 : scoreP2,
+          scoreOpponent: winnerPlayer.nickname === this.currentMatchPlayers[0] ? scoreP2 : scoreP1
+        })
+      });
+
+      // Save match history for loser
+      fetch(`${API_BASE_URL}/tournament/match-history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: loserPlayer.id,
+          opponent: winnerPlayer.username,
+          result: 'loss',
+          scoreUser: loserPlayer.nickname === this.currentMatchPlayers[0] ? scoreP1 : scoreP2,
+          scoreOpponent: loserPlayer.nickname === this.currentMatchPlayers[0] ? scoreP2 : scoreP1
+        })
+      });
+    }
+
     this.recordMatchWinner(winner);
   }
 
-private resetGame() {
-  this.score = { player1: 0, player2: 0 };
-  this.isGameOver = false;
-  this.winner = '';
-  this.isGameStarted = false;
-  this.isBallActive = false;
-  this.isInitialCountdown = false;
-  this.gameLoop = false;
-  this.updateScoreDisplay();
-
-  if (this.initialCountdownTimer !== null) {
-    clearInterval(this.initialCountdownTimer);
-    this.initialCountdownTimer = null;
+  private resetGame() {
+    cancelAnimationFrame(this.animationFrameId);
+    this.score = { player1: 0, player2: 0 };
+    this.isGameOver = false;
+    this.winner = '';
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.isInitialCountdown = false;
+    this.gameLoop = false;
+    this.initGame();
+    this.draw();
   }
 
-  this.initGame();
-  this.draw();
-}
-
+  private togglePause() {
+    this.isPaused = !this.isPaused;
+    this.isPaused ? cancelAnimationFrame(this.animationFrameId) : this.startGameLoop();
+    this.draw();
+  }
 
   public start() {
     this.render();
-    this.resetGame();
   }
 }
 
