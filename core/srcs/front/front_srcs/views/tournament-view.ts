@@ -621,9 +621,9 @@ async handleJoin(e: Event) {
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-    // 3) Déplacement de la balle
-    this.ball.x += this.ball.dx;
-    this.ball.y += this.ball.dy;
+    if (this.isBallActive && !this.isGameOver) {
+      this.ball.x += this.ball.dx;
+      this.ball.y += this.ball.dy;
 
       if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
 
