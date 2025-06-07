@@ -44,9 +44,9 @@ class SettingsView extends HTMLElement {
     	this.render();
   	}
 
-  	// private updateUserField(field: keyof this, value: string) {
-    //	(this as any)[field] = value;
-  	// }
+  	private updateUserField(field: keyof this, value: string) {
+    	(this as any)[field] = value;
+  	}
 
   	private renderMessage(success: string, error: string): string {
     	if ((this as any)[success]) {
