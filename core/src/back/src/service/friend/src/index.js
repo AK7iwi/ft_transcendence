@@ -2,7 +2,7 @@ const fastify = require('fastify');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
 const friendRoutes = require('./friend/friend.routes');
-const internalRoutes = require('./interna/internal.routes');
+const internalRoutes = require('./internal/internal.routes');
 const ServiceClient = require('./utils/service-client');
 
 // Create Fastify instance
@@ -17,8 +17,7 @@ initializeDatabase();
 
 // Register routes
 app.register(friendRoutes, { prefix: '/friend' });
-app.register(internalRoutes, { prefix: '/friend/internal' });
-
+app.register(internalRoutes, { prefix: '/internal' });
 // Test endpoint
 app.get('/', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is running' });

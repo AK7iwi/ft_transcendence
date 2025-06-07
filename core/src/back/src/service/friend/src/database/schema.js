@@ -1,4 +1,4 @@
-const DbFriend = require('./db_models/db.friend');  
+const DbFriend = require('./db.friend');  
 
 function initializeDatabase() {
     // Initialize all database tables
