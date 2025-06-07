@@ -5,16 +5,12 @@ const path = require('path');
 const fastifyModule = require('fastify');
 const WebSocketService = require('./services/websocket.service');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
-const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
 const fastifyMultipart = require('@fastify/multipart');
 const fastifyStatic = require('@fastify/static');
 const fastifyCors = require('@fastify/cors');
 const authRoutes = require('./routes/auth.routes');
 const avatarRoutes = require('./routes/avatar.routes');
 const authenticate = require('./middleware/authenticate');
-
 
 
 // Créer Fastify
@@ -134,32 +130,6 @@ fastify.get('/profile', async (request, reply) => {
     return { id: user.id, username: user.username, avatar: user.avatar, twoFactorEnabled: user.two_factor_enabled };
   } catch (err) {
     return reply.status(401).send({ error: 'Accès refusé' });
-  }
-});
-
-// fastify.get('/2fa/setup', async (_, reply) => {
-//   try {
-//     const secret = speakeasy.generateSecret({ length: 20 });
-//     const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
-//     return { qrCodeDataURL, secret: secret.base32 };
-//   } catch (err) {
-//     reply.code(500).send({ error: 'Failed to generate QR code' });
-//   }
-// });
-
-fastify.get('/debug-static', (req, reply) => {
-  const filePath = path.join(__dirname, 'public', 'avatars', 'default.png');
-  return {
-    path: filePath,
-    exists: fs.existsSync(filePath)
-  };
-});
-
-// Online users route
-fastify.get('/auth/online-users', {
-  preHandler: [fastify.authenticate],
-  handler: async (req, reply) => {
-    return { online: fastify.websocketService.getOnlineUserIds() };
   }
 });
 
