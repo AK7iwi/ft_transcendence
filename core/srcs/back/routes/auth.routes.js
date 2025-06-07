@@ -82,6 +82,13 @@ fastify.get('/users/:id/stats', async (req, reply) => {
     }
   });
 
+
+
+
+
+
+
+
   // POST /auth/login - Connexion utilisateur
   fastify.post('/login', {
 
@@ -99,6 +106,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
             username: user.username
           });
         }
+console.log("Durée JWT :", process.env.JWT_EXPIRES_IN);
 
         const token = jwt.sign(
           { id: user.id, username: user.username },
@@ -255,6 +263,7 @@ fastify.get('/users/:id/stats', async (req, reply) => {
         if (!verified) {
           return reply.code(401).send({ error: 'Invalid 2FA token' });
         }
+console.log("Durée JWT :", process.env.JWT_EXPIRES_IN);
 
         const token = jwt.sign(
           { id: userId },

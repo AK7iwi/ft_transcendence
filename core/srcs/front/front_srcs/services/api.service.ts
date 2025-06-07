@@ -1,4 +1,12 @@
 import { API_BASE_URL } from '../config';
+import { navigateTo } from '../app';
+
+function logoutAndRedirect() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('gameSettings');
+  navigateTo('/login');
+}
 
 export default class ApiService {
 
@@ -164,17 +172,23 @@ static async updatePassword(username: string, newPassword: string) {
 
 
 
-    private static async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
+private static async fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
-        try {
-            const response = await this.fetchWithRetry(url, { ...options, signal: controller.signal });
-            return response;
-        } finally {
-            clearTimeout(timeoutId);
+    try {
+        const response = await this.fetchWithRetry(url, { ...options, signal: controller.signal });
+        // 👇
+        if (response.status === 401 || response.status === 403) {
+            logoutAndRedirect();
+            throw new Error('Session expirée ou non autorisée');
         }
+        return response;
+    } finally {
+        clearTimeout(timeoutId);
     }
+}
+
 
     private static async safeParseJSON(response: Response): Promise<any> {
         const text = await response.text();
