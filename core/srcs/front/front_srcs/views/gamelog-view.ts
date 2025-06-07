@@ -1,7 +1,5 @@
-// gamelog-view.ts
 import { SettingsService } from '../services/settings-service';
 import type { GameSettings } from '../services/settings-service';
-import { API_BASE_URL } from '../config';
 
 const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
@@ -16,8 +14,6 @@ class GamelogView extends HTMLElement {
   private isBallActive = false;
   private isInitialCountdown = false;
   private isPaused = false;
-  private resultSent = false;
-
 
   private keysPressed: Record<string, boolean> = {};
   private canvas!: HTMLCanvasElement;
@@ -141,10 +137,6 @@ class GamelogView extends HTMLElement {
     }
   }
 
-  private handleSettingsChanged = (e: Event) => {
-    this.settings = (e as CustomEvent<GameSettings>).detail;
-    this.updateGameSettings();
-  };
 
   private handleResize = () => {
     // Tant que la partie n’a pas démarré, on redimensionne le canvas et on redessine
@@ -307,83 +299,63 @@ class GamelogView extends HTMLElement {
   }
 
 private updateGame() {
-  if (!this.isBallActive || this.isGameOver) return;
+    if (!this.isBallActive || this.isGameOver) return;
 
-  // 1) Déplacement des paddles
-  if (this.keysPressed['w'] || this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
-  if (this.keysPressed['s'] || this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
-  if (this.keysPressed['o'] || this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
-  if (this.keysPressed['k'] || this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
+    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
+    this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
-  // Empêcher les paddles de sortir du canvas
-  this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
-  this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
+    this.ball.x += this.ball.dx;
+    this.ball.y += this.ball.dy;
 
-  // 2) Déplacement de la balle
-  this.ball.x += this.ball.dx;
-  this.ball.y += this.ball.dy;
+    if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
 
-  const halfSize = this.ball.size / 2;
+    const ballHitsPaddle = (p: any) =>
+      this.ball.y + this.ball.size / 2 >= p.y &&
+      this.ball.y - this.ball.size / 2 <= p.y + p.height;
 
-  // 3) Collision avec le haut et le bas du canvas
-  if (this.ball.y - halfSize <= 0) {
-    this.ball.y = halfSize;            // Pour ne pas « traverser » le mur
-    this.ball.dy = -this.ball.dy;     // On inverse la vitesse verticale
-  } else if (this.ball.y + halfSize >= this.canvas.height) {
-    this.ball.y = this.canvas.height - halfSize;
-    this.ball.dy = -this.ball.dy;
-  }
-
-  // 4) Collision avec le paddle gauche (paddle1)
-  if (
-    this.ball.x - halfSize <= this.paddle1.x + this.paddle1.width &&
-    this.ball.x - halfSize >= this.paddle1.x && // Facultatif : pour éviter de rebondir plusieurs fois en dehors
-    this.ball.y + halfSize >= this.paddle1.y &&
-    this.ball.y - halfSize <= this.paddle1.y + this.paddle1.height
-  ) {
-    this.ball.x = this.paddle1.x + this.paddle1.width + halfSize; // Replacer la balle juste à côté du paddle
-    this.ball.dx = -this.ball.dx;                                  // Inverser la vitesse horizontale
-  }
-
-  // 5) Collision avec le paddle droit (paddle2)
-  if (
-    this.ball.x + halfSize >= this.paddle2.x &&
-    this.ball.x + halfSize <= this.paddle2.x + this.paddle2.width && // Facultatif
-    this.ball.y + halfSize >= this.paddle2.y &&
-    this.ball.y - halfSize <= this.paddle2.y + this.paddle2.height
-  ) {
-    this.ball.x = this.paddle2.x - halfSize;
-    this.ball.dx = -this.ball.dx;
-  }
-
-  // 6) Vérification du score (bords gauche / droite)
-  if (this.ball.x - halfSize < 0) {
-    // « Player 2 » marque
-    this.score.player2++;
-    this.updateScoreDisplay();
-
-    if (this.score.player2 >= this.settings.endScore) {
-      this.endGame('Player 2');
-    } else {
-      this.resetBall();
+    if (
+      this.ball.dx < 0 &&
+      this.ball.x <= this.paddle1.x + this.paddle1.width &&
+      this.ball.x >= this.paddle1.x &&
+      ballHitsPaddle(this.paddle1)
+    ) {
+      this.ball.dx *= -1;
+    } else if (
+      this.ball.dx > 0 &&
+      this.ball.x + this.ball.size >= this.paddle2.x &&
+      this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+      ballHitsPaddle(this.paddle2)
+    ) {
+      this.ball.dx *= -1;
     }
-    return;
-  }
 
-  if (this.ball.x + halfSize > this.canvas.width) {
-    // « Player 1 » marque
-    this.score.player1++;
-    this.updateScoreDisplay();
-
-    if (this.score.player1 >= this.settings.endScore) {
-      this.endGame('Player 1');
-    } else {
-      this.resetBall();
-    }
-    return;
+    if (this.ball.x <= 0) {
+  this.score.player2++;
+  if (this.score.player2 >= this.settings.endScore) {
+    this.endGame('Player 2');
+  } else {
+    this.resetBall();
   }
+  this.updateScoreDisplay();
+} else if (this.ball.x >= this.canvas.width) {
+  this.score.player1++;
+  if (this.score.player1 >= this.settings.endScore) {
+    // 👉 Ici, mets le username connecté !
+    this.endGame(this.user.username || 'Player 1');
+  } else {
+    this.resetBall();
+  }
+  this.updateScoreDisplay();
 }
-
+  }
 
   private drawCenteredText(text: string, size: number, y: number) {
     this.ctx.font = `bold ${size}px Arial`;
@@ -440,58 +412,12 @@ private updateGame() {
     }
   }
 
-
-
-
-private endGame(winner: string) {
-  // 1) On bloque tout double‐appel
-  if (this.resultSent) return;
-  this.resultSent = true;
-
-  // 2) Mise à jour de l’état local
-  this.isGameOver = true;
-  this.winner = winner;
-  this.gameLoop = false;
-  cancelAnimationFrame(this.animationFrameId);
-
-  // 3) Préparer le payload en ne passant QUE l’ID du joueur (vs bot)
-  const result: { winnerId?: number; loserId?: number } = {};
-
-  if (winner === 'Player 1') {
-    // Le joueur humain (Player 1) a gagné → on envoie seulement winnerId
-    result.winnerId = this.user.id;
-  } else {
-    // Le joueur humain (Player 1) a perdu → on envoie seulement loserId
-    result.loserId = this.user.id;
+  private endGame(winner: string) {
+    this.isGameOver = true;
+    this.winner = winner;
+    this.gameLoop = false;
+    cancelAnimationFrame(this.animationFrameId);
   }
-
-  // 4) Appel HTTP UNIQUE : on appelle la route une seule fois, ici
-  fetch(`${API_BASE_URL}/game/result`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    body: JSON.stringify(result),
-  })
-    .then(res => {
-      if (!res.ok) throw new Error(`Erreur serveur ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      console.log('✅ Résultat enregistré :', data);
-      this.dispatchEvent(
-        new CustomEvent('game:finished', {
-          bubbles: true,
-          composed: true,
-          detail: { winner },
-        })
-      );
-    })
-    .catch(err => {
-      console.error('❌ Échec fetch("/game/result") :', err.message);
-    });
-}
 
   private resetGame() {
     // Réinitialisation du score NÉCESSAIRE ici
@@ -502,7 +428,6 @@ private endGame(winner: string) {
     this.isBallActive = false;
     this.isInitialCountdown = false;
     this.gameLoop = false;
-      this.resultSent = false;
 
     this.initGame();
     this.updateScoreDisplay();
