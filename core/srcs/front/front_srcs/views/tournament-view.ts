@@ -1,11 +1,11 @@
 import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
-import { API_BASE_URL } from '../config'; // adjust path as needed
+import { API_BASE_URL } from '../config';
 import type { GameSettings } from '../services/settings-service';
 
-  const COUNTDOWN_START = 3;
-  const CANVAS_ASPECT_RATIO = 16 / 9;
-  const PADDLE_MARGIN = 0.02;
+const COUNTDOWN_START = 3;
+const CANVAS_ASPECT_RATIO = 16 / 9;
+const PADDLE_MARGIN = 0.02;
 
 
 class TournamentView extends HTMLElement {
@@ -14,11 +14,7 @@ class TournamentView extends HTMLElement {
   private message = '';
   private messageType: 'success' | 'error' | '' = '';
   private isTournamentOver = false;
-  private countdownIntervalId: number | null = null;
 
-
-
-  // private players: { username: string; nickname: string }[] = [];
   private players: Array<{
     id: number;
     username: string;
@@ -33,8 +29,6 @@ class TournamentView extends HTMLElement {
   private currentMatchIndex = 0;
   private currentMatchPlayers: string[] = [];
 
-
-// hmm this is game
   private score = { player1: 0, player2: 0 };
   private isGameStarted = false;
   private isGameOver = false;
@@ -56,11 +50,10 @@ class TournamentView extends HTMLElement {
   private paddle2 = { x: 0, y: 0, width: 10, height: 100, speed: 5 };
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
 
-
-constructor() {
-  super();
-  this.handleKeyEvent = this.handleKeyEvent.bind(this); // pour le removeEventListener
-}
+  constructor() {
+    super();
+    this.handleKeyEvent = this.handleKeyEvent.bind(this); // pour le removeEventListener
+  }
 
   connectedCallback() {
     this.handleKeyEvent = this.handleKeyEvent?.bind(this) || ((e) => {});
@@ -71,95 +64,83 @@ constructor() {
     this.render();
   }
 
-disconnectedCallback() {
-  window.removeEventListener('keydown', this.handleKeyEvent);
-  window.removeEventListener('keyup', this.handleKeyEvent);
-  window.removeEventListener('resize', this.handleResize);
-  window.removeEventListener('settingsChanged', this.handleSettingsChanged);
-}
-
-
-private handleKeyEvent(e: KeyboardEvent) {
-  this.keysPressed[e.key] = e.type === 'keydown';
-  if (e.type === 'keydown') this.handleKeyDown(e);
-}
-
-
-
-
-async handleJoin(e: Event) {
-  if (this.players.length >= 4) {
-  this.message = 'Maximum 4 players in the tournament';
-  this.messageType = 'error';
-  return this.render();
-}
-  e.preventDefault();
-  this.message = '';
-  this.messageType = '';
-
-  const username = this.username.trim();
-  const nickname = this.nickname.trim();
-
-  if (!username || !nickname) {
-    this.message = 'Username and nickname are required';
-    this.messageType = 'error';
-    return this.render();
+  disconnectedCallback() {
+    window.removeEventListener('keydown', this.handleKeyEvent);
+    window.removeEventListener('keyup', this.handleKeyEvent);
+    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('settingsChanged', this.handleSettingsChanged);
   }
 
-  if (this.players.some(p => p.username === username)) {
-    this.message = 'This user is already registered';
-    this.messageType = 'error';
-    return this.render();
+
+  private handleKeyEvent(e: KeyboardEvent) {
+    this.keysPressed[e.key] = e.type === 'keydown';
+    if (e.type === 'keydown') this.handleKeyDown(e);
   }
 
-  try {
-    const data = await ApiService.validateUsername(username) as {
-      valid: boolean;
-      message?: string;
-      avatar?: string;
-      id?: number;
-      wins?: number;
-      losses?: number;
-    };
+  async handleJoin(e: Event) {
+    if (this.players.length >= 4) {
+      this.message = 'Maximum 4 players in the tournament';
+      this.messageType = 'error';
+      return this.render();
+    }
+    e.preventDefault();
+    this.message = '';
+    this.messageType = '';
 
-    if (!data.valid) {
-      this.message = data.message || 'User not found';
+    const username = this.username.trim();
+    const nickname = this.nickname.trim();
+
+    if (!username || !nickname) {
+      this.message = 'Username and nickname are required';
       this.messageType = 'error';
       return this.render();
     }
 
-    this.players.push({
-      id: data.id!,
-      username,
-      nickname,
-     avatar: data.avatar
-  ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
-  : `${API_BASE_URL}/avatars/default.png`,
+    if (this.players.some(p => p.username === username)) {
+      this.message = 'This user is already registered';
+      this.messageType = 'error';
+      return this.render();
+    }
 
-      matchesPlayed: (data.wins ?? 0) + (data.losses ?? 0),
-      winRatio: (data.wins ?? 0) + (data.losses ?? 0) > 0 ? (data.wins ?? 0) / ((data.wins ?? 0) + (data.losses ?? 0)) : null
-    });
+    try {
+      const data = await ApiService.validateUsername(username) as {
+        valid: boolean;
+        message?: string;
+        avatar?: string;
+        id?: number;
+        wins?: number;
+        losses?: number;
+      };
 
-    console.log('[✅ PLAYER JOINED]', {
-      id: data.id,
-      username,
-      nickname,
-      avatar: this.players[this.players.length - 1].avatar,
-      winRatio: this.players[this.players.length - 1].winRatio,
-    });
+      if (!data.valid) {
+        this.message = data.message || 'User not found';
+        this.messageType = 'error';
+        return this.render();
+      }
 
-    this.username = '';
-    this.nickname = '';
-    this.message = 'Player registered';
-    this.messageType = 'success';
-    this.render();
-  } catch (err) {
-    console.error('[handleJoin] Error:', err);
-    this.message = 'Failed to validate user';
-    this.messageType = 'error';
-    this.render();
+      this.players.push({
+        id: data.id!,
+        username,
+        nickname,
+        avatar: data.avatar
+        ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
+        : `${API_BASE_URL}/avatars/default.png`,
+        matchesPlayed: (data.wins ?? 0) + (data.losses ?? 0),
+        winRatio: (data.wins ?? 0) + (data.losses ?? 0) > 0 ? (data.wins ?? 0) / ((data.wins ?? 0) + (data.losses ?? 0)) : null
+      });
+
+      this.username = '';
+      this.nickname = '';
+      this.message = 'Player registered';
+      this.messageType = 'success';
+      this.render();
+    } catch (err) {
+      console.error('[handleJoin] Error:', err);
+      this.message = 'Failed to validate user';
+      this.messageType = 'error';
+      this.render();
+    }
   }
-}
   
   startTournament() {
     if (this.players.length !== 4) {
@@ -184,13 +165,13 @@ async handleJoin(e: Event) {
     this.render();
   }
 
-private removePlayer(id: number) {
-  if (this.bracket.length > 0) return; // Ignore si tournoi lancé
-  this.players = this.players.filter(p => p.id !== id);
-  this.message = 'Player removed';
-  this.messageType = 'success';
-  this.render();
-}
+  private removePlayer(id: number) {
+    if (this.bracket.length > 0) return; // Ignore si tournoi lancé
+    this.players = this.players.filter(p => p.id !== id);
+    this.message = 'Player removed';
+    this.messageType = 'success';
+    this.render();
+  }
 
 
   private resetTournament() {
@@ -216,25 +197,22 @@ private removePlayer(id: number) {
   }
   
   private recordMatchWinner(winner: string) {
-    // Set winner nickname in bracket for current match
     const currentMatch = this.bracket[this.currentMatchIndex];
     currentMatch.winner = winner;
     
-      // Capture final score
     const currentScore = {
       p1: this.score.player1,
       p2: this.score.player2
     };
     this.matchScores[this.currentMatchIndex] = currentScore;
     if (this.currentMatchIndex < 2) {
-  // Ajoute le gagnant à la finale, mais s'il y a déjà 2 joueurs, on remplace (sécurité)
-  if (this.bracket[2].players.length < 2) {
-    this.bracket[2].players.push(winner);
-  } else {
-    // sécurité: au cas où, on remplace le joueur (rare, mais safe)
-    this.bracket[2].players[this.currentMatchIndex] = winner;
-  }
-}
+      if (this.bracket[2].players.length < 2) {
+        this.bracket[2].players.push(winner);
+      } else {
+        // sécurité: au cas où, on remplace le joueur (rare, mais safe)
+        this.bracket[2].players[this.currentMatchIndex] = winner;
+      }
+    }
 
     
     this.currentMatchIndex++;
@@ -271,11 +249,11 @@ private removePlayer(id: number) {
     `;
   }
 
-private normalizeBallVelocity() {
-  const norm = Math.sqrt(this.ball.dx * this.ball.dx + this.ball.dy * this.ball.dy);
-  this.ball.dx = (this.ball.dx / norm) * this.ball.speed;
-  this.ball.dy = (this.ball.dy / norm) * this.ball.speed;
-}
+  private normalizeBallVelocity() {
+    const norm = Math.sqrt(this.ball.dx * this.ball.dx + this.ball.dy * this.ball.dy);
+    this.ball.dx = (this.ball.dx / norm) * this.ball.speed;
+    this.ball.dy = (this.ball.dy / norm) * this.ball.speed;
+  }
 
   private renderEndScreen() {
     console.log('tournament over, endscreen');
@@ -391,6 +369,7 @@ private normalizeBallVelocity() {
       this.querySelector('.new-tournament-btn')?.addEventListener('click', this.resetTournament.bind(this));
       return;
     }
+
     this.innerHTML = `
       <main class="w-full mx-auto p-8">
 
@@ -401,64 +380,63 @@ private normalizeBallVelocity() {
 
             <form class="flex gap-2 mb-4" onsubmit="return false;">
               <input
-  type="text"
-  placeholder="Username"
-  value="${this.username}"
-  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-  name="username"
-  ${this.players.length >= 4 ? 'disabled' : ''}
-/>
-<input
-  type="text"
-  placeholder="Nickname"
-  value="${this.nickname}"
-  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-  name="nickname"
-  ${this.players.length >= 4 ? 'disabled' : ''}
-/>
-<button
-  type="submit"
-  class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
-  ${this.players.length >= 4 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
->
-  Join
-</button>
+                type="text"
+                placeholder="Username"
+                value="${this.username}"
+                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+                name="username"
+                ${this.players.length >= 4 ? 'disabled' : ''}
+              />
+              <input
+                type="text"
+                placeholder="Nickname"
+                value="${this.nickname}"
+                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+                name="nickname"
+                ${this.players.length >= 4 ? 'disabled' : ''}
+              />
+              <button
+                type="submit"
+                class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
+                ${this.players.length >= 4 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+              >
+                Join
+              </button>
             </form>
 
             ${this.message ? `
               <div class="text-center font-semibold ${this.messageType === 'error' ? 'text-red-500' : 'text-green-400'}">
                 ${this.message}
               </div>` : ''}
-          </div> <!-- tournament-ui -->
-        </div> <!-- form-wrapper -->
+          </div>
+        </div>
 
         <!-- Full width player cards -->
         <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
           ${this.players.map(player => `
-  <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-    <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
-      <img
-        src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
-        alt="Avatar of ${player.nickname}"
-        class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-      />
-      <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-      <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
-      <div class="text-white text-sm space-y-1 w-full">
-        <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
-        <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
-      </div>
-      <button
-  class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
-  data-player-id="${player.id}"
-  ${this.bracket.length > 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
->
-  Remove
-</button>
-
-    </div>
-  </div>
-`).join('')}
+            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+                <img
+                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+                  alt="Avatar of ${player.nickname}"
+                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+                />
+                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+                <div class="text-white text-sm space-y-1 w-full">
+                  <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
+                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
+                </div>
+                <button
+                  class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
+                  data-player-id="${player.id}"
+                  ${this.bracket.length > 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          `).join('')}
         </div>
 
         ${this.bracket.length === 0 ? `
@@ -470,7 +448,7 @@ private normalizeBallVelocity() {
 
         ${this.renderBracket()}
         ${this.renderNextMatch()}
-      </div>
+      </main>
 
       <div id="game-ui" class="hidden">
         <div class="flex flex-col items-center justify-center w-full min-h-[calc(100vh-80px)] p-4 relative">
@@ -498,11 +476,12 @@ private normalizeBallVelocity() {
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
             </span>
-           
+
             <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
               Pause:
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
             </span>
+
             <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
               ${this.currentMatchPlayers[1] || 'Player 2'}
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">O</span>
@@ -511,55 +490,48 @@ private normalizeBallVelocity() {
           </div>
         </div>
       </div>
-
-    </main>
-  `;
-  this.querySelector('.pause-btn')?.addEventListener('click', () => {
-  this.togglePause();
-  this.canvas?.focus(); // pour rester clavier-friendly
-});
-this.querySelectorAll('.remove-player-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const id = Number((btn as HTMLElement).getAttribute('data-player-id'));
-    this.removePlayer(id);
-      });
-});
-  // Attach event listeners after setting innerHTML
-  this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
-  this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
-  this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
-  this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
-  this.querySelector('.play-match-button')?.addEventListener('click', () => {
-    this.toggleGameUI(true);
-  });
-}
-
- private toggleGameUI(showGame: boolean) {
-  const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
-  const gameUI = this.querySelector('#game-ui') as HTMLElement;
-  if (!tournamentUI || !gameUI) return;
-
-  if (showGame) {
-    tournamentUI.style.display = 'none';
-    gameUI.style.display = 'block';
-    // Initialize canvas and game only here
-    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
-
-    this.initGame();
-    this.draw();
-  } else {
-    tournamentUI.style.display = 'block';
-    gameUI.style.display = 'none';
+    `;
+    this.querySelector('.pause-btn')?.addEventListener('click', () => {
+      this.togglePause();
+      this.canvas?.focus(); // pour rester clavier-friendly
+    });
+    this.querySelectorAll('.remove-player-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = Number((btn as HTMLElement).getAttribute('data-player-id'));
+        this.removePlayer(id);
+          });
+    });
+    // Attach event listeners after setting innerHTML
+    this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
+    this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
+    this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
+    this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
+    this.querySelector('.play-match-button')?.addEventListener('click', () => {
+      this.toggleGameUI(true);
+    });
   }
-}
 
+  private toggleGameUI(showGame: boolean) {
+    const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
+    const gameUI = this.querySelector('#game-ui') as HTMLElement;
+    if (!tournamentUI || !gameUI) return;
 
+    if (showGame) {
+      tournamentUI.style.display = 'none';
+      gameUI.style.display = 'block';
+      // Initialize canvas and game only here
+      this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+      this.ctx = this.canvas.getContext('2d')!;
 
-
+      this.initGame();
+      this.draw();
+    } else {
+      tournamentUI.style.display = 'block';
+      gameUI.style.display = 'none';
+    }
+  }
 
 // ~---~ GAME FOR TOURNEY ~---~ //
-
 
   private updateScoreDisplay() {
     const scoreEl = document.getElementById('score');
@@ -592,7 +564,7 @@ this.querySelectorAll('.remove-player-btn').forEach(btn => {
     } else if (e.key === 'Enter' && this.isGameOver) {
         if (this.currentMatchIndex >= this.bracket.length) {
           this.isTournamentOver = true;
-          this.render(); // Shows end screens
+          this.render();
         } else {
           this.toggleGameUI(false);
           this.resetGame();
@@ -601,17 +573,16 @@ this.querySelectorAll('.remove-player-btn').forEach(btn => {
       }
   }
 
-private updateGameSettings() {
-  this.paddle1.speed = this.settings.paddleSpeed;
-  this.paddle2.speed = this.settings.paddleSpeed;
+  private updateGameSettings() {
+    this.paddle1.speed = this.settings.paddleSpeed;
+    this.paddle2.speed = this.settings.paddleSpeed;
 
-  // Changer la vitesse de la balle sans casser la direction :
-  const speed = this.settings.ballSpeed;
-  const angle = Math.atan2(this.ball.dy, this.ball.dx); // garde la même direction
-  this.ball.speed = speed;
-  this.ball.dx = Math.cos(angle) * speed;
-  this.ball.dy = Math.sin(angle) * speed;
-}
+    const speed = this.settings.ballSpeed;
+    const angle = Math.atan2(this.ball.dy, this.ball.dx);
+    this.ball.speed = speed;
+    this.ball.dx = Math.cos(angle) * speed;
+    this.ball.dy = Math.sin(angle) * speed;
+  }
 
 
   private initGame() {
@@ -691,6 +662,7 @@ private resetBall() {
   }
 
   private updateGame() {
+    if (!this.canvas) return;
     if (this.keysPressed['w']) this.paddle1.y -= this.paddle1.speed;
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
@@ -707,52 +679,34 @@ private resetBall() {
       this.ball.y += this.ball.dy;
 
       if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
-  this.ball.dy = -this.ball.dy;
-  this.normalizeBallVelocity();
-}
-
-}
+        this.ball.dy = -this.ball.dy;
+        this.normalizeBallVelocity();
+      }
 
       const ballHitsPaddle = (p: any) =>
         this.ball.y + this.ball.size / 2 >= p.y &&
         this.ball.y - this.ball.size / 2 <= p.y + p.height;
 
-     if (
-  this.ball.dx < 0 &&
-  this.ball.x <= this.paddle1.x + this.paddle1.width &&
-  this.ball.x >= this.paddle1.x &&
-  ballHitsPaddle(this.paddle1)
-) {
-  this.ball.dx = -this.ball.dx;
-  this.normalizeBallVelocity();
-}
-
-
-
-// Paddle droite (player 2)
-if (
-  this.ball.dx > 0 &&
-  this.ball.x + this.ball.size >= this.paddle2.x &&
-  this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-  ballHitsPaddle(this.paddle2)
-) {
-  this.ball.dx = -this.ball.dx;
-  this.normalizeBallVelocity();
-}
-
-
-
-      if (this.ball.x <= 0) {
-        this.score.player2++;
-        this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1], this.currentMatchPlayers[0]) : this.resetBall();
-        this.updateScoreDisplay();
-      } else if (this.ball.x >= this.canvas.width) {
-        this.score.player1++;
-        this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0], this.currentMatchPlayers[1]) : this.resetBall();
-        this.updateScoreDisplay();
+      if (
+        this.ball.dx < 0 &&
+        this.ball.x <= this.paddle1.x + this.paddle1.width &&
+        this.ball.x >= this.paddle1.x &&
+        ballHitsPaddle(this.paddle1)
+      ) {
+        this.ball.dx = -this.ball.dx;
+        this.normalizeBallVelocity();
       }
+    }
     
-    console.log('[BALL SPEED]', Math.hypot(this.ball.dx, this.ball.dy));
+    if (this.ball.x <= 0) {
+      this.score.player2++;
+      this.score.player2 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[1], this.currentMatchPlayers[0]) : this.resetBall();
+      this.updateScoreDisplay();
+    } else if (this.ball.x >= this.canvas.width) {
+      this.score.player1++;
+      this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0], this.currentMatchPlayers[1]) : this.resetBall();
+      this.updateScoreDisplay();
+    }
   }
 
 
@@ -764,6 +718,7 @@ if (
   }
 
   private draw() {
+    if (!this.ctx || !this.canvas) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.fillStyle = this.settings.paddleColor;
@@ -800,8 +755,6 @@ if (
     } else if (!this.isBallActive && this.countdown > 0) {
       this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
-
-    // if (!this.isGameStarted) requestAnimationFrame(() => this.draw());
   }
 
   private endGame(winner: string, loser: string) {
@@ -817,7 +770,6 @@ if (
       const scoreP1 = this.score.player1;
       const scoreP2 = this.score.player2;
 
-      // Save winner/loser result
       fetch(`${API_BASE_URL}/tournament/game-result`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -837,7 +789,6 @@ if (
         console.error('[❌ Fetch Error]', err);
       });
 
-      // Save match history for winner
       fetch(`${API_BASE_URL}/tournament/match-history`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -880,16 +831,16 @@ if (
     this.draw();
   }
 
-private togglePause() {
-  this.isPaused = !this.isPaused;
-  if (this.isPaused) {
-    cancelAnimationFrame(this.animationFrameId);
-  } else {
-    cancelAnimationFrame(this.animationFrameId); // pour éviter les doublons (sécurité)
-    this.startGameLoop();
+  private togglePause() {
+    this.isPaused = !this.isPaused;
+    if (this.isPaused) {
+      cancelAnimationFrame(this.animationFrameId);
+    } else {
+      cancelAnimationFrame(this.animationFrameId); // pour éviter les doublons (sécurité)
+      this.startGameLoop();
+    }
+    this.draw();
   }
-  this.draw();
-}
 
 
   public start() {
