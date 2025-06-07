@@ -17,6 +17,7 @@ class AuthController {
                 }
             });
         } catch (error) {
+            request.log.error('Registration error:', error);
             return reply.code(400).send({
                 success: false,
                 message: error.message || 'Registration failed'

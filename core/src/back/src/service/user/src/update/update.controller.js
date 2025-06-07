@@ -3,25 +3,25 @@ const UpdateService = require('./update.service');
 class UpdateController {
     async updateUsername(request, reply) {
         try {
-          const { newUsername } = request.body;
+            const { newUsername } = request.body;
             const currentUsername = request.user.username;
 
             await UpdateService.updateUsername(currentUsername, newUsername, request.server.serviceClient);
             
             return reply.code(200).send({
-              success: true,
-              message: 'User updated successfully',
-              data: {
-                username: newUsername
-              }
+                success: true,
+                message: 'User updated successfully',
+                data: {
+                    username: newUsername
+                }
             });
-          } catch (error) {
+        } catch (error) {
             request.log.error('[UPDATE ERROR]', error);
             return reply.code(400).send({
-              success: false,
-              message: error.message
+                success: false,
+                message: error.message || 'Failed to update username'
             });
-          }
+        }
     }
 
     async updatePassword(request, reply) {
@@ -31,19 +31,19 @@ class UpdateController {
             await UpdateService.updatePassword(username, newPassword, request.server.serviceClient);
             
             return reply.code(200).send({
-              success: true,
-              message: 'Password updated successfully',
-              data: {
-                username: username
-              }
+                success: true,
+                message: 'Password updated successfully',
+                data: {
+                    username: username
+                }
             });
-          } catch (error) {
+        } catch (error) {
             request.log.error('[UPDATE PASSWORD ERROR]', error);
             return reply.code(400).send({
-              success: false,
-              message: error.message
+                success: false,
+                message: error.message || 'Failed to update password'
             });
-          }
+        }
     }
 }
 

@@ -8,10 +8,7 @@ class InternalController {
             
             return reply.code(200).send({
                 success: true,
-                message: 'Username updated in auth service',
-                data: {
-                    username: newUsername
-                }
+                message: 'Username updated in auth service'
             });
         } catch (error) {
             request.log.error('[UPDATE USERNAME ERROR]', error);

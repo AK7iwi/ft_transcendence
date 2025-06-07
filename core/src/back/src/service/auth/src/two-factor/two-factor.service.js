@@ -101,7 +101,7 @@ class TwoFactorService {
             const enabled = await DbAuth.getTwoFactorEnabled(userId);
             return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
         } catch (error) {
-            throw new Error('Failed to get 2FA enabled');
+            throw new Error(`Failed to get 2FA enabled: ${error.message}`);
         }
     }
 
@@ -109,7 +109,7 @@ class TwoFactorService {
         try {
             return await DbAuth.getTwoFactorSecret(userId);
         } catch (error) {
-            throw new Error('Failed to get 2FA secret');
+            throw new Error(`Failed to get 2FA secret: ${error.message}`);
         }
     }
 }

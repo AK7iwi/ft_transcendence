@@ -6,12 +6,6 @@ class UserController {
             const userId = request.user.id;
 
             const user = await UserService.getUser(userId);
-            if (!user) {
-                return reply.code(404).send({
-                    success: false,
-                    message: 'User not found'
-                });
-            }
 
             return reply.code(200).send({
                 success: true,
@@ -30,7 +24,7 @@ class UserController {
         } catch (error) {
             return reply.code(400).send({
                 success: false,
-                message: error.message
+                message: error.message || 'Failed to get user information'
             });
         }
     }

@@ -34,7 +34,7 @@ class TwoFactorController {
                 }
             });
         } catch (error) {
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message
             });
