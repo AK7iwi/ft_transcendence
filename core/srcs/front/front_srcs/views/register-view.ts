@@ -14,14 +14,23 @@ class RegisterView extends HTMLElement {
     	this.render();
   	}
 
-  	validatePassword(password: string): string[] {
-    	const errors = [];
-    	if (password.length < 8) errors.push('Password must be at least 8 characters long');
-    	if (!/[a-z]/.test(password)) errors.push('Password must contain at least one lowercase letter');
-    	if (!/[A-Z]/.test(password)) errors.push('Password must contain at least one uppercase letter');
-    	if (!/\d/.test(password)) errors.push('Password must contain at least one number');
-    	return errors;
-  	}
+validatePassword(password: string): string[] {
+  const errors = [];
+  if (password.length < 8)
+    errors.push('Password must be at least 8 characters long');
+  if (!/[a-z]/.test(password))
+    errors.push('Password must contain at least one lowercase letter');
+  if (!/[A-Z]/.test(password))
+    errors.push('Password must contain at least one uppercase letter');
+  if (!/\d/.test(password))
+    errors.push('Password must contain at least one number');
+  if (!/[!@.]/.test(password))
+    errors.push('Password must contain at least one special character: ! @ .');
+  if (/[^a-zA-Z0-9!@.]/.test(password))
+    errors.push('Password can only contain letters, numbers, and the special characters: ! @ .');
+  return errors;
+}
+
 
   	handleInput(e: Event) {
     	const target = e.target as HTMLInputElement;
@@ -31,12 +40,11 @@ class RegisterView extends HTMLElement {
   	}
 
   	async handleSignUp(e: Event) {
-    	e.preventDefault();
-    	this.signUpError = '';
-    	this.signUpSuccess = '';
-    	this.isLoading = true;
-    	this.render();
-
+    	 e.preventDefault();
+  this.signUpError = '';
+  this.signUpSuccess = '';
+  this.isLoading = true;
+  this.render();
     	try {
       		const { username, password, confirmPassword } = this.signUpForm;
 
@@ -52,14 +60,20 @@ class RegisterView extends HTMLElement {
         		throw new Error(passwordErrors.join(', '));
 
       		await ApiService.register(username, password);
-      		this.signUpSuccess = 'Account successfully created! You can now log in.';
-    	} catch (error: any) {
-      		this.signUpError = error.message || 'Registration failed';
-    	} finally {
-      		this.isLoading = false;
-      		this.render();
-    	}
-  	}
+    this.signUpSuccess = 'Account successfully created! You can now log in.';
+    // Ici tu peux vider les champs si tu veux !
+    this.signUpForm.password = '';
+    this.signUpForm.confirmPassword = '';
+  } catch (error: any) {
+    this.signUpError = error.message || 'Registration failed';
+    // Ici tu peux vider les champs si tu veux :
+    this.signUpForm.password = '';
+    this.signUpForm.confirmPassword = '';
+  } finally {
+    this.isLoading = false;
+    this.render();
+  }
+}
 
   	render() {
     	this.innerHTML = '';

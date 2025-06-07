@@ -7,6 +7,11 @@ function clearSessionStorage() {
 	localStorage.removeItem('gameSettings');
 }
 
+	function logoutAndRedirect() {
+  clearSessionStorage();
+  navigateTo('/login');
+}
+
 class LoginView extends HTMLElement {
   	private signInForm = { username: '', password: '' };
   	private signInError = '';
@@ -44,12 +49,18 @@ class LoginView extends HTMLElement {
     	this.render();
   	}
 
+	
+
   	handleInput(e: Event) {
     	const target = e.target as HTMLInputElement;
     	if (target.name === 'username') this.signInForm.username = target.value;
     	if (target.name === 'password') this.signInForm.password = target.value;
     	if (target.name === 'code2FA') this.code2FA = target.value;
   	}
+
+
+
+
 
 	async handleSignIn(e: Event) {
   		e.preventDefault();
@@ -71,9 +82,18 @@ class LoginView extends HTMLElement {
 			localStorage.setItem('user', JSON.stringify(profile));
 			navigateTo('/profile');
 		} catch (error: any) {
-				this.signInError = error.message || 'Login failed';
-				this.render();
-		} finally {
+  if (
+    error?.response?.status === 401 ||
+    error?.message === 'Invalid token' ||
+    error?.message === 'Authorization header missing'
+  ) {
+    logoutAndRedirect();
+    return;
+  }
+  this.signInError = error.message || 'Login failed';
+  this.render();
+}
+ finally {
 				this.isLoading = false;
 				this.render();
   		}
