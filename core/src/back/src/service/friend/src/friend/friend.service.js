@@ -22,14 +22,8 @@ class FriendService {
 
             // Add friend
             await DbFriend.createFriendship(userId, friend.user_id);
-
-            // Get user details
-            const userDetails = await DbFriend.getUserDetails(friend.user_id);
-
             return {
-                user_id: userDetails.user_id,
-                username: userDetails.username,
-                avatar: userDetails.avatar || '/avatars/default.png'
+                username: username
             };
 
         } catch (error) {

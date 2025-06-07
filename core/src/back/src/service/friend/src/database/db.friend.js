@@ -65,24 +65,10 @@ class DbFriend {
                        ELSE '/avatars/default.png'
                    END AS avatar
             FROM friends f
-            JOIN users u ON u.user_id = f.friend_id
+            JOIN users u ON u.id = f.friend_id
             WHERE f.user_id = ?
         `);
         return stmt.all(userId);
-    }
-
-    static async getUserDetails(userId) {
-        const stmt = db.prepare(`
-            SELECT user_id, username,
-                   CASE
-                       WHEN avatar IS NOT NULL AND avatar != ''
-                       THEN '/avatars/' || avatar
-                       ELSE '/avatars/default.png'
-                   END AS avatar
-            FROM users
-            WHERE user_id = ?
-        `);
-        return stmt.get(userId);
     }
 
     //INTERNAL ROUTES
