@@ -10,6 +10,8 @@ class ProfileView extends HTMLElement {
   private errorMessage: string = '';
   private wins: number = 0;
   private losses: number = 0;
+  private showAllHistory = false;
+
 
   private matchHistory: Array<{
     match_id: number;
@@ -138,6 +140,8 @@ class ProfileView extends HTMLElement {
     }
   }
 
+  
+
   render() {
     const formatDate = (iso: string) => {
       const d = new Date(iso);
@@ -149,25 +153,29 @@ class ProfileView extends HTMLElement {
         minute: '2-digit'
       });
     };
+const matchesSorted = this.matchHistory
+  .sort((a, b) => new Date(b.played_at).getTime() - new Date(a.played_at).getTime());
 
-    const historyRows = this.matchHistory
-      .map(m => {
-        const scoreText = `${m.score_user} – ${m.score_opponent}`;
-        const resultColor = m.result === 'win' ? 'text-green-400' : 'text-red-400';
-        return `
-          <tr class="border-b border-gray-700 hover:bg-gray-800">
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">
-              ${formatDate(m.played_at)}
-            </td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${m.opponent}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold ${resultColor}">
-              ${m.result.toUpperCase()}
-            </td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${scoreText}</td>
-          </tr>
-        `;
-      })
-      .join('');
+const matchesToShow = this.showAllHistory ? matchesSorted : matchesSorted.slice(0, 10);
+
+const historyRows = matchesToShow
+  .map(m => {
+    const scoreText = `${m.score_user} – ${m.score_opponent}`;
+    const resultColor = m.result === 'win' ? 'text-green-400' : 'text-red-400';
+    return `
+      <tr class="border-b border-gray-700 hover:bg-gray-800">
+        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">
+          ${formatDate(m.played_at)}
+        </td>
+        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${m.opponent}</td>
+        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold ${resultColor}">
+          ${m.result.toUpperCase()}
+        </td>
+        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-200">${scoreText}</td>
+      </tr>
+    `;
+  })
+  .join('');
 
     this.innerHTML = `
       <div class="bg-gray-900 py-12">
@@ -245,7 +253,13 @@ class ProfileView extends HTMLElement {
             </tbody>
           </table>
         </div>
+        ${this.matchHistory.length > 10 ? `
+  <div class="text-center mt-2">
+    <button class="text-sm text-blue-400 underline" id="toggle-history-btn">
+      ${this.showAllHistory ? 'Voir moins' : 'Voir tout'}
+    </button>
       </div>
+` : ''}
     `;
 
     // Listeners
@@ -257,6 +271,14 @@ class ProfileView extends HTMLElement {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => this.logout());
     }
+    const toggleHistoryBtn = this.querySelector('#toggle-history-btn');
+if (toggleHistoryBtn) {
+  toggleHistoryBtn.addEventListener('click', () => {
+    this.showAllHistory = !this.showAllHistory;
+    this.render();
+  });
+}
+
   }
 }
 
