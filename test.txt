@@ -53,9 +53,13 @@ curl -k -X POST \
   "https://localhost:3000/auth/2fa/disable"
 
 
-SQL injection: 
+curl -k -X GET \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "https://localhost:3000/friend/friends"
 
-curl -k -v -X POST \
+
+curl -k -X POST \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "SELECT * FROM users"}' \
-  https://localhost:3000/auth/login
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"username": "friend_to_add"}' \
+  "https://localhost:3000/friend/add"

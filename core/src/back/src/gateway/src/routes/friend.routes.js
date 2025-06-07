@@ -30,4 +30,30 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    fastify.get('/friends', {
+        schema: friendSchema.getFriends,
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.get(
+                    `${process.env.FRIEND_SERVICE_URL}/friend/friends`,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to fetch friends';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };

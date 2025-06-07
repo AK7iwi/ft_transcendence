@@ -25,6 +25,25 @@ class FriendController {
             });
         }
     }
+
+    async getFriends(request, reply) {
+        try {
+            const userId = request.user.id;
+            const friends = await FriendService.getFriends(userId);
+            
+            return reply.code(200).send({
+                success: true,
+                message: 'Friends retrieved successfully',
+                data: friends
+            });
+        } catch (error) {
+            request.log.error('[GET FRIENDS ERROR]', error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to fetch friends'
+            });
+        }
+    }
 }
 
 module.exports = new FriendController();

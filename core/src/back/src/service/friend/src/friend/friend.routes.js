@@ -9,6 +9,12 @@ async function friendRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.addFriend
     });
+
+    fastify.get('/friends', {
+        schema: friendSchema.getFriends,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: FriendController.getFriends
+    });
 }
 
 module.exports = friendRoutes;

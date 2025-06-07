@@ -8,6 +8,7 @@ class DbFriend {
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 username TEXT NOT NULL UNIQUE,
+                avatar TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -22,8 +23,8 @@ class DbFriend {
                 status TEXT DEFAULT 'accepted',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id),
-                FOREIGN KEY (friend_id) REFERENCES users(user_id)
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (friend_id) REFERENCES users(id)
             )
         `);
         createFriendsTable.run();
@@ -53,6 +54,35 @@ class DbFriend {
             DELETE FROM friends
             WHERE user_id = ? AND friend_id = ?
         `).run(userId, friendId);
+    }
+
+    static async getFriends(userId) {
+        const stmt = db.prepare(`
+            SELECT u.user_id, u.username,
+                   CASE
+                       WHEN u.avatar IS NOT NULL AND u.avatar != ''
+                       THEN '/avatars/' || u.avatar
+                       ELSE '/avatars/default.png'
+                   END AS avatar
+            FROM friends f
+            JOIN users u ON u.user_id = f.friend_id
+            WHERE f.user_id = ?
+        `);
+        return stmt.all(userId);
+    }
+
+    static async getUserDetails(userId) {
+        const stmt = db.prepare(`
+            SELECT user_id, username,
+                   CASE
+                       WHEN avatar IS NOT NULL AND avatar != ''
+                       THEN '/avatars/' || avatar
+                       ELSE '/avatars/default.png'
+                   END AS avatar
+            FROM users
+            WHERE user_id = ?
+        `);
+        return stmt.get(userId);
     }
 
     //INTERNAL ROUTES

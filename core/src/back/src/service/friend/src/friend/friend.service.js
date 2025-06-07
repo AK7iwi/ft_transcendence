@@ -9,22 +9,27 @@ class FriendService {
                 throw new Error('User not found');
             }
 
-        // Check if trying to add self
-        if (friend.id === userId) {
-            throw new Error('Cannot add yourself as a friend');
-        }
+            // Check if trying to add self
+            if (friend.user_id === userId) {
+                throw new Error('Cannot add yourself as a friend');
+            }
 
-        // Check if friendship already exists
-        const exists = await DbFriend.findFriendship(userId, friend.id);
-        if (exists) {
-            throw new Error('Friend already added');
-        }
+            // Check if friendship already exists
+            const exists = await DbFriend.findFriendship(userId, friend.user_id);
+            if (exists) {
+                throw new Error('Friend already added');
+            }
 
             // Add friend
-            await DbFriend.createFriendship(userId, friend.id);
+            await DbFriend.createFriendship(userId, friend.user_id);
+
+            // Get user details
+            const userDetails = await DbFriend.getUserDetails(friend.user_id);
 
             return {
-                username: username
+                user_id: userDetails.user_id,
+                username: userDetails.username,
+                avatar: userDetails.avatar || '/avatars/default.png'
             };
 
         } catch (error) {
@@ -32,6 +37,14 @@ class FriendService {
         }
     }
 
+    static async getFriends(userId) {
+        try {
+            const friends = await DbFriend.getFriends(userId);
+            return friends;
+        } catch (error) {
+            throw new Error(`Failed to fetch friends: ${error.message}`);
+        }
+    }
 }
 
 module.exports = FriendService;
