@@ -1,4 +1,3 @@
-import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
 import { API_BASE_URL } from '../config'; // adjust path as needed
 import type { GameSettings } from '../services/settings-service';
@@ -14,6 +13,9 @@ class TournamentView extends HTMLElement {
   private message = '';
   private messageType: 'success' | 'error' | '' = '';
   private isTournamentOver = false;
+  private countdownIntervalId: number | null = null;
+
+
 
   // private players: { username: string; nickname: string }[] = [];
   private players: Array<{
@@ -54,17 +56,42 @@ class TournamentView extends HTMLElement {
   private ball = { x: 0, y: 0, size: 10, speed: 5, dx: 5, dy: 5 };
 
 
-  constructor() {
-    super();
-    window.addEventListener('settingsChanged', this.handleSettingsChanged);
-    window.addEventListener('resize', this.handleResize);
-  }
+constructor() {
+  super();
+  this.handleKeyEvent = this.handleKeyEvent.bind(this); // pour le removeEventListener
+}
 
   connectedCallback() {
+    this.handleKeyEvent = this.handleKeyEvent?.bind(this) || ((e) => {});
+    window.addEventListener('keydown', this.handleKeyEvent);
+    window.addEventListener('keyup', this.handleKeyEvent);
+    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('settingsChanged', this.handleSettingsChanged);
     this.render();
   }
 
+disconnectedCallback() {
+  window.removeEventListener('keydown', this.handleKeyEvent);
+  window.removeEventListener('keyup', this.handleKeyEvent);
+  window.removeEventListener('resize', this.handleResize);
+  window.removeEventListener('settingsChanged', this.handleSettingsChanged);
+}
+
+
+private handleKeyEvent(e: KeyboardEvent) {
+  this.keysPressed[e.key] = e.type === 'keydown';
+  if (e.type === 'keydown') this.handleKeyDown(e);
+}
+
+
+
+
 async handleJoin(e: Event) {
+  if (this.players.length >= 4) {
+  this.message = 'Maximum 4 players in the tournament';
+  this.messageType = 'error';
+  return this.render();
+}
   e.preventDefault();
   this.message = '';
   this.messageType = '';
@@ -104,9 +131,10 @@ async handleJoin(e: Event) {
       id: data.id!,
       username,
       nickname,
-      avatar: data.avatar?.startsWith('/')
-        ? `${API_BASE_URL}${data.avatar}`
-        : (data.avatar || 'https://placehold.co/96x96?text=Avatar'),
+     avatar: data.avatar
+  ? (data.avatar.startsWith('/') ? `${API_BASE_URL}${data.avatar}` : data.avatar)
+  : `${API_BASE_URL}/avatars/default.png`,
+
       matchesPlayed: (data.wins ?? 0) + (data.losses ?? 0),
       winRatio: (data.wins ?? 0) + (data.losses ?? 0) > 0 ? (data.wins ?? 0) / ((data.wins ?? 0) + (data.losses ?? 0)) : null
     });
@@ -155,6 +183,15 @@ async handleJoin(e: Event) {
     this.render();
   }
 
+private removePlayer(id: number) {
+  if (this.bracket.length > 0) return; // Ignore si tournoi lancé
+  this.players = this.players.filter(p => p.id !== id);
+  this.message = 'Player removed';
+  this.messageType = 'success';
+  this.render();
+}
+
+
   private resetTournament() {
     this.players = [];
     this.bracket = [];
@@ -189,9 +226,15 @@ async handleJoin(e: Event) {
     };
     this.matchScores[this.currentMatchIndex] = currentScore;
     if (this.currentMatchIndex < 2) {
-      // Advance winner to Final
-      this.bracket[2].players.push(winner);
-    }
+  // Ajoute le gagnant à la finale, mais s'il y a déjà 2 joueurs, on remplace (sécurité)
+  if (this.bracket[2].players.length < 2) {
+    this.bracket[2].players.push(winner);
+  } else {
+    // sécurité: au cas où, on remplace le joueur (rare, mais safe)
+    this.bracket[2].players[this.currentMatchIndex] = winner;
+  }
+}
+
     
     this.currentMatchIndex++;
     this.currentMatchPlayers = this.bracket[this.currentMatchIndex]?.players || [];
@@ -226,6 +269,12 @@ async handleJoin(e: Event) {
       </div>
     `;
   }
+
+private normalizeBallVelocity() {
+  const norm = Math.sqrt(this.ball.dx * this.ball.dx + this.ball.dy * this.ball.dy);
+  this.ball.dx = (this.ball.dx / norm) * this.ball.speed;
+  this.ball.dy = (this.ball.dy / norm) * this.ball.speed;
+}
 
   private renderEndScreen() {
     console.log('tournament over, endscreen');
@@ -351,25 +400,28 @@ async handleJoin(e: Event) {
 
             <form class="flex gap-2 mb-4" onsubmit="return false;">
               <input
-                type="text"
-                placeholder="Username"
-                value="${this.username}"
-                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-                name="username"
-              />
-              <input
-                type="text"
-                placeholder="Nickname"
-                value="${this.nickname}"
-                class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
-                name="nickname"
-              />
-              <button
-                type="submit"
-                class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
-              >
-                Join
-              </button>
+  type="text"
+  placeholder="Username"
+  value="${this.username}"
+  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+  name="username"
+  ${this.players.length >= 4 ? 'disabled' : ''}
+/>
+<input
+  type="text"
+  placeholder="Nickname"
+  value="${this.nickname}"
+  class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
+  name="nickname"
+  ${this.players.length >= 4 ? 'disabled' : ''}
+/>
+<button
+  type="submit"
+  class="flex-[1_1_20%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-semibold hover:opacity-90 transition text-sm"
+  ${this.players.length >= 4 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+>
+  Join
+</button>
             </form>
 
             ${this.message ? `
@@ -382,22 +434,30 @@ async handleJoin(e: Event) {
         <!-- Full width player cards -->
         <div class="grid gap-2 mb-6 px-8 justify-center mx-auto" style="grid-template-columns: repeat(auto-fit, minmax(150px, 200px));">
           ${this.players.map(player => `
-            <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
-              <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
-                <img
-                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
-                  alt="Avatar of ${player.nickname}"
-                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-                />
-                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
-                <div class="text-white text-sm space-y-1 w-full">
-                  <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
-                  <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-          `).join('')}
+  <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
+    <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
+      <img
+        src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
+        alt="Avatar of ${player.nickname}"
+        class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+      />
+      <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
+      <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+      <div class="text-white text-sm space-y-1 w-full">
+        <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
+        <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>
+      </div>
+      <button
+  class="mt-3 text-sm px-4 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition remove-player-btn"
+  data-player-id="${player.id}"
+  ${this.bracket.length > 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}
+>
+  Remove
+</button>
+
+    </div>
+  </div>
+`).join('')}
         </div>
 
         ${this.bracket.length === 0 ? `
@@ -437,6 +497,7 @@ async handleJoin(e: Event) {
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">W</span>
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">S</span>
             </span>
+           
             <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-md font-semibold">
               Pause:
               <span class="inline-block px-2 py-1 bg-white text-slate-900 rounded shadow-inner font-bold text-xs">G</span>
@@ -452,7 +513,16 @@ async handleJoin(e: Event) {
 
     </main>
   `;
-
+  this.querySelector('.pause-btn')?.addEventListener('click', () => {
+  this.togglePause();
+  this.canvas?.focus(); // pour rester clavier-friendly
+});
+this.querySelectorAll('.remove-player-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const id = Number((btn as HTMLElement).getAttribute('data-player-id'));
+    this.removePlayer(id);
+      });
+});
   // Attach event listeners after setting innerHTML
   this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
   this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
@@ -463,25 +533,26 @@ async handleJoin(e: Event) {
   });
 }
 
-  private toggleGameUI(showGame: boolean) {
-    const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
-    const gameUI = this.querySelector('#game-ui') as HTMLElement;
-    if (!tournamentUI || !gameUI) return;
+ private toggleGameUI(showGame: boolean) {
+  const tournamentUI = this.querySelector('#tournament-ui') as HTMLElement;
+  const gameUI = this.querySelector('#game-ui') as HTMLElement;
+  if (!tournamentUI || !gameUI) return;
 
-    if (showGame) {
-      tournamentUI.style.display = 'none';
-      gameUI.style.display = 'block';
-      // Initialize canvas and game only here
-      this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
-      this.ctx = this.canvas.getContext('2d')!;
-      this.setupEventListeners();
-      this.initGame();
-      this.draw();
-    } else {
-      tournamentUI.style.display = 'block';
-      gameUI.style.display = 'none';
-    }
+  if (showGame) {
+    tournamentUI.style.display = 'none';
+    gameUI.style.display = 'block';
+    // Initialize canvas and game only here
+    this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext('2d')!;
+
+    this.initGame();
+    this.draw();
+  } else {
+    tournamentUI.style.display = 'block';
+    gameUI.style.display = 'none';
   }
+}
+
 
 
 
@@ -508,15 +579,7 @@ async handleJoin(e: Event) {
     this.draw();
   };
 
-  private setupEventListeners() {
-    ['keydown', 'keyup'].forEach((event) =>
-      window.addEventListener(event, (e) => {
-        ['w', 's', 'o', 'k'].includes(e.key);
-        this.keysPressed[e.key] = event === 'keydown';
-        if (event === 'keydown') this.handleKeyDown(e as KeyboardEvent);
-      })
-    );
-  }
+
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
@@ -537,13 +600,18 @@ async handleJoin(e: Event) {
       }
   }
 
-  private updateGameSettings() {
-    this.paddle1.speed = this.settings.paddleSpeed;
-    this.paddle2.speed = this.settings.paddleSpeed;
-    this.ball.speed = this.settings.ballSpeed;
-    this.ball.dx = this.settings.ballSpeed;
-    this.ball.dy = this.settings.ballSpeed;
-  }
+private updateGameSettings() {
+  this.paddle1.speed = this.settings.paddleSpeed;
+  this.paddle2.speed = this.settings.paddleSpeed;
+
+  // Changer la vitesse de la balle sans casser la direction :
+  const speed = this.settings.ballSpeed;
+  const angle = Math.atan2(this.ball.dy, this.ball.dx); // garde la même direction
+  this.ball.speed = speed;
+  this.ball.dx = Math.cos(angle) * speed;
+  this.ball.dy = Math.sin(angle) * speed;
+}
+
 
   private initGame() {
     const container = this.canvas.parentElement!;
@@ -561,6 +629,8 @@ async handleJoin(e: Event) {
     this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
+
+     this.ball.speed = this.settings.ballSpeed;
     this.resetBall();
     this.gameLoop = false;
     this.isGameStarted = false;
@@ -568,16 +638,18 @@ async handleJoin(e: Event) {
     this.updateGameSettings();
   }
 
-  private resetBall() {
-    this.ball.x = this.canvas.width / 2;
-    this.ball.y = this.canvas.height / 2;
-    const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
-    this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
-    this.isBallActive = false;
-    this.startBallCountdown();
-  }
+private resetBall() {
+  this.ball.speed = this.settings.ballSpeed; // <- toujours ici
+  const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
+  const direction = Math.random() > 0.5 ? 1 : -1;
+  this.ball.dx = Math.cos(angle) * this.ball.speed * direction;
+  this.ball.dy = Math.sin(angle) * this.ball.speed;
+  this.ball.x = this.canvas.width / 2;
+  this.ball.y = this.canvas.height / 2;
+  this.isBallActive = false;
+  this.startBallCountdown();
+}
+
 
   private startInitialCountdown() {
     const interval = setInterval(() => {
@@ -588,6 +660,8 @@ async handleJoin(e: Event) {
         this.gameLoop = true;
         this.isBallActive = true;
         this.isInitialCountdown = false;
+        cancelAnimationFrame(this.animationFrameId);
+
         this.startGameLoop();
       }
       this.draw();
@@ -607,6 +681,8 @@ async handleJoin(e: Event) {
   }
 
   private startGameLoop() {
+    cancelAnimationFrame(this.animationFrameId);
+
     if (!this.gameLoop || this.isPaused) return;
     this.updateGame();
     this.draw();
@@ -618,6 +694,10 @@ async handleJoin(e: Event) {
     if (this.keysPressed['s']) this.paddle1.y += this.paddle1.speed;
     if (this.keysPressed['o']) this.paddle2.y -= this.paddle2.speed;
     if (this.keysPressed['k']) this.paddle2.y += this.paddle2.speed;
+    if (this.keysPressed['W']) this.paddle1.y -= this.paddle1.speed;
+    if (this.keysPressed['S']) this.paddle1.y += this.paddle1.speed;
+    if (this.keysPressed['O']) this.paddle2.y -= this.paddle2.speed;
+    if (this.keysPressed['K']) this.paddle2.y += this.paddle2.speed;
     this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.paddle1.height, this.paddle1.y));
     this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.paddle2.height, this.paddle2.y));
 
@@ -625,27 +705,41 @@ async handleJoin(e: Event) {
       this.ball.x += this.ball.dx;
       this.ball.y += this.ball.dy;
 
-      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) this.ball.dy *= -1;
+      if (this.ball.y <= 0 || this.ball.y >= this.canvas.height) {
+  this.ball.dy = -this.ball.dy;
+  this.normalizeBallVelocity();
+}
+
+}
 
       const ballHitsPaddle = (p: any) =>
         this.ball.y + this.ball.size / 2 >= p.y &&
         this.ball.y - this.ball.size / 2 <= p.y + p.height;
 
-      if (
-        this.ball.dx < 0 &&
-        this.ball.x <= this.paddle1.x + this.paddle1.width &&
-        this.ball.x >= this.paddle1.x &&
-        ballHitsPaddle(this.paddle1)
-      ) {
-        this.ball.dx *= -1;
-      } else if (
-        this.ball.dx > 0 &&
-        this.ball.x + this.ball.size >= this.paddle2.x &&
-        this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
-        ballHitsPaddle(this.paddle2)
-      ) {
-        this.ball.dx *= -1;
-      }
+     if (
+  this.ball.dx < 0 &&
+  this.ball.x <= this.paddle1.x + this.paddle1.width &&
+  this.ball.x >= this.paddle1.x &&
+  ballHitsPaddle(this.paddle1)
+) {
+  this.ball.dx = -this.ball.dx;
+  this.normalizeBallVelocity();
+}
+
+
+
+// Paddle droite (player 2)
+if (
+  this.ball.dx > 0 &&
+  this.ball.x + this.ball.size >= this.paddle2.x &&
+  this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+  ballHitsPaddle(this.paddle2)
+) {
+  this.ball.dx = -this.ball.dx;
+  this.normalizeBallVelocity();
+}
+
+
 
       if (this.ball.x <= 0) {
         this.score.player2++;
@@ -656,9 +750,10 @@ async handleJoin(e: Event) {
         this.score.player1 >= this.settings.endScore ? this.endGame(this.currentMatchPlayers[0], this.currentMatchPlayers[1]) : this.resetBall();
         this.updateScoreDisplay();
       }
-    }
+    
     console.log('[BALL SPEED]', Math.hypot(this.ball.dx, this.ball.dy));
   }
+
 
   private drawCenteredText(text: string, size: number, y: number) {
     this.ctx.font = `bold ${size}px Arial`;
@@ -784,11 +879,17 @@ async handleJoin(e: Event) {
     this.draw();
   }
 
-  private togglePause() {
-    this.isPaused = !this.isPaused;
-    this.isPaused ? cancelAnimationFrame(this.animationFrameId) : this.startGameLoop();
-    this.draw();
+private togglePause() {
+  this.isPaused = !this.isPaused;
+  if (this.isPaused) {
+    cancelAnimationFrame(this.animationFrameId);
+  } else {
+    cancelAnimationFrame(this.animationFrameId); // pour éviter les doublons (sécurité)
+    this.startGameLoop();
   }
+  this.draw();
+}
+
 
   public start() {
     this.render();
@@ -796,3 +897,8 @@ async handleJoin(e: Event) {
 }
 
 customElements.define('tournament-view', TournamentView);
+
+
+
+
+
