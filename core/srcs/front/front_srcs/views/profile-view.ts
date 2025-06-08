@@ -115,7 +115,6 @@ class ProfileView extends HTMLElement {
   private async loadMatchHistory() {
     try {
       const data = await ApiService.getMatchHistory();
-      console.log('[DEBUG] Raw match history data:', data);
       this.matchHistory = data;
       this.matchHistory.forEach(m => {
         console.log('[MATCH]', {

@@ -325,7 +325,6 @@ setInterval(() => {
 
   handleAuth(clientId, payload) {
   const token = payload?.token;
-   console.log('[BACK] handleAuth reçu token =', token);
   if (!token) {
     return this.sendToClient(clientId, {
       type: 'error',
@@ -354,9 +353,7 @@ setInterval(() => {
 
   ws.userId = userId;
   ws.clientId = clientId;
-console.log('[BACK] handleAuth → userId déduit =', userId);
   this.onlineUsers.set(userId, ws);
-  console.log('[BACK] onlineUsers contient maintenant', Array.from(this.onlineUsers.keys()));
   this.clients.set(clientId, ws);
 
   this.sendToClient(clientId, {

@@ -24,16 +24,14 @@ export class WebSocketService {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
-        console.log('[WS] Connected');
         this.reconnectAttempts = 0;
 
 
         const token = localStorage.getItem('token');
         if (token) {
           this.send('auth', { token });
-          console.log('[WS] ✅ Auth envoyé automatiquement');
         } else {
-          console.warn('[WS] ⚠️ Aucun token trouvé pour WebSocket');
+          console.warn('[WS] Aucun token trouvé pour WebSocket');
         }
 
         while (this.messageQueue.length > 0) {
@@ -45,7 +43,6 @@ export class WebSocketService {
       this.ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log('[WS RAW]', message);
           this.handleMessage(message);
         } catch (error) {
           console.error('Error processing message:', error);
@@ -53,7 +50,6 @@ export class WebSocketService {
       };
 
       this.ws.onclose = () => {
-        console.log('[WS] Disconnected');
         this.handleReconnect();
       };
 
@@ -70,7 +66,6 @@ export class WebSocketService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       setTimeout(() => {
-        console.log(`[WS] Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         this.connect();
       }, this.reconnectTimeout * this.reconnectAttempts);
     } else {
@@ -86,7 +81,6 @@ export class WebSocketService {
   }
 
   public on(type: string, handler: (data: any) => void) {
-     console.log(`[WSService] Enregistrement handler pour type: ${type}`);
     if (!this.messageHandlers.has(type)) {
       this.messageHandlers.set(type, []);
     }

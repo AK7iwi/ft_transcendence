@@ -77,7 +77,6 @@ async function authRoutes(fastify, options) {
                         username: user.username
                     });
                 }
-                console.log("Durée JWT :", process.env.JWT_EXPIRES_IN);
 
                 const token = jwt.sign(
                     { id: user.id, username: user.username },
@@ -108,7 +107,6 @@ async function authRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.updateUsername,
         handler: async (request, reply) => {
-    console.log('Payload reçu /auth/update:', request.body);
     try {
         const { username, newUsername } = request.body;
 
@@ -236,7 +234,6 @@ async function authRoutes(fastify, options) {
                 if (!verified) {
                     return reply.code(401).send({ error: 'Invalid 2FA token' });
                 }
-                console.log("Durée JWT :", process.env.JWT_EXPIRES_IN);
 
                 const token = jwt.sign(
                     { id: userId },
@@ -317,7 +314,6 @@ async function authRoutes(fastify, options) {
         handler: async (request, reply) => {
             try {
                 const userId = request.user.id;
-                console.log('Fetching friends for user ID:', userId);
 
                 const rows = dbApi.db.prepare(`
                     SELECT u.id, u.username,
@@ -331,7 +327,6 @@ async function authRoutes(fastify, options) {
                     WHERE f.user_id = ?
                 `).all(userId);
 
-                console.log('Friends found:', rows);
                 return reply.send(rows);
             } catch (err) {
                 return reply.code(500).send({ error: 'Failed to fetch friends' });

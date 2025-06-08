@@ -172,7 +172,6 @@ function initializeDatabase() {
             }
         }
 
-        console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Failed to initialize database tables:', error);
         process.exit(1);
@@ -194,10 +193,8 @@ async function getUserByUsername(username) {
 }
 
 function getUserByUsernameforMat(username) {
-    console.log('[DB] Looking up:', username); 
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     const user = stmt.get(username);
-    console.log('[DB] Found:', user); 
     return user;
 }
 

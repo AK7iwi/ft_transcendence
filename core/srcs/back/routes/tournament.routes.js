@@ -11,7 +11,6 @@ async function tournamentRoutes(fastify, options) {
 
       try {
         recordGameResultTournament(winnerId, loserId);
-        console.log(`[✅ DB] Game recorded: winner=${winnerId}, loser=${loserId}`);
         return reply.send({ success: true });
       } catch (err) {
         console.error('[❌ DB] Failed to record game result:', err);
@@ -47,7 +46,6 @@ async function tournamentRoutes(fastify, options) {
   });
   fastify.post('/validate-username', {
     handler: async (request, reply) => {
-      console.log('[ROUTE] /tournament/validate-username hit');
       const username = (request.body.username || '').trim();
 
       if (!username || typeof username !== 'string') {
@@ -56,8 +54,6 @@ async function tournamentRoutes(fastify, options) {
 
       try {
         const user = getUserByUsernameforMat(username);
-        console.log('[CHECK] looking up username:', username, '→ found:', !!user);
-        console.log('[CHECK] Result from DB for', username, ':', user);
 
         if (user) {
           return reply.send({

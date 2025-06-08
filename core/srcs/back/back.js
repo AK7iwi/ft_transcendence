@@ -84,7 +84,6 @@ fastify.listen({ port: process.env.PORT, host: process.env.HOST }, (err, address
         fastify.log.error(err);
         process.exit(1);
     }
-    console.log(`🚀 Serveur HTTPS + WebSocket en écoute sur ${address}`);
 });
 
 

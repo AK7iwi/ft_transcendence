@@ -144,15 +144,12 @@ class GameRemoteView extends HTMLElement {
 		const baseUrl = API_BASE_URL.replace(/^https?/, wsProtocol) + '/ws';
 		const wsUrl = `${baseUrl}?sessionId=${sessionId}&playerId=${playerId}`;
 
-		console.log('[DEBUG] Tentative WebSocket sur :', wsUrl);
 		this.socket = new WebSocket(wsUrl);
 
 		this.socket.onopen = () => {
 			const token = localStorage.getItem('token');
-			console.log('[FRONT] WebSocket ouvert, token =', token);
 			if (token) {
 				this.socket?.send(JSON.stringify({ type: 'auth', payload: { token } }));
-				console.log('[FRONT] Envoi “auth” au serveur');
 			}
 		};
 

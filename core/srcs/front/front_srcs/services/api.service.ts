@@ -108,7 +108,6 @@ private static getFetchOptions(options: RequestInit): RequestInit {
 static async getProfile() {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('Not authenticated');
-console.log('📡 Appel API /profile avec token:', token);
 
   const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/me`, {
     method: 'GET',

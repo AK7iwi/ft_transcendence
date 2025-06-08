@@ -11,7 +11,6 @@ async function avatarRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                console.log('[AVATAR] Upload avatar triggered');
 
                 const file = await request.file();
                 const userId = request.user.id;
@@ -25,7 +24,6 @@ async function avatarRoutes(fastify, options) {
                 const fileName = `avatar_${userId}${ext}`;
                 const filePath = path.join(__dirname, '..', 'public', 'avatars', fileName);
 
-                console.log('[AVATAR] Writing to:', filePath);
 
                 await pump(file.file, fs.createWriteStream(filePath));
 

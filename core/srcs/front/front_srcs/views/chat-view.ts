@@ -194,24 +194,20 @@ private async loadConversations() {
 
   private setupWebSocket() {
     const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + '/ws';
-    console.log('[WS] Connecting to:', wsUrl);
     this.websocket = new WebSocket(wsUrl);
 
     this.websocket.addEventListener('open', () => {
-      console.log('[WS] Open connection');
       const token = localStorage.getItem('token');
       if (token) {
 
         const authMsg = { type: 'auth', payload: { token } };
         this.websocket!.send(JSON.stringify(authMsg));
-        console.log('[WS] Sent auth:', authMsg);
       }
     });
 
     this.websocket.addEventListener('message', (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('[WS] Received:', data);
 
         if (data.type === 'dm') {
             const { senderId, text } = data;
@@ -243,9 +239,7 @@ private async loadConversations() {
 
 private async loadMessages(friendId: string) {
   try {
-    console.log('[loadMessages] friendsId =', friendId);
     const result = await ApiService.getMessages(friendId);
-    console.log("[loadMessages] result =", result);
 
     this.messages = result.map((msg: any) => ({
       author: msg.sender?.username || msg.sender_username || '???',
@@ -324,7 +318,6 @@ private async loadMessages(friendId: string) {
     try {
 
       await ApiService.sendMessage({ receiverId: toUserId, content: text });
-      console.log('[sendMessage] REST API returned OK');
 
 
       const payload = {
@@ -336,7 +329,6 @@ private async loadMessages(friendId: string) {
       };
       if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
         this.websocket.send(JSON.stringify(payload));
-        console.log('[sendMessage] Sent over WebSocket:', payload);
       } else {
         console.warn('[sendMessage] WS not opened, unable to send DM');
       }

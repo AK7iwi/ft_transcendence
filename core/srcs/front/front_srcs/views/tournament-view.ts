@@ -238,8 +238,6 @@ class TournamentView extends HTMLElement {
     
     this.message = `${winner} won ${currentMatch.round}!`;
     this.messageType = 'success';
-    console.log('Updated matchScores:', this.matchScores);
-    console.log(`Updated Match Index ${this.currentMatchIndex} vs Bracket.length ${this.bracket.length}`);
     if (this.currentMatchIndex >= this.bracket.length)
       this.isTournamentOver = true;
     this.resetGame();
@@ -274,7 +272,6 @@ class TournamentView extends HTMLElement {
   }
 
   private renderEndScreen() {
-    console.log('tournament over, endscreen');
     if (!this.isTournamentOver) return '';
     const finalMatch = this.bracket[this.bracket.length - 1];
     const winnerNickname = finalMatch?.winner;
@@ -382,7 +379,6 @@ class TournamentView extends HTMLElement {
 
   render() {
     if (this.isTournamentOver) {
-      console.log(`state = isTournamentOver = ${this.isTournamentOver}`);
       this.innerHTML = this.renderEndScreen();
       this.querySelector('.new-tournament-btn')?.addEventListener('click', this.resetTournament.bind(this));
       return;
@@ -713,6 +709,15 @@ private resetBall() {
         this.ball.dx = -this.ball.dx;
         this.normalizeBallVelocity();
       }
+      if (
+  this.ball.dx > 0 &&
+  this.ball.x + this.ball.size >= this.paddle2.x && // la balle arrive sur le paddle2
+  this.ball.x + this.ball.size <= this.paddle2.x + this.paddle2.width &&
+  ballHitsPaddle(this.paddle2)
+) {
+  this.ball.dx = -this.ball.dx;
+  this.normalizeBallVelocity();
+}
     }
     
     if (this.ball.x <= 0) {
