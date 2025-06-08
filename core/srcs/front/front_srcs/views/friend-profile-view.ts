@@ -51,22 +51,23 @@ class FriendProfileView {
   	}
 
   	private async loadStats(friendId: string) {
-    	try {
-      		const res = await fetch(`${API_BASE_URL}/profile/users/${friendId}/stats`, {
-        		headers: {
-          			Authorization: `Bearer ${localStorage.getItem('token')}`
-        		}
-      		});
-      		const data = await res.json();
-      		this.wins = data.wins;
-      		this.losses = data.losses;
-      		const total = this.wins + this.losses;
-      		this.winRate = total > 0 ? Math.round((this.wins / total) * 100) : 0;
-      		this.render();
-    	} catch (err) {
-      		console.error('Error loading friend stats:', err);
-    	}
-  	}
+  try {
+    const res = await fetch(`${API_BASE_URL}/profile/users/${friendId}/stats`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    const data = await res.json();
+    // FORCER À 0 SI VALEUR MANQUANTE
+    this.wins = Number(data.wins) || 0;
+    this.losses = Number(data.losses) || 0;
+    const total = this.wins + this.losses;
+    this.winRate = total > 0 ? Math.round((this.wins / total) * 100) : 0;
+    this.render();
+  } catch (err) {
+    console.error('Error loading friend stats:', err);
+  }
+}
 
 	private async loadMatchHistory(friendId: number) {
 	try {
@@ -152,11 +153,11 @@ class FriendProfileView {
             				</div>
             				<div class="flex flex-col bg-white/5 p-8">
               					<dt class="text-sm font-semibold text-white">Wins</dt>
-              					<dd class="order-first text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-green-500 to-green-600">${this.wins}</dd>
+              					<dd class="order-first text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-green-500 to-green-600">${this.wins ?? 0}</dd>
             				</div>
             				<div class="flex flex-col bg-white/5 p-8">
               					<dt class="text-sm font-semibold text-white">Losses</dt>
-              					<dd class="order-first text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-red-500 to-red-600">${this.losses}</dd>
+              					<dd class="order-first text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-red-500 to-red-600">${this.losses ?? 0}</dd>
             				</div>
             				<div class="flex flex-col bg-white/5 p-8">
               					<dt class="text-sm font-semibold text-white">Win Rate</dt>
