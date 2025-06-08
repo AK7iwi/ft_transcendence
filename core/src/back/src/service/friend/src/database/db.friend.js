@@ -9,7 +9,8 @@ class DbFriend {
                 user_id INTEGER NOT NULL,
                 username TEXT NOT NULL UNIQUE,
                 avatar TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
         createUsersTable.run();
@@ -36,6 +37,7 @@ class DbFriend {
                 blocker_id INTEGER NOT NULL,
                 blocked_id INTEGER NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
             )

@@ -11,7 +11,7 @@ class InternalService {
 
     static async updateUsername(currentUsername, newUsername) {
         try {
-            await DbAuth.updateUsername(currentUsername, newUsername);
+            await DbFriend.updateUsername(currentUsername, newUsername);
         } catch (error) {
             throw error;
         }

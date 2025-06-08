@@ -12,7 +12,9 @@ class UpdateController {
                 success: true,
                 message: 'User updated successfully',
                 data: {
-                    username: newUsername
+                    user: {
+                        username: newUsername
+                    }
                 }
             });
         } catch (error) {
@@ -34,7 +36,9 @@ class UpdateController {
                 success: true,
                 message: 'Password updated successfully',
                 data: {
-                    username: username
+                    user: {
+                        username: username
+                    }
                 }
             });
         } catch (error) {

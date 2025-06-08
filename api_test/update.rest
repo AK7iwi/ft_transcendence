@@ -1,0 +1,86 @@
+# Register a user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "password": "Test123@"
+}
+
+###
+
+# Login to get token
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "password": "Test123@"
+}
+
+###
+
+# Update username
+PUT https://localhost:3000/user/username
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NDkzNDkwMjMsImV4cCI6MTc0OTM1MjYyM30.uXBvq8FtS-iFkM6cMHnebtMbcY1_9Ld0F7-6gs3ug-g
+
+{
+    "currentUsername": "testuser1",
+    "newUsername": "updateduser1"
+}
+
+###
+
+# Login with new username
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "updateduser1",
+    "password": "Test123@"
+}
+
+###
+
+# Try to login with old username (should fail)
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser1",
+    "password": "Test123@"
+}
+
+###
+
+# Update password
+PUT https://localhost:3000/user/password
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ1cGRhdGVkdXNlcjEiLCJpYXQiOjE3NDkzNDkwOTYsImV4cCI6MTc0OTM1MjY5Nn0.NhW3VIXUgi5KG28UZTSPt31qIm3oznlaru5pK3Y935M
+
+{
+    "newPassword": "Updated123@"
+}
+
+###
+
+# Login with new password
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "updateduser1",
+    "password": "Updated123@"
+}
+
+###
+
+# Try to login with old password (should fail)
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "updateduser1",
+    "password": "Test123@"
+}
