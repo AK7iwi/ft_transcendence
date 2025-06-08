@@ -28,6 +28,19 @@ class DbFriend {
             )
         `);
         createFriendsTable.run();
+
+        // Create blocks table
+        const createBlocksTable = db.prepare(`
+            CREATE TABLE IF NOT EXISTS blocks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                blocker_id INTEGER NOT NULL,
+                blocked_id INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+        createBlocksTable.run();
     }
 
     static async findUserByUsername(username) {
@@ -71,6 +84,10 @@ class DbFriend {
         return stmt.all(userId);
     }
 
+    static async getBlockedIds(blockerId) {
+        return db.prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?').all(blockerId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username) {
         const stmt = db.prepare(`
@@ -79,6 +96,18 @@ class DbFriend {
         `);
         return stmt.run(userId, username);
     }
+
+    static async updateUsername(currentUsername, newUsername) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET username = ?,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE username = ?
+        `);
+        return stmt.run(newUsername, currentUsername);
+    }
+
+
 }
 
 module.exports = DbFriend;

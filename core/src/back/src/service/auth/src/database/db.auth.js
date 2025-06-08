@@ -76,6 +76,15 @@ class DbAuth {
         return result ? result.two_factor_secret : null;
     }
 
+    static async getUserByUsername(username) {
+        const stmt = db.prepare(`
+            SELECT id, username, password, two_factor_enabled
+            FROM user_profiles
+            WHERE username = ?
+        `);
+        return stmt.get(username);
+    }
+
     //INTERNAL ROUTES
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
@@ -96,17 +105,6 @@ class DbAuth {
         `);
         return stmt.run(hashedPassword, username);
     }
-
-
-    static async getUserByUsername(username) {
-        const stmt = db.prepare(`
-            SELECT id, username, password, two_factor_enabled
-            FROM user_profiles
-            WHERE username = ?
-        `);
-        return stmt.get(username);
-    }
-    
 }
 
 module.exports = DbAuth;

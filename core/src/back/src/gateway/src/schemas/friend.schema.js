@@ -89,6 +89,30 @@ const friendSchema = {
                 }
             }
         }
+    },
+    getBlocked: {
+        response: {
+            200: {
+                type: 'array',
+                items: {
+                    type: 'number'
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

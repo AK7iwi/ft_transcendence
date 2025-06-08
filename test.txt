@@ -63,3 +63,7 @@ curl -k -X POST \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"username": "friend_to_add"}' \
   "https://localhost:3000/friend/add"
+
+curl -k -X GET \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  "https://localhost:3000/friend/blocked"

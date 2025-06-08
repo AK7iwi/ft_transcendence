@@ -7,4 +7,9 @@ module.exports = async function (fastify, opts) {
         schema: internalSchema.createUser,
         handler: InternalController.createUser
     });
+
+    fastify.put('/updateUsername', {
+        schema: internalSchema.updateUsername,
+        handler: InternalController.updateUsername
+    });
 };

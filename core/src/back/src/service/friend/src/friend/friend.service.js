@@ -39,6 +39,15 @@ class FriendService {
             throw new Error(`Failed to fetch friends: ${error.message}`);
         }
     }
+
+    static async getBlockedUsers(userId) {
+        try {
+            const rows = await DbFriend.getBlockedIds(userId);
+            return rows.map(r => r.blocked_id);
+        } catch (error) {
+            throw new Error(`Failed to fetch blocked users: ${error.message}`);
+        }
+    }
 }
 
 module.exports = FriendService;

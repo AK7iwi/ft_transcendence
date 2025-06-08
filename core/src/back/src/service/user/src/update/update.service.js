@@ -15,6 +15,12 @@ class UpdateService {
                 newUsername
             });
 
+            // Notify friend service to update username
+            await serviceClient.put(`${process.env.FRIEND_SERVICE_URL}/friend/internal/updateUsername`, {
+                currentUsername,
+                newUsername
+            });
+
             return {
                 username: newUsername
             };

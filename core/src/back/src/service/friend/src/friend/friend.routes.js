@@ -15,6 +15,11 @@ async function friendRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.getFriends
     });
+
+    fastify.get('/blocked', {
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: FriendController.getBlockedUsers
+    });
 }
 
 module.exports = friendRoutes;

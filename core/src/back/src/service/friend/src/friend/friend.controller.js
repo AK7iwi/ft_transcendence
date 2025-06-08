@@ -44,6 +44,21 @@ class FriendController {
             });
         }
     }
+
+    async getBlockedUsers(request, reply) {
+        try {
+            const userId = request.user.id;
+            const blockedIds = await FriendService.getBlockedUsers(userId);
+            
+            return reply.code(200).send(blockedIds);
+        } catch (error) {
+            request.log.error('[GET BLOCKED USERS ERROR]', error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to fetch blocked users'
+            });
+        }
+    }
 }
 
 module.exports = new FriendController();
