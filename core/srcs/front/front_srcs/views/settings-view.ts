@@ -12,7 +12,6 @@ class SettingsView extends HTMLElement {
 	private confirmPassword = '';
 	private code2FA = '';
 	private qrCode = '';
-
 	private usernameSuccessMessage = '';
 	private usernameErrorMessage = '';
 	private passwordSuccessMessage = '';
@@ -71,7 +70,6 @@ class SettingsView extends HTMLElement {
 		const input = e.target as HTMLInputElement;
 		const cursorPosition = input.selectionStart ?? 0;
 		const previousLength = (this[field] as string).length;
-		const previousValue = this[field] as string;
 		
 		(this[field] as string) = sanitizeHTML(input.value);
 		

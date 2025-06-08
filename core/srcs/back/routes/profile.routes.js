@@ -89,10 +89,10 @@ async function profileRoutes(fastify, options) {
     fastify.get('/users/:id/stats', {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
-            const userId = req.params.id;
+            const userId = request.params.id;
 
             try {
-                const row = dbApi.db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
+                const row = db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
 
                 if (!row) {
                     return reply.code(404).send({ error: 'Utilisateur non trouvé' });

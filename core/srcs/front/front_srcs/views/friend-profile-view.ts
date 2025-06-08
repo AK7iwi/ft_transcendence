@@ -1,4 +1,3 @@
-
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { navigateTo } from '../app';
@@ -54,10 +53,12 @@ class FriendProfileView {
   try {
     const res = await fetch(`${API_BASE_URL}/profile/users/${friendId}/stats`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+		        'Content-Type': 'application/json'
       }
     });
     const data = await res.json();
+	console.log(`${data.wins} .. ${data.losses}`);
     this.wins = Number(data.wins) || 0;
     this.losses = Number(data.losses) || 0;
     const total = this.wins + this.losses;
