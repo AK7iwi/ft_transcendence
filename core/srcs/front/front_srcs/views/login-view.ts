@@ -134,18 +134,36 @@ class LoginView extends HTMLElement {
   		}
 	}
 
-  	async handle2FASubmit(e: Event) {
-    	e.preventDefault();
-    	try {
-      		const result = await ApiService.verify2FA(this.code2FA);
-localStorage.setItem('token', result.token);
-navigateTo('/profile');
+async handle2FASubmit(e: Event) {
+  e.preventDefault();
+  try {
+    const result = await ApiService.verify2FA(this.code2FA);
 
-    	} catch (err: any) {
-      		this.signInError = err.message || '2FA failed';
-      		this.render();
-    	}
-  	}
+    // 1. Stocke le token APRES 2FA réussi
+    localStorage.setItem('token', result.token);
+    localStorage.setItem('user', JSON.stringify(result.user));
+
+    // 2. On peut maintenant rediriger
+    navigateTo('/profile');
+
+  } catch (err: any) {
+    this.signInError = err.message || '2FA failed';
+    this.render();
+  }
+}
+
+
+//   	async handle2FASubmit(e: Event) {
+//     	e.preventDefault();
+//     	try {
+//       		await ApiService.verify2FA(this.code2FA);
+// navigateTo('/profile');
+
+//     	} catch (err: any) {
+//       		this.signInError = err.message || '2FA failed';
+//       		this.render();
+//     	}
+//   	}
 
   	render() {
     	this.innerHTML = '';
