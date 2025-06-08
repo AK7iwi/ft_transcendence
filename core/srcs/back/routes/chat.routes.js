@@ -1,6 +1,7 @@
 const { db } = require('../db');
 const JWTAuthentication = require('../middleware/jwt/jwt.auth');
 const SanitizeService = require('../middleware/security.middleware');
+const schemas = require('../schemas/chat.schemas');
 
 async function chatRoutes(fastify, options) {
     fastify.post('/message', {

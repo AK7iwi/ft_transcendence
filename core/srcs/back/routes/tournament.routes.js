@@ -1,7 +1,7 @@
 const { getUserByUsernameforMat, recordGameResultTournament, recordMatchHistory } = require('../db');
 const JWTAuthentication = require('../middleware/jwt/jwt.auth');
 const SanitizeService = require('../middleware/security.middleware');
-
+const schemas = require('../schemas/tournament.schemas');
 async function tournamentRoutes(fastify, options) {
     fastify.post('/game-result', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
