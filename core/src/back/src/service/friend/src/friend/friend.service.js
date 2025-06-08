@@ -57,6 +57,18 @@ class FriendService {
             throw new Error(`Failed to block user: ${error.message}`);
         }
     }
+
+    static async unblockUser(userId, unblockId) {
+        try {
+            const result = await DbFriend.unblockUser(userId, unblockId);
+            if (result.changes === 0) {
+                throw new Error('No blocking relationship found');
+            }
+            return { message: 'User unblocked successfully' };
+        } catch (error) {
+            throw new Error(`Failed to unblock user: ${error.message}`);
+        }
+    }
 }
 
 module.exports = FriendService;

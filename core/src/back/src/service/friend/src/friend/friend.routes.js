@@ -26,6 +26,12 @@ async function friendRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.blockUser
     });
+
+    fastify.post('/unblock', {
+        schema: friendSchema.unblockUser,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: FriendController.unblockUser
+    });
 }
 
 module.exports = friendRoutes;

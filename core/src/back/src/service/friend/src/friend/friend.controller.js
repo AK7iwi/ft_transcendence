@@ -86,6 +86,39 @@ class FriendController {
             });
         }
     }
+
+    async unblockUser(request, reply) {
+        try {
+            const userId = request.user.id;
+            const { unblockId } = request.body;
+
+            if (!unblockId) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'unblockId required'
+                });
+            }
+
+            await FriendService.unblockUser(userId, unblockId);
+            
+            return reply.code(200).send({
+                success: true,
+                message: 'User unblocked successfully'
+            });
+        } catch (error) {
+            request.log.error('[UNBLOCK USER ERROR]', error);
+            if (error.message === 'No blocking relationship found') {
+                return reply.code(404).send({
+                    success: false,
+                    message: error.message
+                });
+            }
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to unblock user'
+            });
+        }
+    }
 }
 
 module.exports = new FriendController();

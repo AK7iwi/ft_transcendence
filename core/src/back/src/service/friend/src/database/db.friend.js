@@ -95,6 +95,11 @@ class DbFriend {
             .run(blockerId, blockedId);
     }
 
+    static async unblockUser(blockerId, blockedId) {
+        return db.prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?')
+            .run(blockerId, blockedId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username) {
         const stmt = db.prepare(`

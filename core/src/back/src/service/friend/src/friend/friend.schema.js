@@ -24,6 +24,18 @@ const friendSchema = {
             },
             additionalProperties: false
         }
+    },
+    unblockUser: {
+        body: {
+            type: 'object',
+            required: ['unblockId'],
+            properties: {
+                unblockId: {
+                    type: 'number'
+                }
+            },
+            additionalProperties: false
+        }
     }
 };
 

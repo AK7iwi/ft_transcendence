@@ -148,6 +148,48 @@ const friendSchema = {
                 }
             }
         }
+    },
+    unblockUser: {
+        body: {
+            type: 'object',
+            required: ['unblockId'],
+            properties: {
+                unblockId: {
+                    type: 'number'
+                }
+            },
+            additionalProperties: false
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            404: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 
