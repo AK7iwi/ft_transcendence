@@ -88,6 +88,11 @@ class DbFriend {
         return db.prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?').all(blockerId);
     }
 
+    static async blockUser(blockerId, blockedId) {
+        return db.prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)')
+            .run(blockerId, blockedId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username) {
         const stmt = db.prepare(`
@@ -106,8 +111,6 @@ class DbFriend {
         `);
         return stmt.run(newUsername, currentUsername);
     }
-
-
 }
 
 module.exports = DbFriend;

@@ -82,4 +82,31 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    fastify.post('/block', {
+        schema: friendSchema.blockUser,
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.post(
+                    `${process.env.FRIEND_SERVICE_URL}/friend/block`,
+                    request.body,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(201).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to block user';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };

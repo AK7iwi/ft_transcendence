@@ -113,6 +113,41 @@ const friendSchema = {
                 }
             }
         }
+    },
+    blockUser: {
+        body: {
+            type: 'object',
+            required: ['blockedId'],
+            properties: {
+                blockedId: {
+                    type: 'number'
+                }
+            },
+            additionalProperties: false
+        },
+        response: {
+            201: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

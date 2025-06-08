@@ -59,6 +59,33 @@ class FriendController {
             });
         }
     }
+
+    async blockUser(request, reply) {
+        try {
+            const userId = request.user.id;
+            const { blockedId } = request.body;
+
+            if (!blockedId) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'blockedId required'
+                });
+            }
+
+            await FriendService.blockUser(userId, blockedId);
+            
+            return reply.code(201).send({
+                success: true,
+                message: 'User blocked successfully'
+            });
+        } catch (error) {
+            request.log.error('[BLOCK USER ERROR]', error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to block user'
+            });
+        }
+    }
 }
 
 module.exports = new FriendController();

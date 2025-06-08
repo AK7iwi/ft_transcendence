@@ -1,0 +1,58 @@
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+###
+
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+###
+
+# Register a second user to block
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "blockeduser",
+    "password": "Test123@"
+}
+
+###
+
+# Login as second user to get their ID
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "blockeduser",
+    "password": "Test123@"
+}
+
+###
+
+# Block the second user (using first user's token)
+POST https://localhost:3000/friend/block
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM0NzgzOSwiZXhwIjoxNzQ5MzUxNDM5fQ.UqI4q3DET0qPNuqIDgdiVLxUjyd4XsQoKk4_sLgTni0
+
+{
+    "blockedId": 2
+}
+
+###
+
+# Get list of blocked users
+GET https://localhost:3000/friend/blocked
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM0NzgzOSwiZXhwIjoxNzQ5MzUxNDM5fQ.UqI4q3DET0qPNuqIDgdiVLxUjyd4XsQoKk4_sLgTni0
+
+###

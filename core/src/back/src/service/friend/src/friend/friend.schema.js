@@ -12,6 +12,18 @@ const friendSchema = {
                 }
             }
         }   
+    },
+    blockUser: {
+        body: {
+            type: 'object',
+            required: ['blockedId'],
+            properties: {
+                blockedId: {
+                    type: 'number'
+                }
+            },
+            additionalProperties: false
+        }
     }
 };
 
