@@ -794,7 +794,10 @@ private resetBall() {
 
       fetch(`${API_BASE_URL}/tournament/game-result`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           winnerId: winnerPlayer.id,
           loserId: loserPlayer.id
@@ -813,7 +816,10 @@ private resetBall() {
 
       fetch(`${API_BASE_URL}/tournament/match-history`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           userId: winnerPlayer.id,
           opponent: loserPlayer.username,
@@ -825,7 +831,10 @@ private resetBall() {
 
       fetch(`${API_BASE_URL}/tournament/match-history`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           userId: loserPlayer.id,
           opponent: winnerPlayer.username,

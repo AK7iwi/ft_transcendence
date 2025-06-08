@@ -434,6 +434,7 @@ static async getUserById(id: string) {
 	const token = localStorage.getItem('token');
 	const response = await fetch(`${this.baseUrl}/profile/users/${id}`, {
 		headers: {
+			'Content-Type': 'application/json',
 			Authorization: `Bearer ${token}`,
 		},
 	});

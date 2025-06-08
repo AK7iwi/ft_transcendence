@@ -1,7 +1,10 @@
 const { getUserByUsernameforMat, recordGameResultTournament, recordMatchHistory } = require('../db');
+const JWTAuthentication = require('../middleware/jwt/jwt.auth');
+const SanitizeService = require('../middleware/security.middleware');
 
 async function tournamentRoutes(fastify, options) {
 	fastify.post('/game-result', {
+		preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
 		handler: async (request, reply) => {
 			const { winnerId, loserId } = request.body;
 
@@ -19,6 +22,7 @@ async function tournamentRoutes(fastify, options) {
 		}
 	});
 	fastify.post('/match-history', {
+		preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
 		handler: async (request, reply) => {
 			const { userId, opponent, result, scoreUser, scoreOpponent } = request.body;
 
@@ -45,6 +49,7 @@ async function tournamentRoutes(fastify, options) {
 		}
 	});
 	fastify.post('/validate-username', {
+		preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
 		handler: async (request, reply) => {
 			const username = (request.body.username || '').trim();
 
