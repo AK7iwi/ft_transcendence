@@ -523,8 +523,8 @@ class TournamentView extends HTMLElement {
     });
     // Attach event listeners after setting innerHTML
     this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
-    this.querySelector('input[name="username"]')?.addEventListener('input', this.handleInput.bind(this, 'username'));
-    this.querySelector('input[name="nickname"]')?.addEventListener('input', this.handleInput.bind(this, 'nickname'));
+    this.querySelector('input[name="username"]')?.addEventListener('input', (e: Event) => this.handleInput(e, 'username'));
+    this.querySelector('input[name="nickname"]')?.addEventListener('input', (e: Event) => this.handleInput(e, 'nickname'));
     this.querySelector('button.w-full')?.addEventListener('click', this.startTournament.bind(this));
     this.querySelector('.play-match-button')?.addEventListener('click', () => {
       this.toggleGameUI(true);
