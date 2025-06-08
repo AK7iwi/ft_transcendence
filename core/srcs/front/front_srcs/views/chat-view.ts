@@ -260,22 +260,42 @@ private async loadConversations() {
     });
   }
 
-  private async loadMessages(friendId: string) {
-    try {
-      console.log('[loadMessages] friendsId =', friendId);
-      const result = await ApiService.getMessages(friendId);
+private async loadMessages(friendId: string) {
+  try {
+    console.log('[loadMessages] friendsId =', friendId);
+    const result = await ApiService.getMessages(friendId);
+    console.log("[loadMessages] result =", result);
 
-      this.messages = result.map((msg: any) => ({
-        author: msg.sender?.username || '???',
-        text: msg.content,
-        me: msg.sender?.id === this.currentUserId,
-      }));
-      return;
-    } catch (err) {
-      console.error('[loadMessages] error:', err);
-      throw err;
-    }
+    this.messages = result.map((msg: any) => ({
+      author: msg.sender?.username || msg.sender_username || '???',
+      text: msg.content,
+      me: (msg.sender?.id ?? msg.sender_id) === this.currentUserId,
+    }));
+    return;
+  } catch (err) {
+    console.error('[loadMessages] error:', err);
+    throw err;
   }
+}
+
+
+
+  // private async loadMessages(friendId: string) {
+  //   try {
+  //     console.log('[loadMessages] friendsId =', friendId);
+  //     const result = await ApiService.getMessages(friendId);
+
+  //     this.messages = result.map((msg: any) => ({
+  //       author: msg.sender?.username || '???',
+  //       text: msg.content,
+  //       me: msg.sender?.id === this.currentUserId,
+  //     }));
+  //     return;
+  //   } catch (err) {
+  //     console.error('[loadMessages] error:', err);
+  //     throw err;
+  //   }
+  // }
 
   private inviteToPlay(friendId?: string) {
     console.log('[INVITE] inviteToPlay friendId=', friendId);
