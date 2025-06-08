@@ -15,8 +15,6 @@ class TournamentView extends HTMLElement {
   private message = '';
   private messageType: 'success' | 'error' | '' = '';
   private isTournamentOver = false;
-  private initialCountdownTimer: number | null = null;
-private ballCountdownTimer: number | null = null;
 
   private players: Array<{
     id: number;
@@ -582,57 +580,25 @@ private ballCountdownTimer: number | null = null;
   };
 
 
-private handleKeyDown(e: KeyboardEvent) {
-  if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
-    this.togglePause();
-  } else if (
-    e.key === 'Enter' &&
-    !this.isGameStarted &&
-    !this.isGameOver &&
-    !this.isInitialCountdown
-  ) {
-    this.isInitialCountdown = true;
-    this.countdown = COUNTDOWN_START;
-    this.startInitialCountdown();
-  } else if (e.key === 'Enter' && this.isGameOver) {
-    if (this.currentMatchIndex >= this.bracket.length) {
-      this.isTournamentOver = true;
-      this.render();
-    } else {
-      this.toggleGameUI(false);
-      this.resetGame();
-      this.render();
-    }
+
+  private handleKeyDown(e: KeyboardEvent) {
+    if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
+      this.togglePause();
+    } else if (e.key === 'Enter' && !this.isGameStarted && !this.isGameOver) {
+      this.isInitialCountdown = true;
+      this.countdown = COUNTDOWN_START;
+      this.startInitialCountdown();
+    } else if (e.key === 'Enter' && this.isGameOver) {
+        if (this.currentMatchIndex >= this.bracket.length) {
+          this.isTournamentOver = true;
+          this.render();
+        } else {
+          this.toggleGameUI(false);
+          this.resetGame();
+          this.render();
+        }
+      }
   }
-}
-
-
-
-//   private handleKeyDown(e: KeyboardEvent) {
-//     if (e.repeat) return;
-//     if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
-//       this.togglePause();
-//     } else if (
-//   e.key === 'Enter'
-//   && !this.isGameStarted
-//   && !this.isGameOver
-//   && !this.isInitialCountdown // ← ajoute ce check !
-// ) {
-//   this.isInitialCountdown = true;
-//   this.countdown = COUNTDOWN_START;
-//   this.startInitialCountdown();
-// }
-//  else if (e.key === 'Enter' && this.isGameOver) {
-//         if (this.currentMatchIndex >= this.bracket.length) {
-//           this.isTournamentOver = true;
-//           this.render();
-//         } else {
-//           this.toggleGameUI(false);
-//           this.resetGame();
-//           this.render();
-//         }
-//       }
-//   }
 
   private updateGameSettings() {
     this.paddle1.speed = this.settings.paddleSpeed;
@@ -684,78 +650,34 @@ private resetBall() {
 }
 
 
-  // private startInitialCountdown() {
-  //   const interval = setInterval(() => {
-  //     this.countdown--;
-  //     if (this.countdown <= 0) {
-  //       clearInterval(interval);
-  //       this.isGameStarted = true;
-  //       this.gameLoop = true;
-  //       this.isBallActive = true;
-  //       this.isInitialCountdown = false;
-  //       cancelAnimationFrame(this.animationFrameId);
+  private startInitialCountdown() {
+    const interval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(interval);
+        this.isGameStarted = true;
+        this.gameLoop = true;
+        this.isBallActive = true;
+        this.isInitialCountdown = false;
+        cancelAnimationFrame(this.animationFrameId);
 
-  //       this.startGameLoop();
-  //     }
-  //     this.draw();
-  //   }, 1000);
-  // }
-
-private startInitialCountdown() {
-  if (this.initialCountdownTimer !== null) {
-    clearInterval(this.initialCountdownTimer);
-    this.initialCountdownTimer = null;
-  }
-  this.countdown = COUNTDOWN_START;
-  this.isInitialCountdown = true;
-  this.initialCountdownTimer = window.setInterval(() => {
-    this.countdown--;
-    this.draw();
-    if (this.countdown <= 0) {
-      if (this.initialCountdownTimer !== null) {
-        clearInterval(this.initialCountdownTimer);
-        this.initialCountdownTimer = null;
+        this.startGameLoop();
       }
-      this.isGameStarted = true;
-      this.gameLoop = true;
-      this.isBallActive = true;
-      this.isInitialCountdown = false;
-      this.startGameLoop();
-    }
-  }, 1000);
-}
-
-private startBallCountdown() {
-  if (this.ballCountdownTimer !== null) {
-    clearInterval(this.ballCountdownTimer);
-    this.ballCountdownTimer = null;
+      this.draw();
+    }, 1000);
   }
-  this.countdown = COUNTDOWN_START;
-  this.ballCountdownTimer = window.setInterval(() => {
-    this.countdown--;
-    this.draw();
-    if (this.countdown <= 0) {
-      if (this.ballCountdownTimer !== null) {
-        clearInterval(this.ballCountdownTimer);
-        this.ballCountdownTimer = null;
+
+  private startBallCountdown() {
+    this.countdown = COUNTDOWN_START;
+    const interval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(interval);
+        this.isBallActive = true;
       }
-      this.isBallActive = true;
-    }
-  }, 1000);
-}
-
-
-  // private startBallCountdown() {
-  //   this.countdown = COUNTDOWN_START;
-  //   const interval = setInterval(() => {
-  //     this.countdown--;
-  //     if (this.countdown <= 0) {
-  //       clearInterval(interval);
-  //       this.isBallActive = true;
-  //     }
-  //     this.draw();
-  //   }, 1000);
-  // }
+      this.draw();
+    }, 1000);
+  }
 
   private startGameLoop() {
     cancelAnimationFrame(this.animationFrameId);
@@ -923,42 +845,18 @@ private startBallCountdown() {
     this.recordMatchWinner(winner);
   }
 
-private resetGame() {
-  cancelAnimationFrame(this.animationFrameId);
-
-  if (this.initialCountdownTimer !== null) {
-    clearInterval(this.initialCountdownTimer);
-    this.initialCountdownTimer = null;
+  private resetGame() {
+    cancelAnimationFrame(this.animationFrameId);
+    this.score = { player1: 0, player2: 0 };
+    this.isGameOver = false;
+    this.winner = '';
+    this.isGameStarted = false;
+    this.isBallActive = false;
+    this.isInitialCountdown = false;
+    this.gameLoop = false;
+    this.initGame();
+    this.draw();
   }
-  if (this.ballCountdownTimer !== null) {
-    clearInterval(this.ballCountdownTimer);
-    this.ballCountdownTimer = null;
-  }
-
-  this.score = { player1: 0, player2: 0 };
-  this.isGameOver = false;
-  this.winner = '';
-  this.isGameStarted = false;
-  this.isBallActive = false;
-  this.isInitialCountdown = false;
-  this.gameLoop = false;
-  this.initGame();
-  this.draw();
-}
-
-
-  // private resetGame() {
-  //   cancelAnimationFrame(this.animationFrameId);
-  //   this.score = { player1: 0, player2: 0 };
-  //   this.isGameOver = false;
-  //   this.winner = '';
-  //   this.isGameStarted = false;
-  //   this.isBallActive = false;
-  //   this.isInitialCountdown = false;
-  //   this.gameLoop = false;
-  //   this.initGame();
-  //   this.draw();
-  // }
 
   private togglePause() {
     this.isPaused = !this.isPaused;
