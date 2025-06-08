@@ -136,7 +136,7 @@ class FriendController {
                 });
             }
 
-            const result = await FriendService.removeFriend(userId, friendId);
+            await FriendService.removeFriend(userId, friendId);
             
             return reply.code(200).send({
                 success: true,

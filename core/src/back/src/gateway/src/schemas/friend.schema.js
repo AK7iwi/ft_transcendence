@@ -68,7 +68,7 @@ const friendSchema = {
                         items: {
                             type: 'object',
                             properties: {
-                                id: { type: 'number' },
+                                user_id: { type: 'number' },
                                 username: { type: 'string' },
                                 avatar: { type: 'string' }
                             }
