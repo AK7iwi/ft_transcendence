@@ -314,15 +314,20 @@ static async verify2FA(code: string) {
 
 // mat
 static async validateUsername(username: string): Promise<{ valid: boolean; message?: string; id?: number; avatar?: string;}> {
+  const token = localStorage.getItem('token');
   const res = await fetch(`${this.baseUrl}/tournament/validate-username`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: JSON.stringify({ username })
   });
 
   if (!res.ok) throw new Error('Failed to validate username');
   return await res.json();
 }
+
 
 
 static logout() {
