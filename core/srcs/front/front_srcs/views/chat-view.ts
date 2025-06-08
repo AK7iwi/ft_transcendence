@@ -74,37 +74,30 @@ window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   private bindEvents() {
-
     this.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
 
+      const convItem = target.closest('.conversation-item') as HTMLElement | null;
+      if (convItem) {
+        const id = convItem.dataset.id;
+        if (!id || id === this.selectedConversationId) {
+          return;
+        }
 
+        this.selectedConversationId = id;
+        this.messages = [];
+        this.render();
 
-const convItem = target.closest('.conversation-item') as HTMLElement | null;
-if (convItem) {
-  const id = convItem.dataset.id;
-  if (!id || id === this.selectedConversationId) {
-    return; 
-  }
+        this.loadMessages(id)
+          .catch(err => {
+            console.error('[loadMessages] failed:', err);
+          })
+          .then(() => {
+            this.render();
+          });
 
-
-  this.selectedConversationId = id;
-  this.messages = [];      
-  this.render();          
-
-
-  this.loadMessages(id)
-    .catch(err => {
-      console.error('[loadMessages] failed:', err);
-    })
-    .then(() => {
-
-      this.render();
-    });
-
-  return;
-}
-
+        return;
+      }
 
       if (target.closest('#invite-button')) {
         this.inviteToPlay(this.selectedConversationId);
@@ -112,34 +105,32 @@ if (convItem) {
       }
 
       if (target.closest('#block-button')) {
-      this.handleBlockUser();
-      return;
-    }
+        this.handleBlockUser();
+        return;
+      }
 
+      if (target.closest('#unblock-button')) {
+        this.handleUnblockUser();
+        return;
+      }
 
-    if (target.closest('#unblock-button')) {
-      this.handleUnblockUser();
-      return;
-    }
       if (target.closest('#profile-button')) {
         this.viewFriendProfile(this.selectedConversationId);
         return;
       }
     });
 
-
     this.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       if (target.id === 'input-message') {
-        this.handleInput(e);
+        this.inputText = sanitizeHTML(target.value);
       }
     });
 
-
     this.addEventListener('submit', (e) => {
+      e.preventDefault();
       const form = e.target as HTMLFormElement;
       if (form.id === 'form-message') {
-        e.preventDefault();
         this.sendMessage();
       }
     });
@@ -582,7 +573,6 @@ private async handleUnblockUser() {
                     autocomplete="off"
                   />
                   <button
-                    id="send-button"
                     type="submit"
                     class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r hover:opacity-90 transition"
                   >
