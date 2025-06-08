@@ -13,6 +13,12 @@ class FriendView extends HTMLElement {
     	super();
   	}
 
+  	private sanitize(str: string): string {
+    	const div = document.createElement('div');
+    	div.textContent = str;
+    	return div.innerHTML;
+  	}
+
   	connectedCallback() {
     	this.loadFriends();
     	this.setupWebSocket();
@@ -122,16 +128,16 @@ class FriendView extends HTMLElement {
     	card.innerHTML = `
       		<h2 class="text-3xl font-bold mb-6 text-center text-white">Friend List</h2>
       		<form class="flex gap-2 mb-6" onsubmit="return false;">
-        		<input type="text" name="username" placeholder="Enter username" value="${this.username}" class="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none" required />
+        		<input type="text" name="username" placeholder="Enter username" value="${this.sanitize(this.username)}" class="flex-1 px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none" required />
         		<button type="submit" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold px-4 py-2 rounded-full transition">Add Friend</button>
       		</form>
-      		${this.message ? `<div class="text-center font-semibold ${this.messageType === 'success' ? 'text-green-400' : 'text-red-500'} mb-4">${this.message}</div>` : ''}
+      		${this.message ? `<div class="text-center font-semibold ${this.messageType === 'success' ? 'text-green-400' : 'text-red-500'} mb-4">${this.sanitize(this.message)}</div>` : ''}
       		<ul class="space-y-4">
         		${this.friends.map(friend => `
           		<li class="flex items-center justify-between bg-gray-700 p-4 rounded-xl">
             		<div class="flex items-center gap-4">
-              			<img src="${friend.avatar?.startsWith('/avatars/') ? `${API_BASE_URL}${friend.avatar}` : `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`}" width="40" height="40" class="rounded-full" />
-              			<span class="text-white">${friend.username}</span>
+              			<img src="${this.sanitize(friend.avatar?.startsWith('/avatars/') ? `${API_BASE_URL}${friend.avatar}` : `${API_BASE_URL}/avatars/${friend.avatar || 'default.png'}`)}" width="40" height="40" class="rounded-full" />
+              			<span class="text-white">${this.sanitize(friend.username)}</span>
               			<span class="w-3 h-3 rounded-full ${this.onlineUserIds.includes(friend.id) ? 'bg-green-500' : 'bg-gray-400'}" title="${this.onlineUserIds.includes(friend.id) ? 'Online' : 'Offline'}"></span>
             		</div>
             		<button data-remove="${friend.id}" class="text-sm bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-1 rounded-full">Remove</button>

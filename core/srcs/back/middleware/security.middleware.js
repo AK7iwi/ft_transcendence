@@ -5,7 +5,38 @@ class SanitizeService {
         const processObject = (obj) => {
             for (let key in obj) {
                 if (typeof obj[key] === 'string') {
-                    obj[key] = xss(obj[key].trim());
+                    // Enhanced XSS protection with stricter options
+                    obj[key] = xss(obj[key].trim(), {
+                        whiteList: {}, // No HTML tags allowed
+                        stripIgnoreTag: true, // Strip all HTML tags
+                        stripIgnoreTagBody: ['script'], // Strip script tags and their content
+                        css: false, // Disable CSS parsing
+                        allowCommentTag: false, // Disable HTML comments
+                        allowList: {
+                            // Only allow specific attributes for specific tags
+                            a: ['href'],
+                            img: ['src', 'alt'],
+                            // No other tags or attributes allowed
+                        }
+                    });
+
+                    // Additional sanitization for usernames
+                    if (key === 'username') {
+                        // Remove any HTML tags
+                        obj[key] = obj[key].replace(/<[^>]*>/g, '');
+                        // Remove event handlers
+                        obj[key] = obj[key].replace(/on\w+\s*=|\b(javascript|data|vbscript):/gi, '');
+                        // Remove any potential script injection
+                        obj[key] = obj[key].replace(/[<>'"]/g, '');
+                        // Only allow alphanumeric characters and underscores
+                        obj[key] = obj[key].replace(/[^a-zA-Z0-9_]/g, '');
+                    }
+
+                    // Additional sanitization for all string inputs
+                    obj[key] = obj[key]
+                        .replace(/javascript:|data:|vbscript:|on\w+\s*=/gi, '') // Remove JavaScript URLs and event handlers
+                        .replace(/<[^>]*>/g, '') // Remove HTML tags
+                        .replace(/[<>'"]/g, ''); // Remove potentially dangerous characters
                 } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                     processObject(obj[key]);
                 }

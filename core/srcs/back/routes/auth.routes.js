@@ -7,6 +7,7 @@ const JWTAuthentication = require('../middleware/jwt/jwt.auth');
 const SanitizeService = require('../middleware/security.middleware');
 
 async function authRoutes(fastify, options) {
+
     // GET /auth/me - Récupérer les informations utilisateur
     fastify.get('/me', {
         preHandler: [JWTAuthentication.verifyJWTToken],
@@ -271,6 +272,21 @@ async function authRoutes(fastify, options) {
                 return reply.code(400).send({ error: 'Username is required' });
             }
 
+            // Additional username validation
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                return reply.code(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
+            }
+
+            // Check for HTML tags
+            if (/<[^>]*>/.test(username)) {
+                return reply.code(400).send({ error: 'Username cannot contain HTML tags' });
+            }
+
+            // Check for event handlers
+            if (/on\w+\s*=/.test(username.toLowerCase())) {
+                return reply.code(400).send({ error: 'Username contains invalid characters' });
+            }
+
             const friend = dbApi.db.prepare('SELECT id FROM users WHERE username = ?').get(username);
             if (!friend) {
                 return reply.code(404).send({ error: 'User not found' });
@@ -326,10 +342,9 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    fastify.get(
-        '/blocked',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.get('/blocked', { 
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
             const blockerId = request.user.id;
             const rows = dbApi.db
                 .prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?')
@@ -337,13 +352,12 @@ async function authRoutes(fastify, options) {
             const blockedIds = rows.map(r => r.blocked_id);
             return reply.code(200).send(blockedIds);
         }
-    );
+    });
 
     // ––– Bloquer (POST /auth/block) –––
-    fastify.post(
-        '/block',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.post('/block', {
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
             const blockerId = request.user.id;
             const { blockedId } = request.body;
             if (!blockedId) return reply.code(400).send({ error: 'blockedId required' });
@@ -357,12 +371,11 @@ async function authRoutes(fastify, options) {
                 return reply.code(500).send({ error: 'Internal server error' });
             }
         }
-    );
+    });
 
-    fastify.post(
-        '/unblock',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.post('/unblock', {
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
             const currentUserId = request.user.id;
             const { unblockId } = request.body;
             if (!unblockId) return reply.code(400).send({ error: 'unblockId required' });
@@ -379,7 +392,7 @@ async function authRoutes(fastify, options) {
                 return reply.code(500).send({ error: 'Internal server error' });
             }
         }
-    );
+    });
 
     fastify.delete('/friends/remove', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
