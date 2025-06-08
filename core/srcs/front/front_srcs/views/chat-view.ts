@@ -106,7 +106,6 @@ if (convItem) {
 }
 
 
-
       if (target.closest('#invite-button')) {
         this.inviteToPlay(this.selectedConversationId);
         return;
@@ -150,6 +149,7 @@ if (convItem) {
     const input = e.target as HTMLInputElement;
     const cursorPosition = input.selectionStart ?? 0;
     const previousLength = this.inputText.length;
+    const previousValue = this.inputText;
     
     // Sanitize the input value
     this.inputText = sanitizeHTML(input.value);
@@ -157,16 +157,22 @@ if (convItem) {
     // Update the input field with the sanitized value
     input.value = this.inputText;
     
-    // If the length changed due to sanitization, adjust the cursor position
-    if (this.inputText.length !== previousLength) {
-        if (input.value.length < previousLength) {
-            input.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
-        } else {
-            input.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
-        }
-    } else {
-        input.setSelectionRange(cursorPosition, cursorPosition);
+    // Calculate the new cursor position
+    let newCursorPosition = cursorPosition;
+    
+    // If we're deleting characters (backspace or delete)
+    if (this.inputText.length < previousLength) {
+        // Keep the cursor at the same position when deleting
+        newCursorPosition = cursorPosition;
+    } 
+    // If we're adding characters
+    else if (this.inputText.length > previousLength) {
+        // Move cursor forward by the number of characters added
+        newCursorPosition = cursorPosition + (this.inputText.length - previousLength);
     }
+    
+    // Set the cursor position
+    input.setSelectionRange(newCursorPosition, newCursorPosition);
   }
 
 private async loadConversations() {
@@ -226,25 +232,19 @@ private async loadConversations() {
         console.log('[WS] Received:', data);
 
         if (data.type === 'dm') {
+            const { senderId, text } = data;
 
-          const { senderId, text } = data;
-
-          if (String(senderId) === this.selectedConversationId) {
-            const senderName =
-              this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown';
-            this.messages.push({ author: senderName, text, me: false });
-            this.render();
-          } else {
-
-
-            console.log(
-              `[WS] New DM of ${senderId}, but conversation ${
-                this.selectedConversationId
-              } is not open`
-            );
-          }
+            if (String(senderId) === this.selectedConversationId) {
+                const senderName = this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown';
+                // Store the raw message text, let renderMessage handle the parsing
+                this.messages.push({ 
+                    author: senderName, 
+                    text: text, // Store the raw text, don't parse here
+                    me: false 
+                });
+                this.render();
+            }
         }
-
       } catch (err) {
         console.error('[WS] Error processing message:', err);
       }
@@ -279,51 +279,57 @@ private async loadMessages(friendId: string) {
 }
 
   private inviteToPlay(friendId?: string) {
-    console.log('[INVITE] inviteToPlay friendId=', friendId);
-
-    if (!friendId) {
-      console.warn('[INVITE] No friendId selected');
-      return;
-    }
-    if (!this.currentUserId) {
-      console.warn('[INVITE] No known current user');
-      return;
-    }
-    if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
-      console.warn('[INVITE] WebSocket not ready or not connected');
-      return;
+    if (!friendId || !this.currentUserId || !this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+        console.warn('[INVITE] Invalid conditions for game invite');
+        return;
     }
 
     const gameUrl = `/game-remote?id=${this.currentUserId}`;
-    const invitationMessage = `
-      <div>
-        🎮 <strong>Invitation to play Pong!</strong><br/>
-        <button
-          data-link="${gameUrl}"
-          class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
-          ▶ Play with me
-        </button>
-      </div>
-    `;
+    const invitationMessage = {
+        type: 'game_invite',
+        gameUrl: gameUrl,
+        text: '🎮 Invitation to play Pong!'
+    };
 
-
+    // Send the structured message
     const payload = {
-      type: 'dm',
-      payload: {
-        toUserId: Number(friendId),
-        text: invitationMessage.trim(),
-      },
+        type: 'dm',
+        payload: {
+            toUserId: Number(friendId),
+            text: JSON.stringify(invitationMessage)
+        }
     };
     this.websocket.send(JSON.stringify(payload));
-    console.log('[INVITE] sent over WebSocket:', payload);
 
-
+    // Add to local messages with the same structure
     this.messages.push({
-      author: 'You',
-      text: invitationMessage.trim(),
-      me: true,
+        author: 'You',
+        text: JSON.stringify(invitationMessage),
+        me: true
     });
     this.render();
+  }
+
+  private renderMessage(message: any): string {
+    try {
+        const parsed = JSON.parse(message.text);
+        if (parsed.type === 'game_invite') {
+            return `
+                <div>
+                    🎮 <strong>Invitation to play Pong!</strong><br/>
+                    <button
+                        data-link="${parsed.gameUrl}"
+                        class="invite-play-btn m-3 px-3 py-3 bg-gradient-to-r from-white via-pink-100 to-purple-200 text-slate-900 hover:opacity-90 rounded-full transition">
+                        ▶ Play with me
+                    </button>
+                </div>
+            `;
+        }
+    } catch (e) {
+        // If parsing fails, it's a regular message
+        return sanitizeHTML(message.text);
+    }
+    return sanitizeHTML(message.text);
   }
 
   private async sendMessage() {
@@ -560,7 +566,7 @@ private async handleUnblockUser() {
                                 : 'bg-gray-700'
                             } px-4 py-2 rounded max-w-xs break-words"
                     >
-                      ${sanitizeHTML(msg.text)}
+                      ${this.renderMessage(msg)}
                     </div>
                   `).join('')
                   }

@@ -197,6 +197,7 @@ class TournamentView extends HTMLElement {
     const input = e.target as HTMLInputElement;
     const cursorPosition = input.selectionStart ?? 0;
     const previousLength = this[field].length;
+    const previousValue = this[field];
     
     // Sanitize the input value
     this[field] = sanitizeHTML(input.value);
@@ -204,16 +205,22 @@ class TournamentView extends HTMLElement {
     // Update the input field with the sanitized value
     input.value = this[field];
     
-    // If the length changed due to sanitization, adjust the cursor position
-    if (this[field].length !== previousLength) {
-        if (input.value.length < previousLength) {
-            input.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
-        } else {
-            input.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
-        }
-    } else {
-        input.setSelectionRange(cursorPosition, cursorPosition);
+    // Calculate the new cursor position
+    let newCursorPosition = cursorPosition;
+    
+    // If we're deleting characters (backspace or delete)
+    if (this[field].length < previousLength) {
+        // Keep the cursor at the same position when deleting
+        newCursorPosition = cursorPosition;
+    } 
+    // If we're adding characters
+    else if (this[field].length > previousLength) {
+        // Move cursor forward by the number of characters added
+        newCursorPosition = cursorPosition + (this[field].length - previousLength);
     }
+    
+    // Set the cursor position
+    input.setSelectionRange(newCursorPosition, newCursorPosition);
   }
   
   private recordMatchWinner(winner: string) {
