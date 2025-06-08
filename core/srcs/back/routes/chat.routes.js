@@ -5,6 +5,7 @@ const SanitizeService = require('../middleware/security.middleware');
 async function chatRoutes(fastify, options) {
     fastify.post('/message', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.sendMessage,
         handler: async (request, reply) => {
             const { receiverId, content } = request.body;
             const senderId = request.user.id;

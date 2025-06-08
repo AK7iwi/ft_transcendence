@@ -40,6 +40,7 @@ async function authRoutes(fastify, options) {
     // POST /auth/register - Inscription utilisateur
     fastify.post('/register', {
         preHandler: [SanitizeService.sanitize],
+        schema: schemas.register,
         handler: async (request, reply) => {
             try {
                 const { username, password } = request.body;
@@ -62,6 +63,7 @@ async function authRoutes(fastify, options) {
     // POST /auth/login - Connexion utilisateur
     fastify.post('/login', {
         preHandler: [SanitizeService.sanitize],
+        schema: schemas.login,
         handler: async (request, reply) => {
             try {
                 const { username, password } = request.body;
@@ -106,6 +108,7 @@ async function authRoutes(fastify, options) {
     // PUT /auth/update - Modifier le nom d'utilisateur
     fastify.put('/update', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.updateUsername,
         handler: async (request, reply) => {
             try {
                 const { username, newUsername } = request.body;
@@ -125,6 +128,7 @@ async function authRoutes(fastify, options) {
     // PUT /auth/password - Modifier le mot de passe
     fastify.put('/password', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.updatePassword,
         handler: async (request, reply) => {
             try {
                 const { username, newPassword } = request.body;
@@ -144,6 +148,7 @@ async function authRoutes(fastify, options) {
     // POST /auth/2fa/setup - Génération du QR code pour activer le 2FA
     fastify.post('/2fa/setup', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.setup2FA,
         handler: async (request, reply) => {
             try {
                 const user = request.user;
@@ -175,6 +180,7 @@ async function authRoutes(fastify, options) {
     // POST /auth/2fa/verify - Vérification du token pour activer le 2FA
     fastify.post('/2fa/verify', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.verify_setup2FA,
         handler: async (request, reply) => {
             try {
                 const { token } = request.body;
@@ -211,6 +217,7 @@ async function authRoutes(fastify, options) {
     // POST /auth/2fa/verify-login - Vérification du 2FA pendant le login
     fastify.post('/2fa/verify-login', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.verify_login2FA,
         handler: async (request, reply) => {
             try {
                 const { userId, token: code } = request.body;
@@ -263,6 +270,7 @@ async function authRoutes(fastify, options) {
 
     fastify.post('/friends/add', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.addFriend,
         handler: async (req, reply) => {
             const { username } = req.body;
             const userId = req.user.id;
@@ -326,10 +334,9 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    fastify.get(
-        '/blocked',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.get('/blocked', { 
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
             const blockerId = request.user.id;
             const rows = dbApi.db
                 .prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?')
@@ -337,13 +344,13 @@ async function authRoutes(fastify, options) {
             const blockedIds = rows.map(r => r.blocked_id);
             return reply.code(200).send(blockedIds);
         }
-    );
+    });
 
     // ––– Bloquer (POST /auth/block) –––
-    fastify.post(
-        '/block',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.post('/block',  { 
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.blockUser,
+        handler: async (request, reply) => {
             const blockerId = request.user.id;
             const { blockedId } = request.body;
             if (!blockedId) return reply.code(400).send({ error: 'blockedId required' });
@@ -357,12 +364,12 @@ async function authRoutes(fastify, options) {
                 return reply.code(500).send({ error: 'Internal server error' });
             }
         }
-    );
+    });
 
-    fastify.post(
-        '/unblock',
-        { preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize] },
-        async (request, reply) => {
+    fastify.post('/unblock', { 
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.unblockUser,
+        handler: async (request, reply) => {
             const currentUserId = request.user.id;
             const { unblockId } = request.body;
             if (!unblockId) return reply.code(400).send({ error: 'unblockId required' });
@@ -379,10 +386,11 @@ async function authRoutes(fastify, options) {
                 return reply.code(500).send({ error: 'Internal server error' });
             }
         }
-    );
+    });
 
     fastify.delete('/friends/remove', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        schema: schemas.removeFriend,
         handler: async (req, reply) => {
             const { friendId } = req.body;
             const userId = req.user.id;
