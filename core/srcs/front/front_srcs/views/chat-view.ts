@@ -1,7 +1,7 @@
-
 import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { navigateTo } from '@/app';
+import { sanitizeHTML } from '../services/sanitize';
 
 interface Conversation {
   id: string;
@@ -132,7 +132,7 @@ if (convItem) {
     this.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       if (target.id === 'input-message') {
-        this.inputText = target.value;
+        this.handleInput(e);
       }
     });
 
@@ -144,6 +144,29 @@ if (convItem) {
         this.sendMessage();
       }
     });
+  }
+
+  private handleInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const cursorPosition = input.selectionStart ?? 0;
+    const previousLength = this.inputText.length;
+    
+    // Sanitize the input value
+    this.inputText = sanitizeHTML(input.value);
+    
+    // Update the input field with the sanitized value
+    input.value = this.inputText;
+    
+    // If the length changed due to sanitization, adjust the cursor position
+    if (this.inputText.length !== previousLength) {
+        if (input.value.length < previousLength) {
+            input.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
+        } else {
+            input.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+        }
+    } else {
+        input.setSelectionRange(cursorPosition, cursorPosition);
+    }
   }
 
 private async loadConversations() {
@@ -303,7 +326,7 @@ private async loadConversations() {
   }
 
   private async sendMessage() {
-    const text = this.inputText.trim();
+    const text = sanitizeHTML(this.inputText.trim());
     if (!text) {
       return; 
     }
@@ -451,14 +474,13 @@ private async handleUnblockUser() {
                   data-id="${c.id}"
                 >
                   <img
-  src="${c.avatar}"
-  alt="Avatar"
-  class="w-8 h-8 rounded-full object-cover"
-/>
-
+                    src="${sanitizeHTML(c.avatar)}"
+                    alt="Avatar"
+                    class="w-8 h-8 rounded-full object-cover"
+                  />
                   <div class="flex-1">
-                    <p class="font-semibold">${c.name}</p>
-                    <p class="text-gray-400 text-sm">${c.lastMessage || ''}</p>
+                    <p class="font-semibold">${sanitizeHTML(c.name)}</p>
+                    <p class="text-gray-400 text-sm">${sanitizeHTML(c.lastMessage || '')}</p>
                   </div>
                 </div>
               </li>
@@ -470,7 +492,7 @@ private async handleUnblockUser() {
         ${this.flashMessage
           ? `<div class="mb-4 text-center font-semibold rounded p-2 ${
               this.flashType === 'success' ? 'bg-green-500' : 'bg-red-500'
-            }">${this.flashMessage}</div>`
+            }">${sanitizeHTML(this.flashMessage)}</div>`
           : ''}
 
         ${
@@ -498,7 +520,7 @@ private async handleUnblockUser() {
                 <div class="flex justify-between items-center border-b border-gray-700 pb-3">
                   <div class="flex items-center space-x-3">
                     
-                    <h3 class="text-lg font-semibold">${conv.name}</h3>
+                    <h3 class="text-lg font-semibold">${sanitizeHTML(conv.name)}</h3>
                   </div>
                   <div class="space-x-2">
                     <button
@@ -537,7 +559,7 @@ private async handleUnblockUser() {
                                 : 'bg-gray-700'
                             } px-4 py-2 rounded max-w-xs break-words"
                     >
-                      ${msg.text}
+                      ${sanitizeHTML(msg.text)}
                     </div>
                   `).join('')
                   }
@@ -549,7 +571,7 @@ private async handleUnblockUser() {
                     type="text"
                     placeholder="Type your message..."
                     class="flex-1 px-4 py-2 rounded-l bg-white text-black focus:outline-none"
-                    value="${this.inputText}"
+                    value="${sanitizeHTML(this.inputText)}"
                     autocomplete="off"
                   />
                   <button
