@@ -278,25 +278,6 @@ private async loadMessages(friendId: string) {
   }
 }
 
-
-
-  // private async loadMessages(friendId: string) {
-  //   try {
-  //     console.log('[loadMessages] friendsId =', friendId);
-  //     const result = await ApiService.getMessages(friendId);
-
-  //     this.messages = result.map((msg: any) => ({
-  //       author: msg.sender?.username || '???',
-  //       text: msg.content,
-  //       me: msg.sender?.id === this.currentUserId,
-  //     }));
-  //     return;
-  //   } catch (err) {
-  //     console.error('[loadMessages] error:', err);
-  //     throw err;
-  //   }
-  // }
-
   private inviteToPlay(friendId?: string) {
     console.log('[INVITE] inviteToPlay friendId=', friendId);
 
