@@ -433,7 +433,7 @@ static async removeFriend(friendId: number) {
 
 static async getUserById(id: string) {
   const token = localStorage.getItem('token');
-  const response = await fetch(`${this.baseUrl}/users/${id}`, {
+  const response = await fetch(`${this.baseUrl}/profile/users/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -484,7 +484,7 @@ static async getUserById(id: string) {
 
   static async getUserMatchHistory(userId: number) {
     const token = this.getToken();
-    const res = await fetch(`${this.baseUrl}/auth/users/${userId}/history`, {
+    const res = await fetch(`${this.baseUrl}/profile/users/${userId}/history`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`

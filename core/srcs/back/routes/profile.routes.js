@@ -4,7 +4,7 @@ const SanitizeService = require('../middleware/security.middleware');
 
 async function profileRoutes(fastify, options) {
     // ─── 1) Historique du profil connecté ───────────────────────────────────────
-    fastify.get('/profile/history', {
+    fastify.get('/history', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
@@ -33,7 +33,7 @@ async function profileRoutes(fastify, options) {
     });
 
     // ─── 2) Historique d'un autre utilisateur ───────────────────────────────────
-    fastify.get('/auth/users/:id/history', {
+    fastify.get('/users/:id/history', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
@@ -61,6 +61,49 @@ async function profileRoutes(fastify, options) {
             } catch (err) {
                 request.log.error(err);
                 return reply.code(500).send({ error: 'Failed to load match history for user.' });
+            }
+        }
+    });
+
+    fastify.get('/users/:id', {
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
+            const friendId = parseInt(request.params.id, 10);
+    
+            const user = db.prepare(`
+                SELECT id, username, avatar
+                FROM users
+                WHERE id = ?
+            `).get(friendId);
+    
+            if (!user) {
+                return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+            }
+    
+            return {
+                id: user.id,
+                username: user.username,
+                avatar: user.avatar || 'default.png'
+            };
+        }
+    });
+
+    fastify.get('/users/:id/stats', {
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            const userId = req.params.id;
+
+            try {
+                const row = dbApi.db.prepare('SELECT wins, losses FROM users WHERE id = ?').get(userId);
+
+                if (!row) {
+                    return reply.code(404).send({ error: 'Utilisateur non trouvé' });
+                }
+
+                return { wins: row.wins, losses: row.losses };
+            } catch (err) {
+                console.error('Erreur chargement stats:', err);
+                return reply.code(500).send({ error: 'Erreur interne du serveur' });
             }
         }
     });

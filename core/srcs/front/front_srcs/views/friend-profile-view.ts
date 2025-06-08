@@ -52,7 +52,7 @@ class FriendProfileView {
 
   	private async loadStats(friendId: string) {
     	try {
-      		const res = await fetch(`${API_BASE_URL}/auth/users/${friendId}/stats`, {
+      		const res = await fetch(`${API_BASE_URL}/profile/users/${friendId}/stats`, {
         		headers: {
           			Authorization: `Bearer ${localStorage.getItem('token')}`
         		}
