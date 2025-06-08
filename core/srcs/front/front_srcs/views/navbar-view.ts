@@ -14,52 +14,101 @@ class NavbarView extends HTMLElement {
 	// window.removeEventListener('popstate', () => this.update());
   }
 
-  public update() {
-    const isAuthenticated = !!localStorage.getItem('token');
-    // const isHomePage = window.location.pathname === '/';
 
-    this.innerHTML = `
-      <nav class="bg-gray-800 py-6 px-4 text-lg">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <!-- Logo -->
-          <div class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent
-                      bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
-            <a href="/">PONG GAME</a>
-          </div>
 
-          ${isAuthenticated
-            ? `<div id="nav-links" class="flex-1 flex justify-center items-center gap-x-4">
-                 <a href="/gamelog"    class="${this.linkClass()}">Game</a>
-                 <a href="/tournament" class="${this.linkClass()}">Tournament</a>
-                 <a href="/chat"       class="${this.linkClass()}">Chat</a>
-                 <a href="/friends"    class="${this.linkClass()}">Friends</a>
-                 <a href="/settings"   class="${this.linkClass()}">Settings</a>
-                 <a href="/profile"    class="${this.linkClass()}">Profile</a>
-               </div>`
-            : `<div id="nav-links" class="flex-1"></div>`}
+public update() {
+  const isAuthenticated = !!localStorage.getItem('token');
 
-          ${!isAuthenticated
-            ? `<a href="/login"    class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-                                        text-white rounded-full hover:opacity-90 transition">
-                 Sign In
-               </a>
-               <a href="/register" class="px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
-                                        text-slate-900 rounded-full hover:opacity-90 transition">
-                 Sign Up
-               </a>`
-            : ``}
+  this.innerHTML = `
+    <nav class="bg-gray-800 py-6 px-4 text-lg">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <!-- LOGO (toujours à gauche) -->
+        <div class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent
+                    bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+          <a href="/">PONG GAME</a>
         </div>
-      </nav>
-    `;
 
-    this.querySelectorAll('a[href^="/"]').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        const href = (e.currentTarget as HTMLAnchorElement).getAttribute('href')!;
-        navigateTo(href); // new - (Appelle navigateTo() -> Fait le pushState, appelle rendreRoute(), met a jour la navbar si besoin)
-      });
+        <!-- NAV LINKS (centre, même vide) -->
+        <div id="nav-links" class="flex-1 flex justify-center items-center gap-x-4">
+          ${isAuthenticated ? `
+            <a href="/gamelog"    class="${this.linkClass()}">Game</a>
+            <a href="/tournament" class="${this.linkClass()}">Tournament</a>
+            <a href="/chat"       class="${this.linkClass()}">Chat</a>
+            <a href="/friends"    class="${this.linkClass()}">Friends</a>
+            <a href="/settings"   class="${this.linkClass()}">Settings</a>
+            <a href="/profile"    class="${this.linkClass()}">Profile</a>
+          ` : ''}
+        </div>
+
+        <!-- BOUTONS D'AUTH (droite, même vide) -->
+        <div class="flex gap-2">
+          ${!isAuthenticated ? `
+            <a href="/login" class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+                        text-white rounded-full hover:opacity-90 transition">Sign In</a>
+            <a href="/register" class="px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
+                        text-slate-900 rounded-full hover:opacity-90 transition">Sign Up</a>
+          ` : ''}
+        </div>
+      </div>
+    </nav>
+  `;
+
+  this.querySelectorAll('a[href^="/"]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const href = (e.currentTarget as HTMLAnchorElement).getAttribute('href')!;
+      navigateTo(href);
     });
-  }
+  });
+}
+
+
+  // public update() {
+  //   const isAuthenticated = !!localStorage.getItem('token');
+  //   // const isHomePage = window.location.pathname === '/';
+
+  //   this.innerHTML = `
+  //     <nav class="bg-gray-800 py-6 px-4 text-lg">
+  //       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+  //         <!-- Logo -->
+  //         <div class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent
+  //                     bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+  //           <a href="/">PONG GAME</a>
+  //         </div>
+
+  //         ${isAuthenticated
+  //           ? `<div id="nav-links" class="flex-1 flex justify-center items-center gap-x-4">
+  //                <a href="/gamelog"    class="${this.linkClass()}">Game</a>
+  //                <a href="/tournament" class="${this.linkClass()}">Tournament</a>
+  //                <a href="/chat"       class="${this.linkClass()}">Chat</a>
+  //                <a href="/friends"    class="${this.linkClass()}">Friends</a>
+  //                <a href="/settings"   class="${this.linkClass()}">Settings</a>
+  //                <a href="/profile"    class="${this.linkClass()}">Profile</a>
+  //              </div>`
+  //           : ''}
+
+  //         ${!isAuthenticated
+  //           ? `<a href="/login"    class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+  //                                       text-white rounded-full hover:opacity-90 transition">
+  //                Sign In
+  //              </a>
+  //              <a href="/register" class="px-4 py-2 bg-gradient-to-r from-white via-pink-100 to-purple-200
+  //                                       text-slate-900 rounded-full hover:opacity-90 transition">
+  //                Sign Up
+  //              </a>`
+  //           : ``}
+  //       </div>
+  //     </nav>
+  //   `;
+
+  //   this.querySelectorAll('a[href^="/"]').forEach(link => {
+  //     link.addEventListener('click', e => {
+  //       e.preventDefault();
+  //       const href = (e.currentTarget as HTMLAnchorElement).getAttribute('href')!;
+  //       navigateTo(href); // new - (Appelle navigateTo() -> Fait le pushState, appelle rendreRoute(), met a jour la navbar si besoin)
+  //     });
+  //   });
+  // }
 
   private linkClass(): string {
     return [

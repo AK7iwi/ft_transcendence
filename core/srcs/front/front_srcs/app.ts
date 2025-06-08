@@ -22,14 +22,14 @@ import { API_BASE_URL } from './config';
 // ----- LOCAL DEV ----- //
 
 // Local dev, clear localstorage
-function isLocalDevHost(): boolean {
-	const host = window.location.hostname;
-	if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-		return true;
-	}
-	const privateIPv4 = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
-	return privateIPv4.test(host);
-}
+// function isLocalDevHost(): boolean {
+// 	const host = window.location.hostname;
+// 	if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+// 		return true;
+// 	}
+// 	const privateIPv4 = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
+// 	return privateIPv4.test(host);
+// }
 
 // // Disconnects on reload
 // if (isLocalDevHost()) {
@@ -55,6 +55,7 @@ type Route = {
 	protected?: boolean;
 };
 
+
 const routes: Route[] = [
 	{ path: '/', component: 'home-view' },
 	{ path: '/game', component: 'game-view' },
@@ -78,6 +79,7 @@ function navigateTo(path: string) {
 		// window.dispatchEvent(new Event('popstate')); //
 	}
 }
+
 
 function renderRoute() {
 	const main = document.querySelector('main');
@@ -123,7 +125,9 @@ document.addEventListener('click', (e) => {
 class PongApp extends HTMLElement {
 	connectedCallback() {
 		document.body.className = 'bg-slate-900 text-white';
-		this.innerHTML = `<p hidden>pong-app loaded</p>`;
+		this.innerHTML = `
+		<main></main>
+		<p hidden>pong-app loaded</p>`;
 		renderRoute();
 	}
 

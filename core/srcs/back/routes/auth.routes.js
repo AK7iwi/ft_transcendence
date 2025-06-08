@@ -219,7 +219,7 @@ async function authRoutes(fastify, options) {
 
     // POST /auth/2fa/verify-login - Vérification du 2FA pendant le login
     fastify.post('/2fa/verify-login', {
-        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        preHandler: [SanitizeService.sanitize],
         schema: schemas.verify_login2FA,
         handler: async (request, reply) => {
             try {
