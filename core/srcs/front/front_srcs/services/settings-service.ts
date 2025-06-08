@@ -30,6 +30,8 @@ export class SettingsService {
     }
   }
 
+
+  
   public static getInstance(): SettingsService {
     if (!SettingsService.instance) {
       SettingsService.instance = new SettingsService();

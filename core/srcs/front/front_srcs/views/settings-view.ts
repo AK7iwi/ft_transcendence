@@ -32,6 +32,20 @@ class SettingsView extends HTMLElement {
     	this.loadUser();
   	}
 
+validateNumberInput(field: keyof GameSettings, value: string) {
+    const errorEl = document.getElementById(`${field}-error`);
+    const num = Number(value);
+
+    if (!/^\d+$/.test(value) || num < 1 || num > 20) {
+      this.settings = { ...this.settings, [field]: '' as any }; // remet à vide/0
+      if (errorEl) errorEl.textContent = 'Must be a number between 1 and 20';
+      return;
+    }
+
+    this.settings = { ...this.settings, [field]: num };
+    if (errorEl) errorEl.textContent = '';
+  }
+
   	async loadUser() {
     	try {
 			const profile = await ApiService.getProfile();
@@ -187,15 +201,44 @@ class SettingsView extends HTMLElement {
     	`;
   	}
 
-  	renderGameSettingInputs(): string {
-    	const labels: Record<string, string> = {
-      		endScore: 'End Score', ballSpeed: 'Ball Speed', paddleSpeed: 'Paddle Speed'
-    	};
+renderNumberInput(label: string, name: string, value: number): string {
+  return `
+    <div class="mb-2">
+      <label class="block text-white text-sm font-medium mb-1">${label}</label>
+      <div class="p-[2px] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+        <input
+          type="text"
+          name="${name}"
+          value="${value ?? ''}"
+          class="w-full px-4 py-2 rounded-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+          oninput="document.querySelector('settings-view').validateNumberInput('${name}', this.value)"
+          autocomplete="off"
+        />
+      </div>
+      <div class="text-red-400 text-xs" id="${name}-error"></div>
+    </div>
+  `;
+}
 
-    	return Object.entries(labels)
-      		.map(([key, label]) => this.renderTextInput(label, key, String(this.settings[key as keyof GameSettings]), 'text'))
-      		.join('');
-  	}
+
+
+renderGameSettingInputs(): string {
+  const labels: Record<string, string> = {
+    endScore: 'End Score', ballSpeed: 'Ball Speed', paddleSpeed: 'Paddle Speed'
+  };
+
+  return Object.entries(labels)
+    .map(([key, label]) =>
+      this.renderNumberInput(
+        label,
+        key,
+        Number(this.settings[key as keyof GameSettings]) || 0
+      )
+    )
+    .join('');
+}
+
+
 
   	renderQRCodeInput(): string {
     	return `
@@ -217,26 +260,26 @@ class SettingsView extends HTMLElement {
   	}
 
   	updateSetting(key: keyof GameSettings, value: string) {
-		const isNumericField = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key);
-		if (isNumericField) {
-			const parsed = parseInt(value, 10);
+    const isNumericField = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key);
+    if (isNumericField) {
+        const parsed = parseInt(value, 10);
+        // Bloque les valeurs non numériques ou ≤ 0
+        if (isNaN(parsed) || parsed <= 0) {
+            this.settingsErrorMessage = `Invalid value for "${key}". Please enter a positive number.`;
+            this.settingsSuccessMessage = '';
+            this.render();
+            return;
+        }
+        this.settings = { ...this.settings, [key]: parsed };
+    } else {
+        this.settings = { ...this.settings, [key]: value };
+    }
+    // Nettoie les anciens messages
+    this.settingsErrorMessage = '';
+    this.settingsSuccessMessage = '';
+    this.render();
+}
 
-			// Bloque les valeurs non numériques ou ≤ 0
-			if (isNaN(parsed) || parsed <= 0) {
-				this.settingsErrorMessage = `Invalid value for "${key}". Please enter a positive number.`;
-				this.settingsSuccessMessage = '';
-				this.render();
-				return;
-			}
-			this.settings = { ...this.settings, [key]: parsed };
-		} else {
-			this.settings = { ...this.settings, [key]: value };
-		}
-		// Nettoie les anciens messages
-		this.settingsErrorMessage = '';
-		this.settingsSuccessMessage = '';
-		this.render();
-	}
 
   	saveSettings() {
     	try {
