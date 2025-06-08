@@ -5,6 +5,7 @@ const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const JWTAuthentication = require('../middleware/jwt/jwt.auth');
 const SanitizeService = require('../middleware/security.middleware');
+const schemas = require('../schemas/auth.schemas');
 
 async function authRoutes(fastify, options) {
     // GET /auth/me - Récupérer les informations utilisateur
