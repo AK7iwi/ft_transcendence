@@ -2,6 +2,9 @@ import ApiService from '../services/api.service';
 import { API_BASE_URL } from '../config';
 import { sanitizeHTML } from '../services/sanitize';
 
+type Friend = { id: number; username: string; avatar: string };
+
+
 class FriendView extends HTMLElement {
   	private username = '';
   	private message = '';
@@ -50,7 +53,7 @@ class FriendView extends HTMLElement {
   	async loadFriends() {
     	try {
       		const result = await ApiService.getFriends();
-      		this.friends = (result.friends || result).map(friend => ({
+      		this.friends = (result.friends || result).map((friend: Friend) => ({
 				...friend,
 				avatar: friend.avatar
 				? friend.avatar.replace(/^\/?avatars\/?/, '')

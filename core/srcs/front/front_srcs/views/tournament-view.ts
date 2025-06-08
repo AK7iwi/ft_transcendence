@@ -291,10 +291,17 @@ class TournamentView extends HTMLElement {
           🏆 Tournament Champion!
         </h2>
         <img
-          src="${winner.avatar || 'https://placehold.co/128x128?text=Avatar'}"
-          alt="${winner.nickname}'s avatar"
-          class="w-32 h-32 rounded-full border-4 border-white"
-        />
+  src="${
+    winner.avatar
+      ? (winner.avatar.startsWith('/avatars/')
+          ? `${API_BASE_URL}${winner.avatar}`
+          : `${API_BASE_URL}/avatars/${winner.avatar}`)
+      : `${API_BASE_URL}/avatars/default.png`
+  }"
+  alt="${sanitizeHTML(winner.nickname)}'s avatar"
+  class="w-32 h-32 rounded-full border-4 border-white"
+/>
+
         <h3 class="text-4xl font-semibold mb-2">${winner.nickname}</h3>
         <p class="text-gray-400 text-normal mb-3">@${winner.username}</p>
         <button class="mt-6 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold hover:opacity-90 transition new-tournament-btn">
@@ -431,10 +438,14 @@ class TournamentView extends HTMLElement {
             <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
               <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
                 <img
-                  src="${sanitizeHTML(player.avatar || 'https://placehold.co/96x96?text=Avatar')}"
-                  alt="Avatar of ${sanitizeHTML(player.nickname)}"
-                  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
-                />
+  src="${player.avatar 
+    ? (player.avatar.startsWith('/avatars/') 
+        ? `${API_BASE_URL}${player.avatar}` 
+        : `${API_BASE_URL}/avatars/${player.avatar}`)
+    : `${API_BASE_URL}/avatars/default.png`}"
+  alt="Avatar of ${sanitizeHTML(player.nickname)}"
+  class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
+/>
                 <h3 class="text-xl font-bold text-white mb-1">${sanitizeHTML(player.nickname)}</h3>
                 <p class="text-gray-400 text-sm mb-3">@${sanitizeHTML(player.username)}</p>
                 <div class="text-white text-sm space-y-1 w-full">
