@@ -145,35 +145,35 @@ if (convItem) {
     });
   }
 
-  private handleInput(e: Event) {
+  handleInput(e: Event, field: keyof this) {
     const input = e.target as HTMLInputElement;
     const cursorPosition = input.selectionStart ?? 0;
-    const previousLength = this.inputText.length;
-    const previousValue = this.inputText;
+    const previousLength = (this[field] as string).length;
+    const previousValue = this[field] as string;
     
     // Sanitize the input value
-    this.inputText = sanitizeHTML(input.value);
+    (this[field] as string) = sanitizeHTML(input.value);
     
     // Update the input field with the sanitized value
-    input.value = this.inputText;
+    input.value = this[field] as string;
     
     // Calculate the new cursor position
     let newCursorPosition = cursorPosition;
     
     // If we're deleting characters (backspace or delete)
-    if (this.inputText.length < previousLength) {
+    if ((this[field] as string).length < previousLength) {
         // Keep the cursor at the same position when deleting
         newCursorPosition = cursorPosition;
     } 
     // If we're adding characters
-    else if (this.inputText.length > previousLength) {
+    else if ((this[field] as string).length > previousLength) {
         // Move cursor forward by the number of characters added
-        newCursorPosition = cursorPosition + (this.inputText.length - previousLength);
+        newCursorPosition = cursorPosition + ((this[field] as string).length - previousLength);
     }
     
     // Set the cursor position
     input.setSelectionRange(newCursorPosition, newCursorPosition);
-  }
+}
 
 private async loadConversations() {
   try {
