@@ -56,6 +56,29 @@ fastify.get('/', async (request, reply) => {
 const wsService = new WebSocketService(fastify.server);
 fastify.decorate('websocketService', wsService);
 
+// Add security headers middleware
+fastify.addHook('onRequest', (request, reply, done) => {
+    reply.header('Content-Security-Policy', 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data:; " +
+        "font-src 'self'; " +
+        "object-src 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self'; " +
+        "frame-ancestors 'none'; " +
+        "block-all-mixed-content; " +
+        "upgrade-insecure-requests;"
+    );
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('X-XSS-Protection', '1; mode=block');
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    reply.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    done();
+});
+
 fastify.listen({ port: process.env.PORT, host: process.env.HOST }, (err, address) => {
     if (err) {
         fastify.log.error(err);

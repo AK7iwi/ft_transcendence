@@ -42,20 +42,26 @@ const authSchema = {
       }
   },
   updateUsername: {
-    body: {
-        type: 'object',
-        required: ['newUsername'],
-        properties: {
-            newUsername: {
-                type: 'string',
-                minLength: 3,
-                maxLength: 20,
-                pattern: '^[a-zA-Z0-9_-]+$'
-            }
-        },
-        additionalProperties: false
-    }
-},
+  body: {
+    type: 'object',
+    required: ['username', 'newUsername'], // <- les deux sont requis
+    properties: {
+      username: { // <- AJOUTE CE CHAMP
+        type: 'string',
+        minLength: 3,
+        maxLength: 20,
+        pattern: '^[a-zA-Z0-9_-]+$'
+      },
+      newUsername: {
+        type: 'string',
+        minLength: 3,
+        maxLength: 20,
+        pattern: '^[a-zA-Z0-9_-]+$'
+      }
+    },
+    additionalProperties: false
+  }
+  },
 updatePassword: {
     body: {
         type: 'object', 

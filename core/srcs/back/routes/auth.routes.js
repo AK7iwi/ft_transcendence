@@ -8,6 +8,7 @@ const SanitizeService = require('../middleware/security.middleware');
 const schemas = require('../schemas/auth.schemas');
 
 async function authRoutes(fastify, options) {
+
     // GET /auth/me - Récupérer les informations utilisateur
     fastify.get('/me', {
         preHandler: [JWTAuthentication.verifyJWTToken],
@@ -111,8 +112,9 @@ async function authRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.updateUsername,
         handler: async (request, reply) => {
-            try {
-                const { username, newUsername } = request.body;
+    console.log('Payload reçu /auth/update:', request.body);
+    try {
+        const { username, newUsername } = request.body;
 
                 if (!username || !newUsername) {
                     return reply.code(400).send({ error: 'Username and new username required' });
@@ -278,6 +280,21 @@ async function authRoutes(fastify, options) {
 
             if (!username) {
                 return reply.code(400).send({ error: 'Username is required' });
+            }
+
+            // Additional username validation
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                return reply.code(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
+            }
+
+            // Check for HTML tags
+            if (/<[^>]*>/.test(username)) {
+                return reply.code(400).send({ error: 'Username cannot contain HTML tags' });
+            }
+
+            // Check for event handlers
+            if (/on\w+\s*=/.test(username.toLowerCase())) {
+                return reply.code(400).send({ error: 'Username contains invalid characters' });
             }
 
             const friend = dbApi.db.prepare('SELECT id FROM users WHERE username = ?').get(username);
