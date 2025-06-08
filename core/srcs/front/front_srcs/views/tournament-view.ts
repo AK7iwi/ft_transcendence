@@ -2,6 +2,7 @@ import ApiService from '../services/api.service';
 import { SettingsService } from '../services/settings-service';
 import { API_BASE_URL } from '../config';
 import type { GameSettings } from '../services/settings-service';
+import { sanitizeHTML } from '../services/sanitize';
 
 const COUNTDOWN_START = 3;
 const CANVAS_ASPECT_RATIO = 16 / 9;
@@ -87,8 +88,8 @@ class TournamentView extends HTMLElement {
     this.message = '';
     this.messageType = '';
 
-    const username = this.username.trim();
-    const nickname = this.nickname.trim();
+    const username = sanitizeHTML(this.username.trim());
+    const nickname = sanitizeHTML(this.nickname.trim());
 
     if (!username || !nickname) {
       this.message = 'Username and nickname are required';
@@ -192,8 +193,27 @@ class TournamentView extends HTMLElement {
     this.render();
   }
 
-  handleInput(field: 'username' | 'nickname', e: Event) {
-    this[field] = (e.target as HTMLInputElement).value;
+  private handleInput(e: Event, field: 'username' | 'nickname') {
+    const input = e.target as HTMLInputElement;
+    const cursorPosition = input.selectionStart ?? 0;
+    const previousLength = this[field].length;
+    
+    // Sanitize the input value
+    this[field] = sanitizeHTML(input.value);
+    
+    // Update the input field with the sanitized value
+    input.value = this[field];
+    
+    // If the length changed due to sanitization, adjust the cursor position
+    if (this[field].length !== previousLength) {
+        if (input.value.length < previousLength) {
+            input.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
+        } else {
+            input.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+        }
+    } else {
+        input.setSelectionRange(cursorPosition, cursorPosition);
+    }
   }
   
   private recordMatchWinner(winner: string) {
@@ -382,7 +402,7 @@ class TournamentView extends HTMLElement {
               <input
                 type="text"
                 placeholder="Username"
-                value="${this.username}"
+                value="${sanitizeHTML(this.username)}"
                 class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
                 name="username"
                 ${this.players.length >= 4 ? 'disabled' : ''}
@@ -390,7 +410,7 @@ class TournamentView extends HTMLElement {
               <input
                 type="text"
                 placeholder="Nickname"
-                value="${this.nickname}"
+                value="${sanitizeHTML(this.nickname)}"
                 class="flex-[2_1_40%] rounded-full bg-gray-700 px-4 py-2 text-white placeholder-gray-300 focus:outline-none text-sm"
                 name="nickname"
                 ${this.players.length >= 4 ? 'disabled' : ''}
@@ -406,7 +426,7 @@ class TournamentView extends HTMLElement {
 
             ${this.message ? `
               <div class="text-center font-semibold ${this.messageType === 'error' ? 'text-red-500' : 'text-green-400'}">
-                ${this.message}
+                ${sanitizeHTML(this.message)}
               </div>` : ''}
           </div>
         </div>
@@ -417,12 +437,12 @@ class TournamentView extends HTMLElement {
             <div class="p-[2px] rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg">
               <div class="bg-gray-900 rounded-lg p-4 flex flex-col items-center text-center">
                 <img
-                  src="${player.avatar || 'https://placehold.co/96x96?text=Avatar'}"
-                  alt="Avatar of ${player.nickname}"
+                  src="${sanitizeHTML(player.avatar || 'https://placehold.co/96x96?text=Avatar')}"
+                  alt="Avatar of ${sanitizeHTML(player.nickname)}"
                   class="w-24 h-24 rounded-full border-4 border-gray-900 mb-4"
                 />
-                <h3 class="text-xl font-bold text-white mb-1">${player.nickname}</h3>
-                <p class="text-gray-400 text-sm mb-3">@${player.username}</p>
+                <h3 class="text-xl font-bold text-white mb-1">${sanitizeHTML(player.nickname)}</h3>
+                <p class="text-gray-400 text-sm mb-3">@${sanitizeHTML(player.username)}</p>
                 <div class="text-white text-sm space-y-1 w-full">
                   <p><strong>📊 Matches Played:</strong> ${player.matchesPlayed ?? 'N/A'}</p>
                   <p><strong>🎯 Win Ratio:</strong> ${player.winRatio != null ? (player.winRatio * 100).toFixed(1) + '%' : 'N/A'}</p>

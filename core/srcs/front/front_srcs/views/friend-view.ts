@@ -14,12 +14,6 @@ class FriendView extends HTMLElement {
     	super();
   	}
 
-  	private sanitize(str: string): string {
-    	const div = document.createElement('div');
-    	div.textContent = str;
-    	return div.innerHTML;
-  	}
-
   	connectedCallback() {
     	this.loadFriends();
     	this.setupWebSocket();
