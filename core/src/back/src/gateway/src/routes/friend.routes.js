@@ -136,4 +136,31 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    fastify.delete('/remove', {
+        schema: friendSchema.removeFriend,
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.delete(
+                    `${process.env.FRIEND_SERVICE_URL}/friend/remove`,
+                    request.body,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to remove friend';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };

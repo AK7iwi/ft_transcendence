@@ -119,6 +119,33 @@ class FriendController {
             });
         }
     }
+
+    async removeFriend(request, reply) {
+        try {
+            const userId = request.user.id;
+            const { friendId } = request.body;
+
+            if (!friendId) {
+                return reply.code(400).send({
+                    success: false,
+                    message: 'friendId is required'
+                });
+            }
+
+            const result = await FriendService.removeFriend(userId, friendId);
+            
+            return reply.code(200).send({
+                success: true,
+                message: 'Friend removed successfully'
+            });
+        } catch (error) {
+            request.log.error('[REMOVE FRIEND ERROR]', error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to remove friend'
+            });
+        }
+    }
 }
 
 module.exports = new FriendController();

@@ -60,9 +60,10 @@ class ServiceClient {
         });
     }
 
-    async delete(serviceUrl, options = {}) {
+    async delete(serviceUrl, data, options = {}) {
         return this.request(serviceUrl, {
             method: 'DELETE',
+            body: JSON.stringify(data),
             ...options
         });
     }

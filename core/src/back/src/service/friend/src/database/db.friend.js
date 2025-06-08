@@ -118,6 +118,13 @@ class DbFriend {
         `);
         return stmt.run(newUsername, currentUsername);
     }
+
+    static async removeFriend(userId, friendId) {
+        return db.prepare(`
+            DELETE FROM friends 
+            WHERE user_id = ? AND friend_id = ?
+        `).run(userId, friendId);
+    }
 }
 
 module.exports = DbFriend;

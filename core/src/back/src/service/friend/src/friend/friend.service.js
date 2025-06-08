@@ -69,6 +69,18 @@ class FriendService {
             throw new Error(`Failed to unblock user: ${error.message}`);
         }
     }
+
+    static async removeFriend(userId, friendId) {
+        try {
+            const result = await DbFriend.removeFriend(userId, friendId);
+            if (result.changes === 0) {
+                throw new Error('Friend not found');
+            }
+            return { message: 'Friend removed successfully' };
+        } catch (error) {
+            throw new Error(`Failed to remove friend: ${error.message}`);
+        }
+    }
 }
 
 module.exports = FriendService;

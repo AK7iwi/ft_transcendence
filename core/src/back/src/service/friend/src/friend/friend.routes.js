@@ -32,6 +32,12 @@ async function friendRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.unblockUser
     });
+
+    fastify.delete('/remove', {
+        schema: friendSchema.removeFriend,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: FriendController.removeFriend
+    });
 }
 
 module.exports = friendRoutes;

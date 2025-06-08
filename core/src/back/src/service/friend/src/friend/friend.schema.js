@@ -36,6 +36,18 @@ const friendSchema = {
             },
             additionalProperties: false
         }
+    },
+    removeFriend: {
+        body: {
+            type: 'object',
+            required: ['friendId'],
+            properties: {
+                friendId: {
+                    type: 'number'
+                }
+            },
+            additionalProperties: false
+        }
     }
 };
 

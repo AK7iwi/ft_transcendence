@@ -1,0 +1,105 @@
+# Register first user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+###
+
+# Login as first user
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+###
+
+# Register second user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "frienduser",
+    "password": "Test123@"
+}
+
+###
+
+# Login as second user
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "frienduser",
+    "password": "Test123@"
+}
+
+###
+
+# Add friend (using first user's token)
+POST https://localhost:3000/friend/add
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+{
+    "username": "frienduser"
+}
+
+###
+
+# Get friends list
+GET https://localhost:3000/friend/friends
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+###
+
+# Block friend
+POST https://localhost:3000/friend/block
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+{
+    "blockedId": 2
+}
+
+###
+
+# Get blocked users list
+GET https://localhost:3000/friend/blocked
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+###
+
+# Unblock user
+POST https://localhost:3000/friend/unblock
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+{
+    "unblockId": 2
+}
+
+###
+
+# Remove friend
+DELETE https://localhost:3000/friend/remove
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+
+{
+    "friendId": 2
+}
+
+
+# Get friends list after removing friend
+GET https://localhost:3000/friend/friends
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1MTcwOSwiZXhwIjoxNzQ5MzU1MzA5fQ.hDF1hc0od0gbtmhyBptTtCm8bwc0xz7GcKSp-Xc6rg8
+
+###
+
