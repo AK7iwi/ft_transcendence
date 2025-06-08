@@ -50,7 +50,11 @@ class FriendController {
             const userId = request.user.id;
             const blockedIds = await FriendService.getBlockedUsers(userId);
             
-            return reply.code(200).send(blockedIds);
+            return reply.code(200).send({
+                success: true,
+                message: 'Blocked users retrieved successfully',
+                data: blockedIds
+            });
         } catch (error) {
             request.log.error('[GET BLOCKED USERS ERROR]', error);
             return reply.code(500).send({
