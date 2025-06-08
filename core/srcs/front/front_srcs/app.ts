@@ -31,11 +31,11 @@ function isLocalDevHost(): boolean {
 	return privateIPv4.test(host);
 }
 
-// Disconnects on reload
-if (isLocalDevHost()) {
-	console.log('[DEV] Clear localStorage automatically');
-	localStorage.clear();
-}
+// // Disconnects on reload
+// if (isLocalDevHost()) {
+// 	console.log('[DEV] Clear localStorage automatically');
+// 	localStorage.clear();
+// }
 
 
 // ----- WEBSOCKET INITIALIZATION ----- //
