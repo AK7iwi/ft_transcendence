@@ -132,102 +132,102 @@ class HomeView extends HTMLElement {
 			<!-- TEAM -->
 			<div class="bg-slate-900 py-24 sm:py-32">
   				<div class="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
-    				<div class="max-w-xl">
-      					<h2 class="text-3xl font-semibold tracking-tight text-pretty sm:text-4xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Our Team</h2>
-      					<p class="mt-6 text-lg/8">
-        					We are students from 42, a computer programming school, collaborating on a group project as part of our academic journey.
-      					</p>
-    				</div>
-    				<ul role="list" class="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
-      
-      					<!-- Member 1 -->
-      					<li>
-        					<div class="flex items-center gap-x-6">
-          						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            					</div>
-          						<div>
-            						<h3 class="text-base/7 font-semibold tracking-tight">
-              							<a href="https://github.com/AK7iwi" target="_blank"
+					<div class="max-w-xl">
+	  					<h2 class="text-3xl font-semibold tracking-tight text-pretty sm:text-4xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Our Team</h2>
+	  					<p class="mt-6 text-lg/8">
+							We are students from 42, a computer programming school, collaborating on a group project as part of our academic journey.
+	  					</p>
+					</div>
+					<ul role="list" class="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
+	  
+	  					<!-- Member 1 -->
+	  					<li>
+							<div class="flex items-center gap-x-6">
+		  						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+								</div>
+		  						<div>
+									<h3 class="text-base/7 font-semibold tracking-tight">
+			  							<a href="https://github.com/AK7iwi" target="_blank"
   											class="relative transition duration-300 ease-in-out
 											hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500
 											after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0
 											hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500
 											after:transition-all after:duration-300">mfeldman
 										</a>
-            						</h3>
-            						<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-               							Server Development
-            						</p>
-          						</div>
-        					</div>
-      					</li>
+									</h3>
+									<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+			   							Server Development
+									</p>
+		  						</div>
+							</div>
+	  					</li>
 
-      					<!-- Member 2 -->
-      					<li>
-        					<div class="flex items-center gap-x-6">
-          						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            					</div>
-          						<div>
-            						<h3 class="text-base/7 font-semibold tracking-tight">
-              							<a href="https://github.com/GigotBlaster" target="_blank"
+	  					<!-- Member 2 -->
+	  					<li>
+							<div class="flex items-center gap-x-6">
+		  						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+								</div>
+		  						<div>
+									<h3 class="text-base/7 font-semibold tracking-tight">
+			  							<a href="https://github.com/GigotBlaster" target="_blank"
 											class="relative transition duration-300 ease-in-out
 											hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500
 											after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0
 											hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500
 											after:transition-all after:duration-300">npetitpi
 										</a>
-            						</h3>
-            						<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              				 			Security and Protection
-            						</p>
-          						</div>
-        					</div>
-      					</li>
+									</h3>
+									<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+			  				 			Security and Protection
+									</p>
+		  						</div>
+							</div>
+	  					</li>
 
-      					<!-- Member 3 -->
-      					<li>
-        					<div class="flex items-center gap-x-6">
-          						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            					</div>
-          						<div>
-            						<h3 class="text-base/7 font-semibold tracking-tight">
-              							<a href="https://github.com/NineSama" target="_blank"
+	  					<!-- Member 3 -->
+	  					<li>
+							<div class="flex items-center gap-x-6">
+		  						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+								</div>
+		  						<div>
+									<h3 class="text-base/7 font-semibold tracking-tight">
+			  							<a href="https://github.com/NineSama" target="_blank"
 											class="relative transition duration-300 ease-in-out
 											hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500
 											after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0
 											hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500
 											after:transition-all after:duration-300">mfroissa
 										</a>
-            						</h3>
-            						<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-               							Pong Game Design
-            						</p>
-          						</div>
-        					</div>
-      					</li>
+									</h3>
+									<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+			   							Pong Game Design
+									</p>
+		  						</div>
+							</div>
+	  					</li>
 
-      					<!-- Member 4 -->
-      					<li>
-        					<div class="flex items-center gap-x-6">
-          						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-        						</div>
-          						<div>
-            						<h3 class="text-base/7 font-semibold tracking-tight">
-              							<a href="https://github.com/ffouquet42" target="_blank"
+	  					<!-- Member 4 -->
+	  					<li>
+							<div class="flex items-center gap-x-6">
+		  						<div class="text-2xl bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+								</div>
+		  						<div>
+									<h3 class="text-base/7 font-semibold tracking-tight">
+			  							<a href="https://github.com/ffouquet42" target="_blank"
   											class="relative transition duration-300 ease-in-out
 											hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-500 hover:to-pink-500
 											after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0
 											hover:after:w-full after:h-[2px] after:bg-gradient-to-r after:from-indigo-400 after:via-purple-500 after:to-pink-500
 											after:transition-all after:duration-300">fllanet
 										</a>
-            						</h3>
-            						<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-               							UI & Visual Design
-            						</p>
-          						</div>
-        					</div>
-      					</li>
-    				</ul>
+									</h3>
+									<p class="text-sm/6 font-semibold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+			   							UI & Visual Design
+									</p>
+		  						</div>
+							</div>
+	  					</li>
+					</ul>
   				</div>
 			</div>
 
@@ -270,7 +270,7 @@ class HomeView extends HTMLElement {
 							</span>
 						</div>
 					</div>
-    			</div>
+				</div>
   			</div>
 		</div>
 		`;
