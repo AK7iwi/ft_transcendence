@@ -6,6 +6,9 @@ function clearSessionStorage() {
 	localStorage.removeItem('user');
 	localStorage.removeItem('gameSettings');
 }
+function clearPending2FA() {
+  sessionStorage.removeItem('pendingUser');
+}
 
 	function logoutAndRedirect() {
   clearSessionStorage();
@@ -26,7 +29,39 @@ class LoginView extends HTMLElement {
 
   	connectedCallback() {
     	this.checkAuth();
+		 window.addEventListener('popstate', this.cancel2FAIfNeeded);
+    document.addEventListener('click', this.cancel2FAIfNeededByLink);
   	}
+
+
+  disconnectedCallback() {
+    window.removeEventListener('popstate', this.cancel2FAIfNeeded);
+    document.removeEventListener('click', this.cancel2FAIfNeededByLink);
+  }
+
+
+
+ cancel2FAIfNeeded = () => {
+    // Si on quitte /login ou /2fa, on nettoie le pendingUser
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/2fa') {
+      clearPending2FA();
+      this.show2FAForm = false;
+      this.code2FA = '';
+    }
+  }
+
+  cancel2FAIfNeededByLink = (e: any) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('/')) {
+      // Si on clique sur un lien vers autre chose que /login ou /2fa
+      const href = target.getAttribute('href');
+      if (href !== '/login' && href !== '/2fa') {
+        clearPending2FA();
+        this.show2FAForm = false;
+        this.code2FA = '';
+      }
+    }
+  }
 
   	async checkAuth() {
     	const token = localStorage.getItem('token');
@@ -70,14 +105,14 @@ class LoginView extends HTMLElement {
 
   		try {
     		const response = await ApiService.login(this.signInForm.username, this.signInForm.password);
-    		localStorage.setItem('token', response.token);
-
+			
 			if (response.twofa) {
 				this.show2FAForm = true;
 				this.render();
 				return;
 			}
-
+			
+			localStorage.setItem('token', response.token);
 			const profile = await ApiService.getProfile();
 			localStorage.setItem('user', JSON.stringify(profile));
 			navigateTo('/profile');
@@ -102,8 +137,10 @@ class LoginView extends HTMLElement {
   	async handle2FASubmit(e: Event) {
     	e.preventDefault();
     	try {
-      		await ApiService.verify2FA(this.code2FA);
-      		navigateTo('/profile');
+      		const result = await ApiService.verify2FA(this.code2FA);
+localStorage.setItem('token', result.token);
+navigateTo('/profile');
+
     	} catch (err: any) {
       		this.signInError = err.message || '2FA failed';
       		this.render();
