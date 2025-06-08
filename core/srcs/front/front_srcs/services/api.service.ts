@@ -27,7 +27,6 @@ export default class ApiService {
       throw new Error(err?.message || 'Impossible de récupérer les stats utilisateur');
     }
 
-    // On s’attend à { wins: number, losses: number, … }
     return res.json();
   }
 
@@ -71,7 +70,6 @@ static async unblockUser(unblockId: number) {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('Utilisateur non authentifié');
 
-  // On a renommé en “/auth/blocked” côté serveur
   const res = await fetch(`${API_BASE_URL}/auth/blocked`, {
     method: 'GET',
     headers: {
@@ -153,7 +151,7 @@ static async updateUser(data: { username: string; newUsername?: string }) {
     throw new Error(json?.error || 'Update failed');
   }
 
-  return json.user; // retourne le nouvel utilisateur
+  return json.user; 
 }
 
 static async updatePassword(username: string, newPassword: string) {
@@ -178,7 +176,7 @@ private static async fetchWithTimeout(url: string, options: RequestInit): Promis
 
     try {
         const response = await this.fetchWithRetry(url, { ...options, signal: controller.signal });
-        // 👇
+
         if (response.status === 401 || response.status === 403) {
             logoutAndRedirect();
             throw new Error('Session expirée ou non autorisée');
@@ -206,7 +204,7 @@ static async register(username: string, password: string) {
     const response = await this.fetchWithTimeout(`${this.baseUrl}/auth/register`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json' // ← C’est ça qui manque !
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ username, password })
     });
@@ -242,7 +240,6 @@ static async login(username: string, password: string) {
   const json = await res.json();
 
   if (json.twofa) {
-    // 2FA est requis → stocke temporairement en sessionStorage
     sessionStorage.setItem('pendingUser', JSON.stringify({
       id: json.userId,
       username: json.username
@@ -250,7 +247,6 @@ static async login(username: string, password: string) {
     return json;
   }
 
-  // Login classique
   localStorage.setItem('token', json.token);
   localStorage.setItem('user', JSON.stringify(json.user));
   return json;
@@ -312,7 +308,6 @@ static async verify2FA(code: string) {
 }
 
 
-// mat
 static async validateUsername(username: string): Promise<{ valid: boolean; message?: string; id?: number; avatar?: string;}> {
   const token = localStorage.getItem('token');
   const res = await fetch(`${this.baseUrl}/tournament/validate-username`, {
@@ -343,7 +338,7 @@ static async uploadAvatar(file: File): Promise<string> {
   const response = await fetch(`${this.baseUrl}/auth/upload-avatar`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}` // 👈 important pour l'auth
+      Authorization: `Bearer ${token}`
     },
     body: formData
   });

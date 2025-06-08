@@ -26,13 +26,11 @@ class ProfileView extends HTMLElement {
     super();
   }
 
-  // Méthode liée, pour pouvoir l’ajouter ET la retirer
   private onGameFinished = () => {
     ApiService.getProfile()
       .then(data => {
         this.wins = data.wins;
         this.losses = data.losses;
-        // Si on veut aussi rafraîchir l’historique :
         this.loadMatchHistory().then(() => this.render());
       })
       .catch(err => console.error('Failed to reload profile after game finish:', err));
@@ -42,7 +40,6 @@ class ProfileView extends HTMLElement {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    // 1) Charger le profil initial
     ApiService.getProfile()
       .then(data => {
         this.user = {
@@ -56,19 +53,16 @@ class ProfileView extends HTMLElement {
         this.losses = data.losses;
 
         this.render();
-        // Charger l’historique ensuite
         this.loadMatchHistory().then(() => this.render());
       })
       .catch(err => {
         console.error('Failed to load profile:', err);
       });
 
-    // 2) Ajouter UNE SEULE fois l’écouteur "game:finished"
     window.addEventListener('game:finished', this.onGameFinished);
   }
 
   disconnectedCallback() {
-    // Retirer la même référence qu’on avait passée à addEventListener
     window.removeEventListener('game:finished', this.onGameFinished);
   }
 
@@ -261,7 +255,6 @@ const historyRows = matchesToShow
 ` : ''}
     `;
 
-    // Listeners
     const fileInput = this.querySelector('input[type="file"]');
     if (fileInput) {
       fileInput.addEventListener('change', e => this.handleAvatarUpload(e));

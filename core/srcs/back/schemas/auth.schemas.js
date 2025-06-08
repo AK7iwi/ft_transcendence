@@ -44,9 +44,9 @@ const authSchema = {
   updateUsername: {
   body: {
     type: 'object',
-    required: ['username', 'newUsername'], // <- les deux sont requis
+    required: ['username', 'newUsername'], 
     properties: {
-      username: { // <- AJOUTE CE CHAMP
+      username: { 
         type: 'string',
         minLength: 3,
         maxLength: 20,

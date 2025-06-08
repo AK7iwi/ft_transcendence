@@ -23,7 +23,6 @@ export class SettingsService {
   };
 
   private constructor() {
-    // Load settings from localStorage if available
     const savedSettings = localStorage.getItem('gameSettings');
     if (savedSettings) {
       this.settings = { ...this.settings, ...JSON.parse(savedSettings) };

@@ -12,7 +12,6 @@ class JWTAuthentication {
         }
         const decoded = JWTService.verifyJWTToken(token);
         request.user = decoded;
-        // Surtout NE PAS faire de return ici, laisse Fastify continuer
     } catch (error) {
         return reply.code(401).send({
             success: false,

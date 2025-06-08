@@ -27,7 +27,7 @@ export class WebSocketService {
         console.log('[WS] Connected');
         this.reconnectAttempts = 0;
 
-        // ✅ Envoyer auth automatiquement
+
         const token = localStorage.getItem('token');
         if (token) {
           this.send('auth', { token });
@@ -36,7 +36,6 @@ export class WebSocketService {
           console.warn('[WS] ⚠️ Aucun token trouvé pour WebSocket');
         }
 
-        // ✅ vider la file d’attente
         while (this.messageQueue.length > 0) {
           const msg = this.messageQueue.shift();
           if (msg) this.send(msg.type, msg.data);
@@ -82,7 +81,7 @@ export class WebSocketService {
   private handleMessage(message: any) {
     
     const handlers = this.messageHandlers.get(message.type) || [];
-   handlers.forEach(handler => handler(message)); // envoie le message complet
+   handlers.forEach(handler => handler(message));
 
   }
 

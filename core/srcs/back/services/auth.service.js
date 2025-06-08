@@ -2,28 +2,22 @@ const bcrypt = require('bcrypt');
 const { db } = require('../db');
 
 class AuthService {
-    // Input validation
     static validateUserInput(username, password) {
         const errors = [];
         
-        // Username validation
         if (!username || username.length < 3 || username.length > 20) {
             errors.push('Username must be between 3 and 20 characters');
         }
-        // Enhanced username validation to prevent XSS
         if (!/^[a-zA-Z0-9_]+$/.test(username)) {
             errors.push('Username can only contain letters, numbers, and underscores');
         }
-        // Additional check for HTML tags
         if (/<[^>]*>/.test(username)) {
             errors.push('Username cannot contain HTML tags');
         }
-        // Check for common XSS patterns
         if (/javascript:|data:|vbscript:|on\w+\s*=/.test(username.toLowerCase())) {
             errors.push('Username contains invalid characters');
         }
 
-        // Password validation
         if (!password || password.length < 8) {
             errors.push('Password must be at least 8 characters long');
         }
@@ -34,21 +28,17 @@ class AuthService {
         return errors;
     }
 
-    // Hash password with bcrypt
     static async hashPassword(password) {
         const saltRounds = 10;
         return await bcrypt.hash(password, saltRounds);
     }
 
-    // Verify password against hash
     static async verifyPassword(password, hash) {
         return await bcrypt.compare(password, hash);
     }
 
-    // Register new user with hashed password
     static async registerUser(username, password) {
         try {
-            // Validate input
             const errors = this.validateUserInput(username, password);
             if (errors.length > 0) {
                 throw new Error(errors.join(', '));
@@ -56,7 +46,6 @@ class AuthService {
 
             const hashedPassword = await this.hashPassword(password);
             
-            // Use parameterized queries to prevent SQL injection
             const stmt = db.prepare(`
                 INSERT INTO users (username, password_hash)
                 VALUES (?, ?)
@@ -98,7 +87,6 @@ class AuthService {
                 throw new Error('Invalid password');
             }
 
-            // Return profile + token
             return {
                 id: user.id,
                 username: user.username,

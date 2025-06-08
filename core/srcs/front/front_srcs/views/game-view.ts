@@ -159,7 +159,7 @@ private ballCountdownTimer: number | null = null;
   }
 
 private resetBall() {
-  // Recentrer la balle
+
   this.ball.x = this.canvas.width / 2;
   this.ball.y = this.canvas.height / 2;
   const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
@@ -168,13 +168,11 @@ private resetBall() {
   this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
   this.isBallActive = false;
 
-  // Repositionner les paddles coeur de partie
   this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
   this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
   this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
   this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-  // Stopper un ancien timer si besoin
   if (this.ballCountdownTimer !== null) {
     clearInterval(this.ballCountdownTimer);
   }

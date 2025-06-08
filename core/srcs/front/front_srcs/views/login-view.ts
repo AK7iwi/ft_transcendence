@@ -42,7 +42,6 @@ class LoginView extends HTMLElement {
 
 
  cancel2FAIfNeeded = () => {
-    // Si on quitte /login ou /2fa, on nettoie le pendingUser
     if (window.location.pathname !== '/login' && window.location.pathname !== '/2fa') {
       clearPending2FA();
       this.show2FAForm = false;
@@ -53,7 +52,6 @@ class LoginView extends HTMLElement {
   cancel2FAIfNeededByLink = (e: any) => {
     const target = e.target as HTMLElement;
     if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('/')) {
-      // Si on clique sur un lien vers autre chose que /login ou /2fa
       const href = target.getAttribute('href');
       if (href !== '/login' && href !== '/2fa') {
         clearPending2FA();
@@ -139,11 +137,9 @@ async handle2FASubmit(e: Event) {
   try {
     const result = await ApiService.verify2FA(this.code2FA);
 
-    // 1. Stocke le token APRES 2FA réussi
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
 
-    // 2. On peut maintenant rediriger
     navigateTo('/profile');
 
   } catch (err: any) {
@@ -151,19 +147,6 @@ async handle2FASubmit(e: Event) {
     this.render();
   }
 }
-
-
-//   	async handle2FASubmit(e: Event) {
-//     	e.preventDefault();
-//     	try {
-//       		await ApiService.verify2FA(this.code2FA);
-// navigateTo('/profile');
-
-//     	} catch (err: any) {
-//       		this.signInError = err.message || '2FA failed';
-//       		this.render();
-//     	}
-//   	}
 
   	render() {
     	this.innerHTML = '';

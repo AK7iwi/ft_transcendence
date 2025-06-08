@@ -58,19 +58,15 @@ class GameSession {
     paddles.player2.y = Math.max(0, Math.min(332, paddles.player2.y));
         if (ball.x <= 0) {
       score.player2 += 1;
-      // Dans update(), au lieu de “Player 2” :
     if (score.player2 >= endScore) {
       this.state.isGameOver = true;
-      // Bien récupérer l’ID du player2 depuis this (pas “session.player2”)
       const row = getUserById(this.player2);
       this.state.winner = row?.username || 'Player 2';
       recordGameResult(this.player2, this.player1);
-      // Pas d’autre code, on sort tout de suite :
       setTimeout(() => this.fullReset(), 3000);
       return;
     }
 
-    // Sinon, relance un 3-2-1 avant de remettre la balle
     this.state.waitingForStart = true;
     this.state.countdown = 3;
     const countdownInterval = setInterval(() => {
@@ -86,7 +82,6 @@ class GameSession {
     return;
   }
 
-  // 6) Si la balle sort à droite → point pour le joueur 1
   if (ball.x + ball.size >= 768) {
     score.player1 += 1;
 
@@ -251,7 +246,6 @@ setInterval(() => {
         }
 
         try {
-          // ── 1. On récupère les deux pseudos stockés dans `session.player1` / `session.player2` ──
           let player1Name = 'Player 1';
           let player2Name = 'Player 2';
 
@@ -264,8 +258,6 @@ setInterval(() => {
             if (row2?.username) player2Name = row2.username;
           }
 
-          // ── 2. On construit un objet “fullState” qui reprend TOUT ce qui était dans session.state,
-          //      plus les deux pseudos au‐dessus ──
           const fullState = {
             ball:            session.state.ball,
             paddles:         session.state.paddles,
@@ -275,8 +267,8 @@ setInterval(() => {
             waitingForStart: session.state.waitingForStart,
             countdown:       session.state.countdown,
             isPaused:        session.state.isPaused,    
-            player1Name,    // ← Pseudo du joueur 1
-            player2Name     // ← Pseudo du joueur 2
+            player1Name,    
+            player2Name    
           };
         if (session.state.isPaused) {
             ws.send(JSON.stringify({ type: 'draw' }));
@@ -291,37 +283,6 @@ setInterval(() => {
   }, 1000 / 60);
 }
 
-
-  //   setInterval(() => {
-  //     for (const [sessionId, session] of this.gameSessions.entries()) {
-  //       session.update();
-
-  //       for (const userId of session.players.keys()) {
-  //         const ws = this.onlineUsers.get(userId);
-
-  //         if (!ws) {
-  //           console.warn(`[WARN] No socket for user ${userId}`);
-  //           continue;
-  //         }
-
-  //         if (ws.readyState !== WebSocket.OPEN) {
-  //           console.warn(`[WARN] Socket not open for user ${userId}`);
-  //           this.onlineUsers.delete(userId); // ✅ Clean up dead socket
-  //           continue;
-  //         }
-
-  //         try {
-  //           ws.send(JSON.stringify({
-  //             type: 'state',
-  //             payload: session.state
-  //           }));
-  //         } catch (err) {
-  //           console.error(`[ERROR] Failed to send to user ${userId}:`, err);
-  //         }
-  //       }
-  //     }
-  //   }, 1000 / 60);
-  // }
 
   broadcastUserStatus(userId, status) {
     const message = JSON.stringify({

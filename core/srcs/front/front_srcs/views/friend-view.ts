@@ -8,7 +8,6 @@ class FriendView extends HTMLElement {
   	private messageType: 'success' | 'error' | '' = '';
   	private friends: { id: number; username: string; avatar: string }[] = [];
   	private onlineUserIds: number[] = [];
-  	// private currentUserId = Number(localStorage.getItem('userId') || 0);
 
   	constructor() {
     	super();

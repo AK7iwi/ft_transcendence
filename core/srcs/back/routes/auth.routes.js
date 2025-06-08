@@ -9,7 +9,6 @@ const schemas = require('../schemas/auth.schemas');
 
 async function authRoutes(fastify, options) {
 
-    // GET /auth/me - Récupérer les informations utilisateur
     fastify.get('/me', {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (req, reply) => {
@@ -39,7 +38,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // POST /auth/register - Inscription utilisateur
     fastify.post('/register', {
         preHandler: [SanitizeService.sanitize],
         schema: schemas.register,
@@ -62,7 +60,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // POST /auth/login - Connexion utilisateur
     fastify.post('/login', {
         preHandler: [SanitizeService.sanitize],
         schema: schemas.login,
@@ -107,7 +104,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // PUT /auth/update - Modifier le nom d'utilisateur
     fastify.put('/update', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.updateUsername,
@@ -128,7 +124,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // PUT /auth/password - Modifier le mot de passe
     fastify.put('/password', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.updatePassword,
@@ -148,7 +143,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // POST /auth/2fa/setup - Génération du QR code pour activer le 2FA
     fastify.post('/2fa/setup', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.setup2FA,
@@ -180,7 +174,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // POST /auth/2fa/verify - Vérification du token pour activer le 2FA
     fastify.post('/2fa/verify', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.verify_setup2FA,
@@ -217,7 +210,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // POST /auth/2fa/verify-login - Vérification du 2FA pendant le login
     fastify.post('/2fa/verify-login', {
         preHandler: [SanitizeService.sanitize],
         schema: schemas.verify_login2FA,
@@ -269,7 +261,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // === FRIENDSHIP ROUTES ===
 
     fastify.post('/friends/add', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
@@ -282,17 +273,14 @@ async function authRoutes(fastify, options) {
                 return reply.code(400).send({ error: 'Username is required' });
             }
 
-            // Additional username validation
             if (!/^[a-zA-Z0-9_]+$/.test(username)) {
                 return reply.code(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
             }
 
-            // Check for HTML tags
             if (/<[^>]*>/.test(username)) {
                 return reply.code(400).send({ error: 'Username cannot contain HTML tags' });
             }
 
-            // Check for event handlers
             if (/on\w+\s*=/.test(username.toLowerCase())) {
                 return reply.code(400).send({ error: 'Username contains invalid characters' });
             }
@@ -346,7 +334,6 @@ async function authRoutes(fastify, options) {
                 console.log('Friends found:', rows);
                 return reply.send(rows);
             } catch (err) {
-                console.error('❌ Error fetching friends:', err);  // 👈 LOG PRÉCIS
                 return reply.code(500).send({ error: 'Failed to fetch friends' });
             }
         }
@@ -364,7 +351,6 @@ async function authRoutes(fastify, options) {
         }
     });
 
-    // ––– Bloquer (POST /auth/block) –––
     fastify.post('/block',  { 
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.blockUser,

@@ -43,7 +43,6 @@ class GamelogView extends HTMLElement {
   }
 
   disconnectedCallback() {
-    // On ne réinitialise le score qu’au "Play Again", pas lors du disconnect du composant
     this.isGameStarted = false;
     this.isGameOver = false;
     this.isBallActive = false;
@@ -61,7 +60,6 @@ class GamelogView extends HTMLElement {
   }
 
   private render() {
-    // Récupération de l’utilisateur pour afficher son pseudo
     this.user = JSON.parse(localStorage.getItem('user') || '{}');
     const playerName = this.user.username || 'Player 1';
 
@@ -119,18 +117,15 @@ class GamelogView extends HTMLElement {
       </div>
     `;
 
-    // Récupération du canvas et initialisation du contexte
     this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d')!;
 
-    // Instanciation des listeners, paramétrage initial du jeu et premier draw()
     this.setupEventListeners();
     this.initGame();
     this.draw();
   }
 
   private updateScoreDisplay() {
-    // Met à jour le texte du <span id="score"> en fonction de this.score
     const scoreEl = this.querySelector('#score');
     if (scoreEl) {
       scoreEl.textContent = `${this.score.player1} - ${this.score.player2}`;
@@ -139,7 +134,6 @@ class GamelogView extends HTMLElement {
 
 
   private handleResize = () => {
-    // Tant que la partie n’a pas démarré, on redimensionne le canvas et on redessine
     if (this.isGameStarted) return;
     this.initGame();
     this.draw();
@@ -157,18 +151,15 @@ class GamelogView extends HTMLElement {
 
   private handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      // Empêche de lancer plusieurs fois la même initialisation si on fait maintien sur "Enter"
       if (e.repeat || this.initialCountdownTimer !== null || this.isInitialCountdown) {
         return;
       }
 
-      // Quand la partie est terminée, on appelle resetGame() au lieu de relancer un nouveau point
       if (this.isGameOver) {
         this.resetGame();
         return;
       }
 
-      // Si la partie n’a pas encore démarré, on lance le compte-à-rebours
       if (!this.isGameStarted) {
         this.countdown = COUNTDOWN_START;
         this.startInitialCountdown();
@@ -176,7 +167,6 @@ class GamelogView extends HTMLElement {
       return;
     }
 
-    // Toucher 'G' pour mettre en pause / reprendre
     if (e.key.toLowerCase() === 'g' && this.isGameStarted && !this.isGameOver) {
       this.togglePause();
     }
@@ -191,10 +181,8 @@ class GamelogView extends HTMLElement {
   }
 
   private initGame() {
-    // On récupère la configuration (deep copy pour ne pas modifier l’instance originale)
     this.settings = JSON.parse(JSON.stringify(this.settingsService.getSettings()));
 
-    // Redimensionnement du canvas à l’aspect ratio 16/9
     const container = this.canvas.parentElement!;
     let width = container.clientWidth;
     let height = width / CANVAS_ASPECT_RATIO;
@@ -205,13 +193,11 @@ class GamelogView extends HTMLElement {
     this.canvas.width = width;
     this.canvas.height = height;
 
-    // Placement initial des paddles
     this.paddle1.x = this.canvas.width * PADDLE_MARGIN;
     this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
     this.paddle2.x = this.canvas.width * (1 - PADDLE_MARGIN) - this.paddle2.width;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    // On prépare une nouvelle partie sans avoir lancé le jeu
     this.gameLoop = false;
     this.isGameStarted = false;
     this.isBallActive = false;
@@ -219,28 +205,23 @@ class GamelogView extends HTMLElement {
   }
 
   private resetBall(withCountdown = true) {
-    // Place la balle au centre
     this.ball.x = this.canvas.width / 2;
     this.ball.y = this.canvas.height / 2;
 
-    // Détermine un nouvel angle aléatoire
     const angle = ((Math.random() * 120 - 60) * Math.PI) / 180;
     const direction = Math.random() > 0.5 ? 1 : -1;
     this.ball.dx = Math.cos(angle) * this.settings.ballSpeed * direction;
     this.ball.dy = Math.sin(angle) * this.settings.ballSpeed;
     this.isBallActive = false;
 
-    // Réinitialise la position Y des paddles
     this.paddle1.y = (this.canvas.height - this.paddle1.height) / 2;
     this.paddle2.y = (this.canvas.height - this.paddle2.height) / 2;
 
-    // Si un compte à rebours de la balle était en cours, on l’annule
     if (this.ballCountdownTimer !== null) {
       clearInterval(this.ballCountdownTimer);
       this.ballCountdownTimer = null;
     }
 
-    // Soit on lance un nouveau compte à rebours (affichage du “3, 2, 1”), soit on rend la balle active immédiatement
     if (withCountdown) {
       this.startBallCountdown();
     } else {
@@ -269,7 +250,7 @@ class GamelogView extends HTMLElement {
 
         this.isGameStarted = true;
         this.gameLoop = true;
-        this.resetBall(false);  // Pas de compte à rebours pour la balle, on la rend active tout de suite
+        this.resetBall(false); 
         this.isBallActive = true;
         this.startGameLoop();
       }
@@ -348,7 +329,6 @@ private updateGame() {
 } else if (this.ball.x >= this.canvas.width) {
   this.score.player1++;
   if (this.score.player1 >= this.settings.endScore) {
-    // 👉 Ici, mets le username connecté !
     this.endGame(this.user.username || 'Player 1');
   } else {
     this.resetBall();
@@ -367,12 +347,10 @@ private updateGame() {
   private draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Dessin des paddles
     this.ctx.fillStyle = this.settings.paddleColor;
     this.ctx.fillRect(this.paddle1.x, this.paddle1.y, this.paddle1.width, this.paddle1.height);
     this.ctx.fillRect(this.paddle2.x, this.paddle2.y, this.paddle2.width, this.paddle2.height);
 
-    // Dessin de la balle quand la partie est lancée
     if (this.isGameStarted && this.isBallActive && !this.isGameOver) {
       this.ctx.beginPath();
       this.ctx.arc(this.ball.x, this.ball.y, this.ball.size / 2, 0, Math.PI * 2);
@@ -381,7 +359,6 @@ private updateGame() {
       this.ctx.closePath();
     }
 
-    // Ligne centrale pointillée
     this.ctx.beginPath();
     this.ctx.setLineDash([5, 15]);
     this.ctx.moveTo(this.canvas.width / 2, 0);
@@ -390,7 +367,6 @@ private updateGame() {
     this.ctx.stroke();
     this.ctx.setLineDash([]);
 
-    // Messages “Game Over” / “Paused” / “Press ENTER to Start”
     if (this.isGameOver) {
       this.drawCenteredText(`${this.winner} Wins!`, 48, this.canvas.height / 2 - 30);
       this.drawCenteredText('Press ENTER to Play Again', 24, this.canvas.height / 2 + 30);
@@ -406,7 +382,6 @@ private updateGame() {
       this.drawCenteredText(this.countdown.toString(), 72, this.canvas.height / 2);
     }
 
-    // Tant que la partie n’a pas démarré, on boucle le draw() pour afficher le “Press ENTER” ou le compte‐à‐rebours
     if (!this.isGameStarted) {
       requestAnimationFrame(() => this.draw());
     }
@@ -420,7 +395,6 @@ private updateGame() {
   }
 
   private resetGame() {
-    // Réinitialisation du score NÉCESSAIRE ici
     this.score = { player1: 0, player2: 0 };
     this.isGameOver = false;
     this.winner = '';

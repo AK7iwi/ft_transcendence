@@ -29,7 +29,7 @@ fastify.register(fastifyStatic, {
 
 fastify.register(fastifyMultipart);
 fastify.register(fastifyCors, {
-    origin: true, // autorise tous les domaines OU précise le tien : 'http://localhost:5173'
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -41,7 +41,7 @@ fastify.register(avatarRoutes, { prefix: '/auth' });
 fastify.register(chatRoutes, { prefix: '/chat' });
 fastify.register(profileRoutes, { prefix: '/profile' });
 fastify.register(tournamentRoutes, { prefix: '/tournament' });
-fastify.register(require('./routes/gamelog.routes'));
+
 
 
 fastify.get('/health', async (request, reply) => {

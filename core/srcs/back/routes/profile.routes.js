@@ -3,7 +3,6 @@ const JWTAuthentication = require('../middleware/jwt/jwt.auth');
 const SanitizeService = require('../middleware/security.middleware');
 
 async function profileRoutes(fastify, options) {
-    // ─── 1) Historique du profil connecté ───────────────────────────────────────
     fastify.get('/history', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
@@ -32,7 +31,6 @@ async function profileRoutes(fastify, options) {
         }
     });
 
-    // ─── 2) Historique d'un autre utilisateur ───────────────────────────────────
     fastify.get('/users/:id/history', {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {

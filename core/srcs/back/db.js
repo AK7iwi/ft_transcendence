@@ -8,7 +8,7 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
 
-// Create database
+
 let db;
 try {
     const dbPath = process.env.DB_PATH || path.join(dbDir, 'database.sqlite');
@@ -20,7 +20,7 @@ try {
     process.exit(1);
 }
 
-// Initialize tables
+
 function initializeDatabase() {
     try {
         db.exec(`CREATE TABLE IF NOT EXISTS users (
@@ -54,8 +54,6 @@ function initializeDatabase() {
             status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
-
-        // mat : db for history
         db.exec(`CREATE TABLE IF NOT EXISTS match_history (
             match_id        INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id         INTEGER NOT NULL,
@@ -117,8 +115,6 @@ function initializeDatabase() {
                 FOREIGN KEY (loser_id)  REFERENCES users(id) ON DELETE CASCADE
             );
         `);
-
-        // (3) Définissez seulement ces deux UPDATE dans le trigger :
         db.exec(`
             DROP TRIGGER IF EXISTS increment_stats_after_insert;
 
@@ -151,7 +147,6 @@ function initializeDatabase() {
             FOREIGN KEY (winner_id) REFERENCES users(id)
         )`);
 
-        // Ajout sécurisé des colonnes "wins" et "losses"
         try {
             db.prepare(`ALTER TABLE users ADD COLUMN wins INTEGER DEFAULT 0`).run();
         } catch (err) {
@@ -168,7 +163,7 @@ function initializeDatabase() {
             }
         }
 
-        // Ajout sécurisé de la colonne "status"
+
         try {
             db.prepare(`ALTER TABLE friends ADD COLUMN status TEXT DEFAULT 'accepted'`).run();
         } catch (err) {
@@ -192,36 +187,17 @@ function saveRemoteGame({ player1Id, player2Id, score1, score2, winnerId }) {
     stmt.run(player1Id, player2Id, score1, score2, winnerId);
 }
 
-function updateAllWinLossCounts() {
-    // Réinitialise les compteurs
-    db.prepare(`UPDATE users SET wins = 0, losses = 0`).run();
 
-    // Compte les victoires
-    db.prepare(`
-        UPDATE users SET wins = (
-            SELECT COUNT(*) FROM game_results WHERE winner_id = users.id
-        )
-    `).run();
-
-    // Compte les défaites
-    db.prepare(`
-        UPDATE users SET losses = (
-            SELECT COUNT(*) FROM game_results WHERE loser_id = users.id
-        )
-    `).run();
-}
-
-// Custom DB functions
 async function getUserByUsername(username) {
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     return stmt.get(username);
 }
 
 function getUserByUsernameforMat(username) {
-    console.log('[DB] Looking up:', username); // 🔍 log input
+    console.log('[DB] Looking up:', username); 
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     const user = stmt.get(username);
-    console.log('[DB] Found:', user); // 🔍 log result
+    console.log('[DB] Found:', user); 
     return user;
 }
 
@@ -283,15 +259,15 @@ function recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent
     stmt.run(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
 }
 
+
 function getUserById(userId) {
     const stmt = db.prepare('SELECT username FROM users WHERE id = ?');
     return stmt.get(userId);
 }
 
-// Initialize DB
+
 initializeDatabase();
 
-// Export custom API
 module.exports = {
     db,
     initializeDatabase,

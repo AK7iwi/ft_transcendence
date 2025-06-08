@@ -13,7 +13,6 @@ class SettingsView extends HTMLElement {
 	private code2FA = '';
 	private qrCode = '';
 
-	// private errorMessage = '';
 	private usernameSuccessMessage = '';
 	private usernameErrorMessage = '';
 	private passwordSuccessMessage = '';
@@ -37,7 +36,7 @@ class SettingsView extends HTMLElement {
 		const num = Number(value);
 
 		if (!/^\d+$/.test(value) || num < 1 || num > 20) {
-			this.settings = { ...this.settings, [field]: 1 }; // remet à vide/1
+			this.settings = { ...this.settings, [field]: 1 };
 			if (errorEl) errorEl.textContent = 'Must be a number between 1 and 20';
 			return;
 		}
@@ -54,7 +53,6 @@ class SettingsView extends HTMLElement {
 				twoFactorEnabled: profile.twoFactorEnabled,
 			};
 		} catch {
-			// this.errorMessage = 'Failed to load profile';
 		}
 		this.render();
 	}
@@ -75,27 +73,19 @@ class SettingsView extends HTMLElement {
 		const previousLength = (this[field] as string).length;
 		const previousValue = this[field] as string;
 		
-		// Sanitize the input value
 		(this[field] as string) = sanitizeHTML(input.value);
 		
-		// Update the input field with the sanitized value
 		input.value = this[field] as string;
 		
-		// Calculate the new cursor position
 		let newCursorPosition = cursorPosition;
 		
-		// If we're deleting characters (backspace or delete)
 		if ((this[field] as string).length < previousLength) {
-			// Keep the cursor at the same position when deleting
 			newCursorPosition = cursorPosition;
 		} 
-		// If we're adding characters
 		else if ((this[field] as string).length > previousLength) {
-			// Move cursor forward by the number of characters added
 			newCursorPosition = cursorPosition + ((this[field] as string).length - previousLength);
 		}
 		
-		// Set the cursor position
 		input.setSelectionRange(newCursorPosition, newCursorPosition);
 	}
 
@@ -266,7 +256,6 @@ class SettingsView extends HTMLElement {
 		const isNumericField = ['endScore', 'ballSpeed', 'paddleSpeed'].includes(key);
 		if (isNumericField) {
 			const parsed = parseInt(value, 10);
-			// Bloque les valeurs non numériques ou ≤ 0
 			if (isNaN(parsed) || parsed <= 0) {
 				this.settingsErrorMessage = `Invalid value for "${key}". Please enter a positive number.`;
 				this.settingsSuccessMessage = '';
@@ -277,7 +266,6 @@ class SettingsView extends HTMLElement {
 		} else {
 			this.settings = { ...this.settings, [key]: value };
 		}
-		// Nettoie les anciens messages
 		this.settingsErrorMessage = '';
 		this.settingsSuccessMessage = '';
 		this.render();

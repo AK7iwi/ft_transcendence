@@ -58,7 +58,6 @@ class FriendProfileView {
       }
     });
     const data = await res.json();
-    // FORCER À 0 SI VALEUR MANQUANTE
     this.wins = Number(data.wins) || 0;
     this.losses = Number(data.losses) || 0;
     const total = this.wins + this.losses;

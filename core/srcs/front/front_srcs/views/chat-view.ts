@@ -140,29 +140,20 @@ window.dispatchEvent(new PopStateEvent('popstate'));
     const input = e.target as HTMLInputElement;
     const cursorPosition = input.selectionStart ?? 0;
     const previousLength = (this[field] as string).length;
-    const previousValue = this[field] as string;
     
-    // Sanitize the input value
     (this[field] as string) = sanitizeHTML(input.value);
     
-    // Update the input field with the sanitized value
     input.value = this[field] as string;
     
-    // Calculate the new cursor position
     let newCursorPosition = cursorPosition;
     
-    // If we're deleting characters (backspace or delete)
     if ((this[field] as string).length < previousLength) {
-        // Keep the cursor at the same position when deleting
         newCursorPosition = cursorPosition;
     } 
-    // If we're adding characters
     else if ((this[field] as string).length > previousLength) {
-        // Move cursor forward by the number of characters added
         newCursorPosition = cursorPosition + ((this[field] as string).length - previousLength);
     }
     
-    // Set the cursor position
     input.setSelectionRange(newCursorPosition, newCursorPosition);
 }
 
@@ -227,10 +218,9 @@ private async loadConversations() {
 
             if (String(senderId) === this.selectedConversationId) {
                 const senderName = this.conversations.find(c => c.id === String(senderId))?.name || 'Unknown';
-                // Store the raw message text, let renderMessage handle the parsing
                 this.messages.push({ 
                     author: senderName, 
-                    text: text, // Store the raw text, don't parse here
+                    text: text, 
                     me: false 
                 });
                 this.render();
@@ -282,7 +272,6 @@ private async loadMessages(friendId: string) {
         text: '🎮 Invitation to play Pong!'
     };
 
-    // Send the structured message
     const payload = {
         type: 'dm',
         payload: {
@@ -292,7 +281,6 @@ private async loadMessages(friendId: string) {
     };
     this.websocket.send(JSON.stringify(payload));
 
-    // Add to local messages with the same structure
     this.messages.push({
         author: 'You',
         text: JSON.stringify(invitationMessage),
@@ -317,7 +305,6 @@ private async loadMessages(friendId: string) {
             `;
         }
     } catch (e) {
-        // If parsing fails, it's a regular message
         return sanitizeHTML(message.text);
     }
     return sanitizeHTML(message.text);

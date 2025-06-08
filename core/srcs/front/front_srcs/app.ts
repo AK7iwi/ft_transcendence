@@ -1,4 +1,3 @@
-// ----- IMPORTS ----- //
 
 import './styles.css';
 import './views/home-view.ts';
@@ -18,36 +17,11 @@ import './views/footer-view.ts';
 import { WebSocketService } from './services/websocket-service';
 import { API_BASE_URL } from './config';
 
-
-// ----- LOCAL DEV ----- //
-
-// Local dev, clear localstorage
-// function isLocalDevHost(): boolean {
-// 	const host = window.location.hostname;
-// 	if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-// 		return true;
-// 	}
-// 	const privateIPv4 = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
-// 	return privateIPv4.test(host);
-// }
-
-// // Disconnects on reload
-// if (isLocalDevHost()) {
-// 	console.log('[DEV] Clear localStorage automatically');
-// 	localStorage.clear();
-// }
-
-
-// ----- WEBSOCKET INITIALIZATION ----- //
-
-// Initialize WebSocket from API_BASE_URL
 const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
 const wsUrl = `${wsProtocol}${API_BASE_URL.substring(API_BASE_URL.indexOf('://'))}/ws`;
 const wsService = new WebSocketService(wsUrl);
 export default wsService;
 
-
-// ----- ROUTER ----- //
 
 type Route = {
 	path: string;
@@ -72,11 +46,9 @@ const routes: Route[] = [
 ];
 
 function navigateTo(path: string) {
-	// Avoids adding same page multiple times to the history, prevents re-rendering page already displayed
 	if (window.location.pathname !== path) {
 		history.pushState({}, '', path);
 		renderRoute();
-		// window.dispatchEvent(new Event('popstate')); //
 	}
 }
 
@@ -102,15 +74,12 @@ function renderRoute() {
 
 	window.scrollTo(0, 0);
 
-	// Force navbar update (after every route change, without reload)
 	const navbar = document.querySelector('navbar-view') as any;
 	if (navbar?.update) navbar.update();
 }
 
-// Listen to browser back/forward
 window.addEventListener('popstate', renderRoute);
 
-// Intercept in-app <a> navigation
 document.addEventListener('click', (e) => {
 	const target = e.target as HTMLElement;
 	if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('/')) {
@@ -120,7 +89,6 @@ document.addEventListener('click', (e) => {
 });
 
 
-// ----- APP COMPONENT ----- //
 
 class PongApp extends HTMLElement {
 	connectedCallback() {

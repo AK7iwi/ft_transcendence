@@ -1,4 +1,3 @@
-// game-remote-view.ts
 import { navigateTo } from '@/app';
 import { API_BASE_URL } from '../config';
 
@@ -405,8 +404,7 @@ class GameRemoteView extends HTMLElement {
 		this.ctx.closePath();
 
 		if (isPaused) {
-			// this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-			// this.ctx.fillRect(0, 0, virtWidth, virtHeight);
+
 
 			this.ctx.font = 'bold 48px Arial';
 			this.ctx.fillStyle = '#000';

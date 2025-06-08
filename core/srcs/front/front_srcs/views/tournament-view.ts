@@ -53,7 +53,7 @@ class TournamentView extends HTMLElement {
 
   constructor() {
     super();
-    this.handleKeyEvent = this.handleKeyEvent.bind(this); // pour le removeEventListener
+    this.handleKeyEvent = this.handleKeyEvent.bind(this);
   }
 
   connectedCallback() {
@@ -167,7 +167,7 @@ class TournamentView extends HTMLElement {
   }
 
   private removePlayer(id: number) {
-    if (this.bracket.length > 0) return; // Ignore si tournoi lancé
+    if (this.bracket.length > 0) return; 
     this.players = this.players.filter(p => p.id !== id);
     this.message = 'Player removed';
     this.messageType = 'success';
@@ -199,27 +199,19 @@ class TournamentView extends HTMLElement {
     const previousLength = this[field].length;
     const previousValue = this[field];
     
-    // Sanitize the input value
     this[field] = sanitizeHTML(input.value);
     
-    // Update the input field with the sanitized value
     input.value = this[field];
     
-    // Calculate the new cursor position
     let newCursorPosition = cursorPosition;
     
-    // If we're deleting characters (backspace or delete)
     if (this[field].length < previousLength) {
-        // Keep the cursor at the same position when deleting
         newCursorPosition = cursorPosition;
     } 
-    // If we're adding characters
     else if (this[field].length > previousLength) {
-        // Move cursor forward by the number of characters added
         newCursorPosition = cursorPosition + (this[field].length - previousLength);
     }
     
-    // Set the cursor position
     input.setSelectionRange(newCursorPosition, newCursorPosition);
   }
   
@@ -236,7 +228,6 @@ class TournamentView extends HTMLElement {
       if (this.bracket[2].players.length < 2) {
         this.bracket[2].players.push(winner);
       } else {
-        // sécurité: au cas où, on remplace le joueur (rare, mais safe)
         this.bracket[2].players[this.currentMatchIndex] = winner;
       }
     }
@@ -259,7 +250,7 @@ class TournamentView extends HTMLElement {
     if (this.bracket.length === 0 || this.currentMatchIndex >= this.bracket.length) return '';
 
     const match = this.bracket[this.currentMatchIndex];
-    if (match.players.length < 2) return ''; // no button if less than 2 players
+    if (match.players.length < 2) return ''; 
 
     this.currentMatchPlayers = match.players;
 
@@ -520,7 +511,7 @@ class TournamentView extends HTMLElement {
     `;
     this.querySelector('.pause-btn')?.addEventListener('click', () => {
       this.togglePause();
-      this.canvas?.focus(); // pour rester clavier-friendly
+      this.canvas?.focus(); 
     });
     this.querySelectorAll('.remove-player-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -528,7 +519,7 @@ class TournamentView extends HTMLElement {
         this.removePlayer(id);
           });
     });
-    // Attach event listeners after setting innerHTML
+
     this.querySelector('form')?.addEventListener('submit', this.handleJoin.bind(this));
     this.querySelector('input[name="username"]')?.addEventListener('input', (e: Event) => this.handleInput(e, 'username'));
     this.querySelector('input[name="nickname"]')?.addEventListener('input', (e: Event) => this.handleInput(e, 'nickname'));
@@ -546,7 +537,7 @@ class TournamentView extends HTMLElement {
     if (showGame) {
       tournamentUI.style.display = 'none';
       gameUI.style.display = 'block';
-      // Initialize canvas and game only here
+
       this.canvas = this.querySelector('canvas') as HTMLCanvasElement;
       this.ctx = this.canvas.getContext('2d')!;
 
@@ -558,7 +549,6 @@ class TournamentView extends HTMLElement {
     }
   }
 
-// ~---~ GAME FOR TOURNEY ~---~ //
 
   private updateScoreDisplay() {
     const scoreEl = document.getElementById('score');
@@ -638,7 +628,7 @@ class TournamentView extends HTMLElement {
   }
 
 private resetBall() {
-  this.ball.speed = this.settings.ballSpeed; // <- toujours ici
+  this.ball.speed = this.settings.ballSpeed; 
   const angle = (Math.random() * 120 - 60) * (Math.PI / 180);
   const direction = Math.random() > 0.5 ? 1 : -1;
   this.ball.dx = Math.cos(angle) * this.ball.speed * direction;
@@ -828,7 +818,6 @@ private resetBall() {
         })
       });
 
-      // Save match history for loser
       fetch(`${API_BASE_URL}/tournament/match-history`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -863,7 +852,7 @@ private resetBall() {
     if (this.isPaused) {
       cancelAnimationFrame(this.animationFrameId);
     } else {
-      cancelAnimationFrame(this.animationFrameId); // pour éviter les doublons (sécurité)
+      cancelAnimationFrame(this.animationFrameId); 
       this.startGameLoop();
     }
     this.draw();

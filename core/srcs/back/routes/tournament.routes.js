@@ -34,8 +34,10 @@ async function tournamentRoutes(fastify, options) {
       }
 
       try {
-        recordMatchHistory({ userId, opponent, result, scoreUser, scoreOpponent });
-        console.log(`[✅ DB] Match history recorded for user ${userId} vs ${opponent}`);
+       recordMatchHistory({
+  userId, opponent, result, scoreUser, scoreOpponent, playedAt: new Date().toISOString()
+});
+
         return reply.send({ success: true });
       } catch (err) {
         console.error('[❌ DB] Failed to record match history:', err);
@@ -61,7 +63,7 @@ async function tournamentRoutes(fastify, options) {
           return reply.send({
             valid: true,
             id: user.id,
-            avatar: user.avatar || null, // Make sure your DB returns an avatar field
+            avatar: user.avatar || null, 
             wins: user.wins,
             losses: user.losses
           });

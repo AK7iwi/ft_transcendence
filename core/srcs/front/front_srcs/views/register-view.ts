@@ -61,12 +61,10 @@ validatePassword(password: string): string[] {
 
       		await ApiService.register(username, password);
     this.signUpSuccess = 'Account successfully created! You can now log in.';
-    // Ici tu peux vider les champs si tu veux !
     this.signUpForm.password = '';
     this.signUpForm.confirmPassword = '';
   } catch (error: any) {
     this.signUpError = error.message || 'Registration failed';
-    // Ici tu peux vider les champs si tu veux :
     this.signUpForm.password = '';
     this.signUpForm.confirmPassword = '';
   } finally {
