@@ -33,18 +33,26 @@ class SettingsView extends HTMLElement {
   	}
 
 validateNumberInput(field: keyof GameSettings, value: string) {
-    const errorEl = document.getElementById(`${field}-error`);
-    const num = Number(value);
-
-    if (!/^\d+$/.test(value) || num < 1 || num > 20) {
-      this.settings = { ...this.settings, [field]: '' as any }; // remet à vide/0
-      if (errorEl) errorEl.textContent = 'Must be a number between 1 and 20';
-      return;
-    }
-
-    this.settings = { ...this.settings, [field]: num };
+  const errorEl = document.getElementById(`${field}-error`);
+  // Si c'est vide, on remet à 1 par défaut
+  if (value.trim() === '') {
+    this.settings = { ...this.settings, [field]: 1 };
     if (errorEl) errorEl.textContent = '';
+    return;
   }
+
+  const num = Number(value);
+
+  // Si ce n’est pas un nombre valide 1-20
+  if (!/^\d+$/.test(value) || num < 1 || num > 20) {
+    if (errorEl) errorEl.textContent = 'Must be a number between 1 and 20';
+    return;
+  }
+
+  this.settings = { ...this.settings, [field]: num };
+  if (errorEl) errorEl.textContent = '';
+}
+
 
   	async loadUser() {
     	try {
