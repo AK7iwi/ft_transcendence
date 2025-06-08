@@ -37,7 +37,7 @@ class SettingsView extends HTMLElement {
 		const num = Number(value);
 
 		if (!/^\d+$/.test(value) || num < 1 || num > 20) {
-			this.settings = { ...this.settings, [field]: '' as any }; // remet à vide/0
+			this.settings = { ...this.settings, [field]: 1 }; // remet à vide/0
 			if (errorEl) errorEl.textContent = 'Must be a number between 1 and 20';
 			return;
 		}
