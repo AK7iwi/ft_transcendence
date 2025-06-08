@@ -74,37 +74,30 @@ window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   private bindEvents() {
-
     this.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
 
+      const convItem = target.closest('.conversation-item') as HTMLElement | null;
+      if (convItem) {
+        const id = convItem.dataset.id;
+        if (!id || id === this.selectedConversationId) {
+          return;
+        }
 
+        this.selectedConversationId = id;
+        this.messages = [];
+        this.render();
 
-const convItem = target.closest('.conversation-item') as HTMLElement | null;
-if (convItem) {
-  const id = convItem.dataset.id;
-  if (!id || id === this.selectedConversationId) {
-    return; 
-  }
+        this.loadMessages(id)
+          .catch(err => {
+            console.error('[loadMessages] failed:', err);
+          })
+          .then(() => {
+            this.render();
+          });
 
-
-  this.selectedConversationId = id;
-  this.messages = [];      
-  this.render();          
-
-
-  this.loadMessages(id)
-    .catch(err => {
-      console.error('[loadMessages] failed:', err);
-    })
-    .then(() => {
-
-      this.render();
-    });
-
-  return;
-}
-
+        return;
+      }
 
       if (target.closest('#invite-button')) {
         this.inviteToPlay(this.selectedConversationId);
@@ -112,68 +105,66 @@ if (convItem) {
       }
 
       if (target.closest('#block-button')) {
-      this.handleBlockUser();
-      return;
-    }
+        this.handleBlockUser();
+        return;
+      }
 
+      if (target.closest('#unblock-button')) {
+        this.handleUnblockUser();
+        return;
+      }
 
-    if (target.closest('#unblock-button')) {
-      this.handleUnblockUser();
-      return;
-    }
       if (target.closest('#profile-button')) {
         this.viewFriendProfile(this.selectedConversationId);
         return;
       }
     });
 
-
     this.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
       if (target.id === 'input-message') {
-        this.handleInput(e);
+        this.inputText = sanitizeHTML(target.value);
       }
     });
 
-
     this.addEventListener('submit', (e) => {
+      e.preventDefault();
       const form = e.target as HTMLFormElement;
       if (form.id === 'form-message') {
-        e.preventDefault();
         this.sendMessage();
       }
     });
   }
 
-  private handleInput(e: Event) {
+  handleInput(e: Event, field: keyof this) {
     const input = e.target as HTMLInputElement;
     const cursorPosition = input.selectionStart ?? 0;
-    const previousLength = this.inputText.length;
-    const previousValue = this.inputText;
+    const previousLength = (this[field] as string).length;
+    const previousValue = this[field] as string;
     
     // Sanitize the input value
-    this.inputText = sanitizeHTML(input.value);
+    (this[field] as string) = sanitizeHTML(input.value);
     
     // Update the input field with the sanitized value
-    input.value = this.inputText;
+    input.value = this[field] as string;
     
     // Calculate the new cursor position
     let newCursorPosition = cursorPosition;
     
     // If we're deleting characters (backspace or delete)
-    if (this.inputText.length < previousLength) {
+    if ((this[field] as string).length < previousLength) {
         // Keep the cursor at the same position when deleting
         newCursorPosition = cursorPosition;
     } 
     // If we're adding characters
-    else if (this.inputText.length > previousLength) {
+    else if ((this[field] as string).length > previousLength) {
         // Move cursor forward by the number of characters added
-        newCursorPosition = cursorPosition + (this.inputText.length - previousLength);
+        newCursorPosition = cursorPosition + ((this[field] as string).length - previousLength);
     }
     
     // Set the cursor position
     input.setSelectionRange(newCursorPosition, newCursorPosition);
-  }
+}
 
 private async loadConversations() {
   try {
@@ -582,7 +573,6 @@ private async handleUnblockUser() {
                     autocomplete="off"
                   />
                   <button
-                    id="send-button"
                     type="submit"
                     class="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-r hover:opacity-90 transition"
                   >
