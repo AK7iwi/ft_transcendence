@@ -112,8 +112,9 @@ async function authRoutes(fastify, options) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         schema: schemas.updateUsername,
         handler: async (request, reply) => {
-            try {
-                const { username, newUsername } = request.body;
+    console.log('Payload reçu /auth/update:', request.body);
+    try {
+        const { username, newUsername } = request.body;
 
                 if (!username || !newUsername) {
                     return reply.code(400).send({ error: 'Username and new username required' });
