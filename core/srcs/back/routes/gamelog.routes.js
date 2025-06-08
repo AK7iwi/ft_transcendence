@@ -1,11 +1,10 @@
-// → routes/gamelog.routes.js
-
 const { db } = require('../db');
-const authenticate = require('../middleware/authenticate');
+const JWTAuthentication = require('../middleware/jwt/jwt.auth');
+const SanitizeService = require('../middleware/security.middleware');
 
 async function gameLogRoutes(fastify, options) {
   fastify.post('/game/result', {
-    preHandler: [authenticate],
+    preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
     handler: async (req, reply) => {
       const { winnerId, loserId } = req.body;
 
