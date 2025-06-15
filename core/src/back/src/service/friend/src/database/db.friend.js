@@ -100,6 +100,13 @@ class DbFriend {
             .run(blockerId, blockedId);
     }
 
+    static async removeFriend(userId, friendId) {
+        return db.prepare(`
+            DELETE FROM friends 
+            WHERE user_id = ? AND friend_id = ?
+        `).run(userId, friendId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username) {
         const stmt = db.prepare(`
@@ -117,13 +124,6 @@ class DbFriend {
              WHERE username = ?
         `);
         return stmt.run(newUsername, currentUsername);
-    }
-
-    static async removeFriend(userId, friendId) {
-        return db.prepare(`
-            DELETE FROM friends 
-            WHERE user_id = ? AND friend_id = ?
-        `).run(userId, friendId);
     }
 }
 

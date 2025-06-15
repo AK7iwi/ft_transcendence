@@ -39,7 +39,7 @@ Content-Type: application/json
 ### Add friend (using first user's token)
 POST https://localhost:3000/friend/add
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 {
     "username": "frienduser"
@@ -47,12 +47,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 
 ### Get friends list
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Block user
 POST https://localhost:3000/friend/block
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 {
     "blockedId": 2
@@ -60,12 +60,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 
 ### Get blocked users list
 GET https://localhost:3000/friend/blocked
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Unblock user
 POST https://localhost:3000/friend/unblock
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 {
     "unblockId": 2
@@ -74,7 +74,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 ### Remove friend
 DELETE https://localhost:3000/friend/remove
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
+Authorization: Bearer YOUR_TOKEN_HERE
 
 {
     "friendId": 2
