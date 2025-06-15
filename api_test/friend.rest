@@ -1,4 +1,6 @@
-# Register first user
+### Friend Management API Tests
+
+### Register first user
 POST https://localhost:3000/auth/register
 Content-Type: application/json
 
@@ -7,9 +9,7 @@ Content-Type: application/json
     "password": "Test123@"
 }
 
-###
-
-# Login as first user
+### Login as first user
 POST https://localhost:3000/auth/login
 Content-Type: application/json
 
@@ -18,9 +18,7 @@ Content-Type: application/json
     "password": "Test123@"
 }
 
-###
-
-# Register second user
+### Register second user
 POST https://localhost:3000/auth/register
 Content-Type: application/json
 
@@ -29,9 +27,7 @@ Content-Type: application/json
     "password": "Test123@"
 }
 
-###
-
-# Login as second user
+### Login as second user
 POST https://localhost:3000/auth/login
 Content-Type: application/json
 
@@ -40,67 +36,50 @@ Content-Type: application/json
     "password": "Test123@"
 }
 
-###
-
-# Add friend (using first user's token)
+### Add friend (using first user's token)
 POST https://localhost:3000/friend/add
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
 {
     "username": "frienduser"
 }
 
-# Get friends list after removing friend
+### Get friends list
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNDIyMiwiZXhwIjoxNzUwMDA3ODIyfQ.udoV6Cp0b7oNzLY5YCwi6ZgNzkQxls3Bfs6rGkgpjFc
-###
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
-# Get friends list
-GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
-
-###
-
-# Block friend
+### Block user
 POST https://localhost:3000/friend/block
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
 {
     "blockedId": 2
 }
 
-###
-
-# Get blocked users list
+### Get blocked users list
 GET https://localhost:3000/friend/blocked
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
-###
-
-# Unblock user
+### Unblock user
 POST https://localhost:3000/friend/unblock
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
 {
     "unblockId": 2
 }
 
-###
-
-# Remove friend
+### Remove friend
 DELETE https://localhost:3000/friend/remove
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNjc5OSwiZXhwIjoxNzUwMDEwMzk5fQ.mM_krT5J4guK_glQLVd3BhvvpbVQKVSn7UPSYebqVds
 
 {
     "friendId": 2
 }
 
-
-# Get friends list after removing friend
+### Get friends list after removing friend
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNDIyMiwiZXhwIjoxNzUwMDA3ODIyfQ.udoV6Cp0b7oNzLY5YCwi6ZgNzkQxls3Bfs6rGkgpjFc
-###
+Authorization: Bearer YOUR_TOKEN_HERE
