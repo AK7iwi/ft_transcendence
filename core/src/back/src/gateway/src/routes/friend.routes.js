@@ -47,7 +47,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to fetch friends';
                 return reply.code(statusCode).send({
                     success: false,
@@ -73,7 +73,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to fetch blocked users';
                 return reply.code(statusCode).send({
                     success: false,
@@ -100,7 +100,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(201).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to block user';
                 return reply.code(statusCode).send({
                     success: false,
@@ -127,7 +127,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to unblock user';
                 return reply.code(statusCode).send({
                     success: false,
@@ -154,7 +154,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to remove friend';
                 return reply.code(statusCode).send({
                     success: false,

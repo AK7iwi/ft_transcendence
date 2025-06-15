@@ -38,7 +38,7 @@ class FriendController {
             });
         } catch (error) {
             request.log.error('[GET FRIENDS ERROR]', error);
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to fetch friends'
             });
@@ -57,7 +57,7 @@ class FriendController {
             });
         } catch (error) {
             request.log.error('[GET BLOCKED USERS ERROR]', error);
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to fetch blocked users'
             });
@@ -84,7 +84,7 @@ class FriendController {
             });
         } catch (error) {
             request.log.error('[BLOCK USER ERROR]', error);
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to block user'
             });
@@ -117,7 +117,7 @@ class FriendController {
                     message: error.message
                 });
             }
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to unblock user'
             });
@@ -144,7 +144,7 @@ class FriendController {
             });
         } catch (error) {
             request.log.error('[REMOVE FRIEND ERROR]', error);
-            return reply.code(500).send({
+            return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to remove friend'
             });

@@ -45,24 +45,27 @@ Content-Type: application/json
 # Add friend (using first user's token)
 POST https://localhost:3000/friend/add
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
 
 {
     "username": "frienduser"
 }
 
+# Get friends list after removing friend
+GET https://localhost:3000/friend/friends
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNDIyMiwiZXhwIjoxNzUwMDA3ODIyfQ.udoV6Cp0b7oNzLY5YCwi6ZgNzkQxls3Bfs6rGkgpjFc
 ###
 
 # Get friends list
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjExIiwiaWF0IjoxNzQ5MzU4NTkwLCJleHAiOjE3NDkzNjIxOTB9.3pt1aCaYa4XNqeVhdC0ZAbZ4oi9RaPOd24SfS82jIaI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
 
 ###
 
 # Block friend
 POST https://localhost:3000/friend/block
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
 
 {
     "blockedId": 2
@@ -72,14 +75,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 
 # Get blocked users list
 GET https://localhost:3000/friend/blocked
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
 
 ###
 
 # Unblock user
 POST https://localhost:3000/friend/unblock
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNTgwNiwiZXhwIjoxNzUwMDA5NDA2fQ.Wc25ew4mpWkNHOmKHSLPw10OUWA_iBJLEhd-4sS2qzA
 
 {
     "unblockId": 2
@@ -99,7 +102,5 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 
 # Get friends list after removing friend
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1MTcwOSwiZXhwIjoxNzQ5MzU1MzA5fQ.hDF1hc0od0gbtmhyBptTtCm8bwc0xz7GcKSp-Xc6rg8
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDAwNDIyMiwiZXhwIjoxNzUwMDA3ODIyfQ.udoV6Cp0b7oNzLY5YCwi6ZgNzkQxls3Bfs6rGkgpjFc
 ###
-

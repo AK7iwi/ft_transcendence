@@ -95,9 +95,16 @@ const friendSchema = {
     getBlocked: {
         response: {
             200: {
-                type: 'array',
-                items: {
-                    type: 'number'
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'array',
+                        items: {
+                            type: 'number'
+                        }
+                    }
                 }
             },
             400: {
