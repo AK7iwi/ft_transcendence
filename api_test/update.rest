@@ -23,7 +23,7 @@ Content-Type: application/json
 # Update username
 PUT https://localhost:3000/user/username
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NDkzNDkwMjMsImV4cCI6MTc0OTM1MjYyM30.uXBvq8FtS-iFkM6cMHnebtMbcY1_9Ld0F7-6gs3ug-g
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjExIiwiaWF0IjoxNzQ5MzU4NDM1LCJleHAiOjE3NDkzNjIwMzV9.ExKOjrpWWtRNK5J5PUI3oCnh9CthnZdja1croiUdiz0
 
 {
     "currentUsername": "testuser1",

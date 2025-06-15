@@ -55,7 +55,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 
 # Get friends list
 GET https://localhost:3000/friend/friends
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc0OTM1NDIzOSwiZXhwIjoxNzQ5MzU3ODM5fQ.qjIken9DElgVhRLCPpugr4roysGweSOBePqW6CSbdeI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJ0ZXN0dXNlcjExIiwiaWF0IjoxNzQ5MzU4NTkwLCJleHAiOjE3NDkzNjIxOTB9.3pt1aCaYa4XNqeVhdC0ZAbZ4oi9RaPOd24SfS82jIaI
 
 ###
 

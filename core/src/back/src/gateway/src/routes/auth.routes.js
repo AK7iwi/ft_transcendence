@@ -107,7 +107,7 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/verify-login', {
         schema: authSchema.verify_login2FA,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
