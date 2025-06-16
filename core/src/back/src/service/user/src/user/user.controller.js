@@ -28,6 +28,25 @@ class UserController {
             });
         }
     }
+
+    async getMatchHistory(request, reply) {
+        try {
+            const userId = request.user.id;
+            const matchHistory = await UserService.getMatchHistory(userId);
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Match history retrieved successfully',
+                data: matchHistory
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to load match history'
+            });
+        }
+    }
 }
 
 module.exports = new UserController();

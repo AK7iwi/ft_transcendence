@@ -86,50 +86,6 @@ services:
       timeout: 5s
       retries: 3
 
-  # Game Service
-  # game-service:
-  #   container_name: game-service
-  #   image: game-service
-  #   build:
-  #     context: ./src/back/service/game
-  #     dockerfile: Dockerfile
-  #   working_dir: /usr/src/app
-  #   ports:
-  #     - "3002:3002"
-  #   env_file: .env
-  #   volumes:
-  #     - game_data:/data
-  #   networks:
-  #     - transcendence
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3002/health", "--insecure"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
-
-  # # Tournament Service
-  # tournament-service:
-  #   container_name: tournament-service
-  #   image: tournament-service
-  #   build:
-  #     context: ./src/back/service/tournament
-  #     dockerfile: Dockerfile
-  #   working_dir: /usr/src/app
-  #   ports:
-  #     - "3003:3003"
-  #   env_file: .env
-  #   volumes:
-  #     - tournament_data:/data
-  #   networks:
-  #     - transcendence
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3003/health", "--insecure"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
-
   # # Chat Service
   # chat-service:
   #   container_name: chat-service
@@ -151,6 +107,30 @@ services:
   #     interval: 10s
   #     timeout: 5s
   #     retries: 3
+
+
+  # # Tournament Service
+  # tournament-service:
+  #   container_name: tournament-service
+  #   image: tournament-service
+  #   build:
+  #     context: ./src/back/service/tournament
+  #     dockerfile: Dockerfile
+  #   working_dir: /usr/src/app
+  #   ports:
+  #     - "3003:3003"
+  #   env_file: .env
+  #   volumes:
+  #     - tournament_data:/data
+  #   networks:
+  #     - transcendence
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3005/health", "--insecure"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+
 
   # Frontend Service
   front:

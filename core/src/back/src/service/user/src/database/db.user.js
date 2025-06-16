@@ -2,7 +2,7 @@ const db = require('./connection');
 
 class DbUser {
     static async createTable() {
-        const stmt = db.prepare(`
+        const userStmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -17,7 +17,21 @@ class DbUser {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        stmt.run();
+        userStmt.run();
+
+        const matchStmt = db.prepare(`
+            CREATE TABLE IF NOT EXISTS match_history (
+                match_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id         INTEGER NOT NULL,
+                opponent        TEXT NOT NULL,
+                result          TEXT CHECK(result IN ('win', 'loss')) NOT NULL,
+                score_user      INTEGER NOT NULL,
+                score_opponent  INTEGER NOT NULL,
+                played_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE
+            )
+        `);
+        matchStmt.run();
     }
 
     static async updateUsername(currentUsername, newUsername) {
@@ -44,7 +58,25 @@ class DbUser {
         const stmt = db.prepare('SELECT id, user_id, username, avatar, two_factor_enabled, wins, losses FROM user_profiles WHERE user_id = ?');
         return stmt.get(userId);
     }
-
+    
+    static async getMatchHistory(userId) {
+        const stmt = db.prepare(`
+            SELECT
+                match_id,
+                user_id,
+                opponent,
+                result,
+                score_user,
+                score_opponent,
+                played_at
+            FROM match_history
+            WHERE user_id = ?
+            ORDER BY played_at DESC
+        `);
+        return stmt.all(userId);
+    }
+    
+    
     //INTERNAL ROUTES
     static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`

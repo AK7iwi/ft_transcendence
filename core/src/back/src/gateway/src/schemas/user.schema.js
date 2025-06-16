@@ -123,6 +123,39 @@ const userSchema = {
                 }
             }
         }
+    },
+    getMatchHistory: {
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'array',
+                        items: {
+                            type: 'object', 
+                            properties: {
+                                matchId: { type: 'number' },
+                                user_id: { type: 'number' },
+                                opponent: { type: 'string' },
+                                result: { type: 'string', enum: ['win', 'loss'] },
+                                scoreUser: { type: 'number' },
+                                scoreOpponent: { type: 'number' },
+                                playedAt: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

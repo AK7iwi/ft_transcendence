@@ -10,12 +10,13 @@ rm -rf "$SRCS_DIR/front/certs"
 rm -rf "$SRCS_DIR/back/src/gateway/certs"
 
 # Remove security files
-rm -rf "$SRCS_DIR/back/src/gateway/security"
-rm -rf "$SRCS_DIR/back/src/service/auth/security"
-rm -rf "$SRCS_DIR/back/src/service/user/security"
-rm -rf "$SRCS_DIR/back/src/service/friend/security"
+rm -rf "$SRCS_DIR/back/src/gateway/src/security"
+rm -rf "$SRCS_DIR/back/src/service/auth/src/security"
+rm -rf "$SRCS_DIR/back/src/service/user/src/security"
+rm -rf "$SRCS_DIR/back/src/service/friend/src/security"
 
 # Remove utils files
+rm -rf "$SRCS_DIR/back/src/gateway/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/auth/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/user/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/friend/src/utils"

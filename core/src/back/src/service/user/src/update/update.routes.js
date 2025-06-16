@@ -1,6 +1,6 @@
 const updateSchema = require('./update.schema');
 const UpdateController = require('./update.controller');
-const JWTAuthentication = require('../../security/middleware/jwt/jwt.auth');
+const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Update username

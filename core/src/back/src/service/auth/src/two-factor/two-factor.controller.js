@@ -1,5 +1,5 @@
 const TwoFactorService = require('./two-factor.service');
-const JWTService = require('../../security/middleware/jwt/jwt.service');
+const JWTService = require('../security/middleware/jwt/jwt.service');
 
 class TwoFactorController {
     async setup2FA(request, reply) {

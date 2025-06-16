@@ -1,6 +1,6 @@
 const userSchema = require('../schemas/user.schema');
-const SanitizeService = require('../../security/middleware/sanitize.service');
-const JWTAuthentication = require('../../security/middleware/jwt/jwt.auth');
+const SanitizeService = require('../security/middleware/sanitize.service');
+const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Get user profile route
@@ -78,6 +78,33 @@ module.exports = async function (fastify, opts) {
                 request.log.error(error);
                 const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Update password failed';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
+
+    // Get match history route
+    fastify.get('/history', {
+        schema: userSchema.getMatchHistory,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.get(
+                    `${process.env.USER_SERVICE_URL}/user/history`,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Failed to get match history';
                 return reply.code(statusCode).send({
                     success: false,
                     message: errorMessage

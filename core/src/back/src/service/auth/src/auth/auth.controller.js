@@ -1,5 +1,5 @@
 const AuthService = require('./auth.service');
-const JWTService = require('../../security/middleware/jwt/jwt.service');
+const JWTService = require('../security/middleware/jwt/jwt.service');
 
 class AuthController {
     async register(request, reply) {
@@ -35,7 +35,7 @@ class AuthController {
                 username: user.username
             });
 
-            // If 2FA is enabled, return a special response (without token)
+            // If 2FA is enabled, return a special response (without token) (handle the respinse in the schema)
             if (user.twoFactorEnabled) {
                 return reply.code(200).send({
                     success: true,

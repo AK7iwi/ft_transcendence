@@ -22,6 +22,7 @@ class FriendService {
 
             // Add friend
             await DbFriend.createFriendship(userId, friend.user_id);
+            
             return {
                 username: username
             };

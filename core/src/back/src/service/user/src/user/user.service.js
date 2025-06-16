@@ -17,6 +17,14 @@ class UserService {
             throw new Error(`Failed to get user: ${error.message}`);
         }
     }
+
+    static async getMatchHistory(userId) {
+        try {
+            return await DbUser.getMatchHistory(userId);
+        } catch (error) {
+            throw new Error('Failed to retrieve match history');
+        }
+    }
 }
 
 module.exports = UserService;

@@ -1,0 +1,28 @@
+### User Management API Tests
+
+### Register a new user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+### Login to get JWT token
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+### Get user profile (me)
+GET https://localhost:3000/user/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get user match history
+GET https://localhost:3000/user/history
+Authorization: Bearer YOUR_TOKEN_HERE
+

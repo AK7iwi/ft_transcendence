@@ -1,6 +1,6 @@
 const twoFactorSchema = require('./two-factor.schema');
 const TwoFactorController = require('./two-factor.controller');
-const JWTAuthentication = require('../../security/middleware/jwt/jwt.auth');
+const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
     // Setup 2FA
