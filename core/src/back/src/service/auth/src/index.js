@@ -36,7 +36,7 @@ const start = async () => {
     try {
         await app.listen({ 
             port: process.env.AUTH_PORT,
-            host: '0.0.0.0'
+            host: process.env.HOST
         });
     } catch (err) {
         app.log.error(err);

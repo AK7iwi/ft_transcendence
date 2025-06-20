@@ -14,12 +14,11 @@ rm -rf "$SRCS_DIR/back/src/gateway/src/security"
 rm -rf "$SRCS_DIR/back/src/service/auth/src/security"
 rm -rf "$SRCS_DIR/back/src/service/user/src/security"
 rm -rf "$SRCS_DIR/back/src/service/friend/src/security"
+rm -rf "$SRCS_DIR/back/src/service/chat/src/security"
 
 # Remove utils files
 rm -rf "$SRCS_DIR/back/src/gateway/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/auth/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/user/src/utils"
-rm -rf "$SRCS_DIR/back/src/service/friend/src/utils"
-
 
 echo "Cleaned up all certificates and security files"

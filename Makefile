@@ -23,10 +23,14 @@ start:
 	@echo "Starting containers..."
 	docker compose -f docker-compose.yml up -d
 
-# View logs
-logs:
-	docker logs back
-	docker logs front
+# Stop and remove all containers
+fclean: clean-containers clean-certs clean-docker
+	@clear
+
+# Clean up containers
+clean:
+	docker compose -f docker-compose.yml down
+	@clear
 
 # Stop and remove all containers
 clean-containers:
@@ -45,13 +49,13 @@ clean-docker:
 	docker compose -f docker-compose.yml down -v
 	-docker system prune -af
 
-# Clean up containers
-clean:
-	docker compose -f docker-compose.yml down
-	@clear
-
-fclean: clean-containers clean-certs clean-docker
-	@clear
+# View logs
+logs:
+	docker logs auth-service
+	docker logs friend-service
+	docker logs user-service
+	docker logs gateway
+	docker logs front
 
 # Rebuild everything
 re: clean all

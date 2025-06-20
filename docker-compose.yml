@@ -91,7 +91,7 @@ services:
   #   container_name: chat-service
   #   image: chat-service
   #   build:
-  #     context: ./src/back/service/chat
+  #     context: ./core/src/back/src/service/chat
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:
@@ -103,7 +103,7 @@ services:
   #     - transcendence
   #   restart: unless-stopped
   #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3004/health", "--insecure"]
+  #     test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 3

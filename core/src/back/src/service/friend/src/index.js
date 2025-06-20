@@ -3,14 +3,9 @@ require('dotenv').config();
 const initializeDatabase = require('./database/schema');
 const friendRoutes = require('./friend/friend.routes');
 const internalRoutes = require('./internal/internal.routes');
-const ServiceClient = require('./utils/service-client');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
-
-// Create and register service client
-const serviceClient = new ServiceClient(app);
-app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();   
@@ -35,7 +30,7 @@ const start = async () => {
     try {
         await app.listen({ 
             port: process.env.FRIEND_PORT,
-            host: '0.0.0.0'
+            host: process.env.HOST
         });
     } catch (err) {
         app.log.error(err);

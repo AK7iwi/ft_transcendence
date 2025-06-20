@@ -7,9 +7,9 @@ const websocket = require('@fastify/websocket');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const friendRoutes = require('./routes/friend.routes');
-// const gameRoutes = require('./routes/game.routes');
+const chatRoutes = require('./routes/chat.routes');
 // const tournamentRoutes = require('./routes/tournament.routes');
-// const chatRoutes = require('./routes/chat.routes');
+
 const ServiceClient = require('./utils/service-client');
 
 // Initialize Fastify
@@ -50,9 +50,8 @@ fastify.get('/health', async (request, reply) => {
 fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(userRoutes, { prefix: '/user' });
 fastify.register(friendRoutes, { prefix: '/friend' });
-// fastify.register(gameRoutes, { prefix: '/game' });
+fastify.register(chatRoutes, { prefix: '/chat' });
 // fastify.register(tournamentRoutes, { prefix: '/tournament' });
-// fastify.register(chatRoutes, { prefix: '/chat' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
@@ -75,7 +74,7 @@ const start = async () => {
     try {
         await fastify.listen({ 
             port: process.env.GATEWAY_PORT,
-            host: '0.0.0.0'
+            host: process.env.HOST
         });
     } catch (err) {
         fastify.log.error(err);
