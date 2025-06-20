@@ -10,29 +10,34 @@ async function friendRoutes(fastify, options) {
         handler: FriendController.addFriend
     });
 
+    // Get friends
     fastify.get('/friends', {
         schema: friendSchema.getFriends,
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.getFriends
     });
 
+    // Get blocked users
     fastify.get('/blocked', {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.getBlockedUsers
     });
 
+    // Block a user
     fastify.post('/block', {
         schema: friendSchema.blockUser,
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.blockUser
     });
 
+    // Unblock a user
     fastify.post('/unblock', {
         schema: friendSchema.unblockUser,
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: FriendController.unblockUser
     });
 
+    // Remove a friend
     fastify.delete('/remove', {
         schema: friendSchema.removeFriend,
         preHandler: [JWTAuthentication.verifyJWTToken],

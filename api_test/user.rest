@@ -20,9 +20,14 @@ Content-Type: application/json
 
 ### Get user profile (me)
 GET https://localhost:3000/user/me
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
 
 ### Get user match history
 GET https://localhost:3000/user/history
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
+
+### Get match history for specific user (replace 1 with actual user ID)
+GET https://localhost:3000/user/history/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
+
 

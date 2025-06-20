@@ -156,6 +156,46 @@ const userSchema = {
                 }
             }
         }
+    },
+    getMatchHistoryById: {
+        params: {
+            type: 'object',
+            properties: {
+                id: { type: 'integer', minimum: 1 }
+            },
+            required: ['id']
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                match_id: { type: 'integer' },
+                                user_id: { type: 'integer' },
+                                opponent: { type: 'string' },
+                                result: { type: 'string', enum: ['win', 'loss'] },
+                                score_user: { type: 'integer' },
+                                score_opponent: { type: 'integer' },
+                                played_at: { type: 'string', format: 'date-time' }
+                            }
+                        }
+                    }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

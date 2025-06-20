@@ -112,4 +112,31 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    // Get match history for specific user route
+    fastify.get('/history/:id', {
+        schema: userSchema.getMatchHistoryById,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.get(
+                    `${process.env.USER_SERVICE_URL}/user/history/${request.params.id}`,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to get match history for user';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };

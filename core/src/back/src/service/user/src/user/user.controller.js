@@ -47,6 +47,25 @@ class UserController {
             });
         }
     }
+
+    async getMatchHistoryById(request, reply) {
+        try {
+            const friendId = Number(request.params.id);
+            const matchHistory = await UserService.getMatchHistory(friendId);
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Match history retrieved successfully',
+                data: matchHistory
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to load match history for user'
+            });
+        }
+    }
 }
 
 module.exports = new UserController();
