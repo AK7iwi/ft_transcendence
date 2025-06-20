@@ -10,13 +10,13 @@ class UpdateService {
             }
 
             // Notify auth service to update username
-            await serviceClient.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/updateUsername`, {
+            await serviceClient.put(`${process.env.AUTH_SERVICE_URL}/internal/updateUsername`, {
                 currentUsername,
                 newUsername
             });
 
             // Notify friend service to update username
-            await serviceClient.put(`${process.env.FRIEND_SERVICE_URL}/friend/internal/updateUsername`, {
+            await serviceClient.put(`${process.env.FRIEND_SERVICE_URL}/internal/updateUsername`, {
                 currentUsername,
                 newUsername
             });
@@ -39,7 +39,7 @@ class UpdateService {
             }
 
             // Notify auth service to update password
-            await serviceClient.put(`${process.env.AUTH_SERVICE_URL}/auth/internal/updatePassword`, {
+            await serviceClient.put(`${process.env.AUTH_SERVICE_URL}/internal/updatePassword`, {
                 username,
                 hashedPassword
             });

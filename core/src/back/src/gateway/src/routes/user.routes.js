@@ -10,7 +10,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/me`,
+                    `${process.env.USER_SERVICE_URL}/me`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -37,7 +37,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/${request.params.id}`,
+                    `${process.env.USER_SERVICE_URL}/${request.params.id}`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -64,7 +64,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.put(
-                    `${process.env.USER_SERVICE_URL}/user/username`,
+                    `${process.env.USER_SERVICE_URL}/username`,
                     request.body,
                     {
                         headers: {
@@ -92,7 +92,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.put(
-                    `${process.env.USER_SERVICE_URL}/user/password`,
+                    `${process.env.USER_SERVICE_URL}/password`,
                     request.body,
                     {
                         headers: {
@@ -120,7 +120,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/history`,
+                    `${process.env.USER_SERVICE_URL}/history`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -147,7 +147,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/history/${request.params.id}`,
+                    `${process.env.USER_SERVICE_URL}/history/${request.params.id}`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -174,7 +174,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.USER_SERVICE_URL}/user/stats/${request.params.id}`,
+                    `${process.env.USER_SERVICE_URL}/stats/${request.params.id}`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization

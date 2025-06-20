@@ -10,7 +10,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/register`,
+                    `${process.env.AUTH_SERVICE_URL}/register`,
                     request.body
                 );
                 return reply.code(200).send(response);
@@ -33,7 +33,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/login`,
+                    `${process.env.AUTH_SERVICE_URL}/login`,
                     request.body
                 );
                 return reply.code(200).send(response);
@@ -56,7 +56,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/setup`,
+                    `${process.env.AUTH_SERVICE_URL}/2fa/setup`,
                     request.body,
                     {
                         headers: {
@@ -84,7 +84,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-setup`,
+                    `${process.env.AUTH_SERVICE_URL}/2fa/verify-setup`,
                     request.body,
                     {
                         headers: {
@@ -111,7 +111,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/verify-login`,
+                    `${process.env.AUTH_SERVICE_URL}/2fa/verify-login`,
                     request.body
                 );
                 return reply.code(200).send(response);
@@ -133,7 +133,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/auth/2fa/disable`,
+                    `${process.env.AUTH_SERVICE_URL}/2fa/disable`,
                     request.body,
                     {
                         headers: {

@@ -39,7 +39,7 @@ Content-Type: application/json
 ### Add friend (using first user's token)
 POST https://localhost:3000/friend/add
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQyNTU2MywiZXhwIjoxNzUwNDI5MTYzfQ.v6EsNxQG5kthVrRpce24GzlfUUTDlZKxciHwJ7fwZKc
 
 {
     "username": "frienduser"

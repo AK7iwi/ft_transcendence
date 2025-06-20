@@ -10,7 +10,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/add`,
+                    `${process.env.FRIEND_SERVICE_URL}/add`,
                     request.body,
                     {
                         headers: {
@@ -37,7 +37,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/friends`,
+                    `${process.env.FRIEND_SERVICE_URL}/friends`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -63,7 +63,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.get(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/blocked`,
+                    `${process.env.FRIEND_SERVICE_URL}/blocked`,
                     {
                         headers: {
                             'Authorization': request.headers.authorization
@@ -89,7 +89,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/block`,
+                    `${process.env.FRIEND_SERVICE_URL}/block`,
                     request.body,
                     {
                         headers: {
@@ -116,7 +116,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/unblock`,
+                    `${process.env.FRIEND_SERVICE_URL}/unblock`,
                     request.body,
                     {
                         headers: {
@@ -143,7 +143,7 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             try {
                 const response = await fastify.serviceClient.delete(
-                    `${process.env.FRIEND_SERVICE_URL}/friend/remove`,
+                    `${process.env.FRIEND_SERVICE_URL}/remove`,
                     request.body,
                     {
                         headers: {

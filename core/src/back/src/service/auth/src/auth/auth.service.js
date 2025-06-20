@@ -7,13 +7,13 @@ class AuthService {
             const hashedPassword = await PasswordService.hashPassword(password);
             const result = await DbAuth.createUser(username, hashedPassword);
             
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/createUser`, {
+            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/createUser`, {
                 userId: result.lastInsertRowid,
                 username: username,
                 hashedPassword: hashedPassword
             });
 
-            await serviceClient.post(`${process.env.FRIEND_SERVICE_URL}/friend/internal/createUser`, {
+            await serviceClient.post(`${process.env.FRIEND_SERVICE_URL}/internal/createUser`, {
                 userId: result.lastInsertRowid,
                 username: username
             });

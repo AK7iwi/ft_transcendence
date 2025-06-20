@@ -57,7 +57,7 @@ class TwoFactorService {
     static async store2FASecret(userId, secret, serviceClient) {
         try {
             //send secret to user
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/update2FASecret`, {
+            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
                 userId: userId,
                 secret: secret
             });
@@ -71,7 +71,7 @@ class TwoFactorService {
     static async enable2FA(userId, serviceClient) {
         try {
             // First enable 2FA in the user service
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/enable2FA`, {
+            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/enable2FA`, {
                 userId: userId
             }); 
 
@@ -86,7 +86,7 @@ class TwoFactorService {
     static async disable2FA(userId, serviceClient) {
         try {
             //send disable 2fa to user
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/user/internal/disable2FA`, {
+            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/disable2FA`, {
                 userId: userId
             });
 
