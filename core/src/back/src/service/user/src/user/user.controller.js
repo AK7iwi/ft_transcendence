@@ -102,6 +102,35 @@ class UserController {
             });
         }
     }
+
+    async getUserStats(request, reply) {
+        try {
+            const userId = Number(request.params.id);
+            const stats = await UserService.getUserStats(userId);
+
+            if (!stats) {
+                return reply.code(404).send({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            return reply.code(200).send({
+                success: true,
+                message: 'User stats retrieved successfully',
+                data: {
+                    wins: stats.wins,
+                    losses: stats.losses
+                }
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to retrieve user stats'
+            });
+        }
+    }
 }
 
 module.exports = new UserController();

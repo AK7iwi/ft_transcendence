@@ -25,6 +25,14 @@ class UserService {
             throw new Error('Failed to retrieve match history');
         }
     }
+
+    static async getUserStats(userId) {
+        try {
+            return await DbUser.getUserStats(userId);
+        } catch (error) {
+            throw new Error('Failed to retrieve user stats');
+        }
+    }
 }
 
 module.exports = UserService;

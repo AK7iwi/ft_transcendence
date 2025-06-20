@@ -25,4 +25,10 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: UserController.getMatchHistoryById
     });
+
+    // Get user stats route
+    fastify.get('/stats/:id', {
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: UserController.getUserStats
+    });
 }

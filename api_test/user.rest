@@ -38,7 +38,7 @@ Content-Type: application/json
 
 ### Get first user profile (me)
 GET https://localhost:3000/user/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get second user profile (me)
 GET https://localhost:3000/user/me
@@ -46,15 +46,23 @@ Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 
 ### Get first user by ID (replace 1 with actual user ID)
 GET https://localhost:3000/user/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get second user by ID (replace 2 with actual user ID)
 GET https://localhost:3000/user/2
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get first user stats (replace 1 with actual user ID)
+GET https://localhost:3000/user/stats/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get second user stats (replace 2 with actual user ID)
+GET https://localhost:3000/user/stats/2
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get first user match history
 GET https://localhost:3000/user/history
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get second user match history
 GET https://localhost:3000/user/history
@@ -62,11 +70,13 @@ Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 
 ### Get match history for first user (replace 1 with actual user ID)
 GET https://localhost:3000/user/history/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get match history for second user (replace 2 with actual user ID)
 GET https://localhost:3000/user/history/2
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+Authorization: Bearer YOUR_TOKEN_HERE
+
+
 
 
 

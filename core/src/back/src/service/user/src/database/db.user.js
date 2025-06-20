@@ -76,7 +76,15 @@ class DbUser {
         return stmt.all(userId);
     }
     
-    
+    static async getUserStats(userId) {
+        const stmt = db.prepare(`
+            SELECT wins, losses
+            FROM user_profiles
+            WHERE user_id = ?
+        `);
+        return stmt.get(userId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`

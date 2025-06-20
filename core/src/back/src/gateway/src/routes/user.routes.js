@@ -166,4 +166,31 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    // Get user stats route
+    fastify.get('/stats/:id', {
+        schema: userSchema.getUserStats,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.get(
+                    `${process.env.USER_SERVICE_URL}/user/stats/${request.params.id}`,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to get user stats';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };
