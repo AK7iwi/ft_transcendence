@@ -30,6 +30,33 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    // Get user by ID route
+    fastify.get('/:id', {
+        schema: userSchema.getUserById,
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.get(
+                    `${process.env.USER_SERVICE_URL}/user/${request.params.id}`,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 500;
+                const errorMessage = error.message || 'Failed to get user';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
+
     // Update username route
     fastify.put('/username', {
         schema: userSchema.updateUsername,

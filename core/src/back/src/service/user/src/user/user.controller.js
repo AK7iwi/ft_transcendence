@@ -4,9 +4,15 @@ class UserController {
     async getMe(request, reply) {
         try {
             const userId = request.user.id;
-
             const user = await UserService.getUser(userId);
 
+            if (!user) {
+                return reply.code(404).send({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+            
             return reply.code(200).send({
                 success: true,
                 message: 'User information retrieved successfully',
@@ -25,6 +31,36 @@ class UserController {
             return reply.code(400).send({
                 success: false,
                 message: error.message || 'Failed to get user information'
+            });
+        }
+    }
+
+    async getUserById(request, reply) {
+        try {
+            const userId = Number(request.params.id);
+            const user = await UserService.getUser(userId);
+
+            if (!user) {
+                return reply.code(404).send({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            return reply.code(200).send({
+                success: true,
+                message: 'User retrieved successfully',
+                data: {
+                    id: user.id,
+                    username: user.username,
+                    avatar: user.avatar || 'default.png'
+                }
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({
+                success: false,
+                message: error.message || 'Failed to retrieve user'
             });
         }
     }

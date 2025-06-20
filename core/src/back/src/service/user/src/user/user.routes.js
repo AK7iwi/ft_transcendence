@@ -8,6 +8,12 @@ module.exports = async function (fastify, opts) {
         handler: UserController.getMe
     });
 
+    // Get user by ID route
+    fastify.get('/:id', {
+        preHandler: [JWTAuthentication.verifyJWTToken],
+        handler: UserController.getUserById
+    });
+
     // Get match history route
     fastify.get('/history', {
         preHandler: [JWTAuthentication.verifyJWTToken],

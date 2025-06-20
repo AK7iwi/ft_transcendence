@@ -1,33 +1,73 @@
 ### User Management API Tests
 
-### Register a new user
+### Register first user
 POST https://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-    "username": "testuser",
+    "username": "testuser1",
     "password": "Test123@"
 }
 
-### Login to get JWT token
+### Register second user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser2",
+    "password": "Test123@"
+}
+
+### Login first user to get JWT token
 POST https://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-    "username": "testuser",
+    "username": "testuser1",
     "password": "Test123@"
 }
 
-### Get user profile (me)
+### Login second user to get JWT token
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser2",
+    "password": "Test123@"
+}
+
+### Get first user profile (me)
 GET https://localhost:3000/user/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
 
-### Get user match history
+### Get second user profile (me)
+GET https://localhost:3000/user/me
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+
+### Get first user by ID (replace 1 with actual user ID)
+GET https://localhost:3000/user/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+
+### Get second user by ID (replace 2 with actual user ID)
+GET https://localhost:3000/user/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+
+### Get first user match history
 GET https://localhost:3000/user/history
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
 
-### Get match history for specific user (replace 1 with actual user ID)
+### Get second user match history
+GET https://localhost:3000/user/history
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+
+### Get match history for first user (replace 1 with actual user ID)
 GET https://localhost:3000/user/history/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MDQxNTU0MywiZXhwIjoxNzUwNDE5MTQzfQ.d5QKfdvxmKCtAA_Ukaq7Ay_NGtXBmdWQJgYUHtbWK5c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+
+### Get match history for second user (replace 2 with actual user ID)
+GET https://localhost:3000/user/history/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTA0MjA0OTUsImV4cCI6MTc1MDQyNDA5NX0.lwmZt8tRN5FncV-T9msfmDUlWVgsDtBTc6rU_cuuE5Y
+
+
 
 

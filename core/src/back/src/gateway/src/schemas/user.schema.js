@@ -40,6 +40,46 @@ const userSchema = {
             }
         }
     },
+    getUserById: {
+        params: {
+            type: 'object',
+            properties: {
+                id: { type: 'integer', minimum: 1 }
+            },
+            required: ['id']
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'integer' },
+                            username: { type: 'string' },
+                            avatar: { type: 'string' }
+                        }
+                    }
+                }
+            },
+            404: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
+    },
     updateUsername: {
         body: {
             type: 'object',
