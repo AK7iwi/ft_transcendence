@@ -193,4 +193,32 @@ module.exports = async function (fastify, opts) {
             }
         }
     });
+
+    // Upload avatar route
+    fastify.post('/upload-avatar', {
+        schema: userSchema.uploadAvatar,
+        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        handler: async (request, reply) => {
+            try {
+                const response = await fastify.serviceClient.post(
+                    `${process.env.USER_SERVICE_URL}/upload-avatar`,
+                    request.body,
+                    {
+                        headers: {
+                            'Authorization': request.headers.authorization
+                        }
+                    }
+                );
+                return reply.code(200).send(response);
+            } catch (error) {
+                request.log.error(error);
+                const statusCode = error.status || 400;
+                const errorMessage = error.message || 'Avatar upload failed';
+                return reply.code(statusCode).send({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+        }
+    });
 };

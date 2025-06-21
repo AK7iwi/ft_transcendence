@@ -275,6 +275,45 @@ const userSchema = {
                 }
             }
         }
+    },
+    uploadAvatar: {
+        consumes: ['multipart/form-data'],
+        body: {
+            type: 'object',
+            properties: {
+                avatar: { type: 'string', format: 'binary' }
+            },
+            required: ['avatar']
+        },
+        response: {
+            200: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            avatarUrl: { type: 'string' }
+                        }
+                    }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
+                }
+            }
+        }
     }
 };
 

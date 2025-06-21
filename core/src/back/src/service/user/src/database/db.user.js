@@ -85,6 +85,15 @@ class DbUser {
         return stmt.get(userId);
     }
 
+    static async updateAvatar(userId, avatarPath) {
+        const stmt = db.prepare(`
+            UPDATE user_profiles
+            SET avatar = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        `);
+        return stmt.run(avatarPath, userId);
+    }
+
     //INTERNAL ROUTES
     static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`

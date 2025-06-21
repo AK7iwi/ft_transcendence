@@ -4,6 +4,7 @@ const path = require('path');
 const fastifyModule = require('fastify');
 const cors = require('@fastify/cors');
 const websocket = require('@fastify/websocket');
+const multipart = require('@fastify/multipart');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const friendRoutes = require('./routes/friend.routes');
@@ -31,6 +32,9 @@ fastify.register(cors, {
 
 // Register websocket
 fastify.register(websocket);
+
+// Register multipart for file uploads
+fastify.register(multipart);
 
 // Create and register service client
 const serviceClient = new ServiceClient(fastify);

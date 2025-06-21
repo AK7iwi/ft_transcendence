@@ -1,0 +1,165 @@
+### Avatar Upload API Tests
+
+### Register a user for testing
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "avataruser",
+    "password": "Test123@"
+}
+
+###
+
+### Login to get JWT token
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "avataruser",
+    "password": "Test123@"
+}
+
+###
+
+### Get user profile before avatar upload
+GET https://localhost:3000/user/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### Upload avatar (JPG file)
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test_files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Upload avatar (PNG file)
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.png"
+Content-Type: image/png
+
+< ./test_files/avatar.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Upload avatar (GIF file)
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.gif"
+Content-Type: image/gif
+
+< ./test_files/avatar.gif
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Get user profile after avatar upload
+GET https://localhost:3000/user/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### Test invalid file type (TXT file) - should fail
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="test.txt"
+Content-Type: text/plain
+
+< ./test_files/test.txt
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Test upload without file - should fail
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Test upload without authentication - should fail
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test_files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Test upload with invalid token - should fail
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer INVALID_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test_files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Test upload with large file (over 5MB) - should fail
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="large_image.jpg"
+Content-Type: image/jpeg
+
+< ./test_files/large_image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Get user by ID to verify avatar is updated
+GET https://localhost:3000/user/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### Test upload with different user
+POST https://localhost:3000/user/upload-avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar2.jpg"
+Content-Type: image/jpeg
+
+< ./test_files/avatar2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Get second user profile to verify avatar
+GET https://localhost:3000/user/me
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE 
