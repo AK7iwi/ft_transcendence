@@ -26,7 +26,7 @@ class InternalController {
             
             return reply.code(200).send({
                 success: true,
-                message: 'Username updated in auth service'
+                message: 'Username updated in chat service'
             });
         } catch (error) {
             request.log.error('[UPDATE USERNAME ERROR]', error);
@@ -36,7 +36,24 @@ class InternalController {
             });
         }
     }
-    
+
+    async updateAvatar(request, reply) {
+        try {
+            const { userId, username, avatarPath } = request.body;
+            await InternalService.updateAvatar(userId, username, avatarPath);
+            
+            return reply.code(200).send({
+                success: true,
+                message: 'Avatar updated in chat service'
+            });
+        } catch (error) {
+            request.log.error('[UPDATE AVATAR ERROR]', error);
+            return reply.code(400).send({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }
 
 module.exports = new InternalController();

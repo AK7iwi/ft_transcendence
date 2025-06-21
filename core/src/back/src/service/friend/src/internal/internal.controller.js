@@ -36,7 +36,24 @@ class InternalController {
             });
         }
     }
-    
+
+    async updateAvatar(request, reply) {
+        try {
+            const { userId, username, avatarPath } = request.body;
+            await InternalService.updateAvatar(userId, username, avatarPath);
+            
+            return reply.code(200).send({
+                success: true,
+                message: 'Avatar updated in friend service'
+            });
+        } catch (error) {
+            request.log.error('[UPDATE AVATAR ERROR]', error);
+            return reply.code(400).send({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }
 
 module.exports = new InternalController();

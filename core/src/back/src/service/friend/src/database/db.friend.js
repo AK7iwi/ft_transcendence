@@ -125,6 +125,16 @@ class DbFriend {
         `);
         return stmt.run(newUsername, currentUsername);
     }
+
+    static async updateAvatar(userId, username, avatarPath) {
+        const stmt = db.prepare(`
+            UPDATE users 
+            SET avatar = ?,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE user_id = ?
+        `);
+        return stmt.run(avatarPath, userId);
+    }
 }
 
 module.exports = DbFriend;

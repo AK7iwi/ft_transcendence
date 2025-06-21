@@ -35,7 +35,24 @@ const internalSchema = {
         },
         additionalProperties: false
     }
-}
+   },
+   updateAvatar: {
+    body: {
+        type: 'object',
+        required: ['userId', 'username', 'avatarPath'],
+        properties: {
+            userId: { type: 'number' },
+            username: {
+                type: 'string',
+                minLength: 3,
+                maxLength: 20,
+                pattern: '^[a-zA-Z0-9_-]+$'
+            },
+            avatarPath: { type: 'string' }
+        },
+        additionalProperties: false
+    }
+   }
 }
 
 module.exports = internalSchema;

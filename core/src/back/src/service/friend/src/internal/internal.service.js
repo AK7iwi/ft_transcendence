@@ -16,6 +16,14 @@ class InternalService {
             throw error;
         }
     }
+
+    static async updateAvatar(userId, username, avatarPath) {
+        try {
+            await DbFriend.updateAvatar(userId, username, avatarPath);
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = InternalService;

@@ -6,7 +6,7 @@ class AvatarController {
             const file = await request.file();
             const userId = request.user.id;
 
-            const result = await AvatarService.uploadAvatar(file, userId);
+            const result = await AvatarService.uploadAvatar(file, userId, request.server.serviceClient);
 
             return reply.code(200).send({
                 success: true,

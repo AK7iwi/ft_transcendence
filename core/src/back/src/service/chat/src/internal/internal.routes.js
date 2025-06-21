@@ -13,4 +13,10 @@ module.exports = async function (fastify, opts) {
         schema: internalSchema.updateUsername,
         handler: InternalController.updateUsername
     });
+
+    // Route for user service to update avatar
+    fastify.put('/updateAvatar', {
+        schema: internalSchema.updateAvatar,
+        handler: InternalController.updateAvatar
+    });
 };
