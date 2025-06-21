@@ -37,7 +37,7 @@ class UserController {
 
     async getUserById(request, reply) {
         try {
-            const userId = Number(request.params.id);
+            const userId = parseInt(request.params.id, 10);
             const user = await UserService.getUser(userId);
 
             if (!user) {
@@ -86,7 +86,7 @@ class UserController {
 
     async getMatchHistoryById(request, reply) {
         try {
-            const friendId = Number(request.params.id);
+            const friendId = parseInt(request.params.id, 10);
             const matchHistory = await UserService.getMatchHistory(friendId);
 
             return reply.code(200).send({
@@ -105,7 +105,7 @@ class UserController {
 
     async getUserStats(request, reply) {
         try {
-            const userId = Number(request.params.id);
+            const userId = parseInt(request.params.id, 10);
             const stats = await UserService.getUserStats(userId);
 
             if (!stats) {

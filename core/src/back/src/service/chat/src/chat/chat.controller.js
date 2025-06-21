@@ -12,7 +12,13 @@ class ChatController {
 
             await ChatService.sendMessage(senderId, receiverId, content);
 
-            return reply.send({ success: true });
+            return reply.code(200).send({
+                success: true,
+                message: 'Message sent successfully',
+                data: {
+                    success: true
+                }
+            });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'Internal server error' });
@@ -22,11 +28,15 @@ class ChatController {
     async getMessages(request, reply) {
         try {
             const senderId = request.user.id;
-            const receiverId = Number(request.params.userId);
+            const receiverId = parseInt(request.params.userId, 10);
 
             const messages = await ChatService.getMessages(senderId, receiverId);
 
-            return reply.send(messages);
+            return reply.code(200).send({
+                success: true,
+                message: 'Messages retrieved successfully',
+                data: messages
+            });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'Internal server error' });

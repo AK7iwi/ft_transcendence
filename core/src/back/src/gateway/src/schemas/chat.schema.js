@@ -20,19 +20,22 @@ const chatSchema = {
             200: {
                 type: 'object',
                 properties: {
-                    success: { type: 'boolean' }
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
                 }
             },
             400: {
                 type: 'object',
                 properties: {
-                    error: { type: 'string' }
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
-                    error: { type: 'string' }
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
                 }
             }
         }
@@ -47,23 +50,38 @@ const chatSchema = {
         },
         response: {
             200: {
-                type: 'array',
-                items: {
-                    type: 'object',
-                    properties: {
-                        id: { type: 'integer' },
-                        sender_id: { type: 'integer' },
-                        receiver_id: { type: 'integer' },
-                        content: { type: 'string' },
-                        timestamp: { type: 'string' },
-                        sender_username: { type: 'string' }
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'integer' },
+                                sender_id: { type: 'integer' },
+                                receiver_id: { type: 'integer' },
+                                content: { type: 'string' },
+                                timestamp: { type: 'string' },
+                                sender_username: { type: 'string' }
+                            }
+                        }
                     }
+                }
+            },
+            400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
-                    error: { type: 'string' }
+                    success: { type: 'boolean' },
+                    message: { type: 'string' }
                 }
             }
         }
