@@ -8,6 +8,7 @@ module.exports = async function (fastify, opts) {
         handler: InternalController.createUser
     });
 
+    // Route for auth service to update username
     fastify.put('/updateUsername', {
         schema: internalSchema.updateUsername,
         handler: InternalController.updateUsername

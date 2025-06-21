@@ -24,7 +24,6 @@ app.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
-
 // Start server
 const start = async () => {
     try {

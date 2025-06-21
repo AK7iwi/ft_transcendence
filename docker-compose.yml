@@ -87,26 +87,26 @@ services:
       retries: 3
 
   # # Chat Service
-  # chat-service:
-  #   container_name: chat-service
-  #   image: chat-service
-  #   build:
-  #     context: ./core/src/back/src/service/chat
-  #     dockerfile: Dockerfile
-  #   working_dir: /usr/src/app
-  #   ports:
-  #     - "3004:3004"
-  #   env_file: .env
-  #   volumes:
-  #     - chat_data:/data
-  #   networks:
-  #     - transcendence
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
+  chat-service:
+    container_name: chat-service
+    image: chat-service
+    build:
+      context: ./core/src/back/src/service/chat
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    ports:
+      - "3004:3004"
+    env_file: .env
+    volumes:
+      - chat_data:/data
+    networks:
+      - transcendence
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 
   # # Tournament Service

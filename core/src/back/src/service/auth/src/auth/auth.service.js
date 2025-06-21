@@ -17,6 +17,11 @@ class AuthService {
                 userId: result.lastInsertRowid,
                 username: username
             });
+
+            await serviceClient.post(`${process.env.CHAT_SERVICE_URL}/internal/createUser`, {
+                userId: result.lastInsertRowid,
+                username: username
+            });
             
             return {
                 username: username

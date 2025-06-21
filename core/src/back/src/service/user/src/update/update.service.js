@@ -21,6 +21,12 @@ class UpdateService {
                 newUsername
             });
 
+            // Notify chat service to update username
+            await serviceClient.put(`${process.env.CHAT_SERVICE_URL}/internal/updateUsername`, {
+                currentUsername,
+                newUsername
+            });
+
             return {
                 username: newUsername
             };
