@@ -87,6 +87,21 @@ const authSchema = {
                     }
                 }
             },
+            201: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            twofa: { type: 'boolean' },
+                            userId: { type: 'string' },
+                            username: { type: 'string' }
+                        }
+                    }
+                }
+            },
             400: {
                 type: 'object',
                 properties: {

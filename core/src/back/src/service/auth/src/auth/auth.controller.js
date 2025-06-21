@@ -37,7 +37,7 @@ class AuthController {
 
             // If 2FA is enabled, return a special response (without token) (handle the respinse in the schema)
             if (user.twoFactorEnabled) {
-                return reply.code(200).send({
+                return reply.code(201).send({
                     success: true,
                     message: '2FA required',
                     data: { twofa: true, userId: user.id, username: user.username }
