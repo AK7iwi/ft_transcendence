@@ -1,5 +1,6 @@
-const ChatController = require('./chat.controller');
+const chatSchema = require('./chat.schema');
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
+const ChatController = require('./chat.controller');
 
 module.exports = async function (fastify, opts) {
     // Send message

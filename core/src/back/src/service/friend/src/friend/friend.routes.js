@@ -1,6 +1,6 @@
 const friendSchema = require('./friend.schema');
-const FriendController = require('./friend.controller');
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
+const FriendController = require('./friend.controller');
 
 async function friendRoutes(fastify, options) {
     // Add a friend

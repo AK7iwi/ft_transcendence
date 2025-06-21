@@ -158,6 +158,5 @@ volumes:
   auth_data:
   user_data:
   friend_data:
-  # game_data:
+  chat_data:
   # tournament_data:
-  # chat_data:

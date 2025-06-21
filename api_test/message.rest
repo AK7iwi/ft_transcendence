@@ -1,0 +1,106 @@
+### Chat Message API Tests
+ 
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+### Login as first user
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "Test123@"
+}
+
+### Register second user
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "frienduser",
+    "password": "Test123@"
+}
+
+### Login as second user
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "frienduser",
+    "password": "Test123@"
+}
+
+### Send message from user1 to user2
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "receiverId": 2,
+    "content": "Hello! How are you?"
+}
+
+### Send message from user2 to user1
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+
+{
+    "receiverId": 1,
+    "content": "Hi! I'm doing great, thanks!"
+}
+
+### Send another message from user1 to user2
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "receiverId": 2,
+    "content": "That's awesome! Want to play a game?"
+}
+
+### Get messages between user1 and user2 (as user1)
+GET https://localhost:3000/chat/messages/2
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get messages between user1 and user2 (as user2)
+GET https://localhost:3000/chat/messages/1
+Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+
+### Send message with empty content (should fail)
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "receiverId": 2,
+    "content": ""
+}
+
+### Send message without content (should fail)
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "receiverId": 2
+}
+
+### Send message without receiverId (should fail)
+POST https://localhost:3000/chat/message
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "content": "Hello!"
+}
+
+### Get messages with invalid user ID (should fail)
+GET https://localhost:3000/chat/messages/999
+Authorization: Bearer YOUR_TOKEN_HERE
