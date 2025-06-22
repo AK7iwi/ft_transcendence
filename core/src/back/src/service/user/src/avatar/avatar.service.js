@@ -20,7 +20,8 @@ class AvatarService {
 
             // Validate file size (max 5MB)
             const maxSize = 5 * 1024 * 1024; // 5MB
-            if (file.file.bytesRead > maxSize) {
+            const fileBuffer = await file.toBuffer();
+            if (fileBuffer.length > maxSize) {
                 throw new Error('File size too large. Maximum size is 5MB.');
             }
 
@@ -66,7 +67,6 @@ class AvatarService {
             });
 
             return {
-                success: true,
                 avatarUrl: relativePath
             };
 

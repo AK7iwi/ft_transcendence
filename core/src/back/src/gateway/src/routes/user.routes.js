@@ -157,7 +157,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to get match history for user';
                 return reply.code(statusCode).send({
                     success: false,
@@ -184,7 +184,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Failed to get user stats';
                 return reply.code(statusCode).send({
                     success: false,

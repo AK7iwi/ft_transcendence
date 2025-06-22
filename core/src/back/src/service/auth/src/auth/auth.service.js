@@ -26,7 +26,6 @@ class AuthService {
             return {
                 username: username
             };
-            
         } catch (error) {
             if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
                 throw new Error('Username already exists');

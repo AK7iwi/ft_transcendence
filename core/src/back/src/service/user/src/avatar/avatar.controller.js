@@ -8,7 +8,7 @@ class AvatarController {
 
             const result = await AvatarService.uploadAvatar(file, userId, request.server.serviceClient);
 
-            return reply.code(200).send({
+            return reply.send({
                 success: true,
                 message: 'Avatar uploaded successfully',
                 data: {

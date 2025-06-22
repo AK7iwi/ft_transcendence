@@ -118,7 +118,7 @@ services:
   #     dockerfile: Dockerfile
   #   working_dir: /usr/src/app
   #   ports:
-  #     - "3003:3003"
+  #     - "3005:3005"
   #   env_file: .env
   #   volumes:
   #     - tournament_data:/data
@@ -126,11 +126,10 @@ services:
   #     - transcendence
   #   restart: unless-stopped
   #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3005/health", "--insecure"]
+  #     test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 3
-
 
   # Frontend Service
   front:
@@ -148,6 +147,11 @@ services:
     networks:
       - transcendence
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   transcendence:

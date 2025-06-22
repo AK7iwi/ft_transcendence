@@ -277,14 +277,6 @@ const userSchema = {
         }
     },
     uploadAvatar: {
-        consumes: ['multipart/form-data'],
-        body: {
-            type: 'object',
-            properties: {
-                avatar: { type: 'string', format: 'binary' }
-            },
-            required: ['avatar']
-        },
         response: {
             200: {
                 type: 'object',
