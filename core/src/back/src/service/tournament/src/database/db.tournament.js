@@ -46,6 +46,11 @@ class DbTournament {
         return stmt.run(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
     }
 
+    static async getUserByUsername(username) {
+        const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+        return stmt.get(username);
+    }
+
     // Internal routes
     static async createUser(userId, username) {
         const stmt = db.prepare(`
@@ -73,11 +78,6 @@ class DbTournament {
             WHERE user_id = ?
         `);
         return stmt.run(avatarPath, userId);
-    }
-
-    static async getUserByUsername(username) {
-        const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
-        return stmt.get(username);
     }
 }
 
