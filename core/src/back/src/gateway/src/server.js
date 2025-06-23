@@ -9,7 +9,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const friendRoutes = require('./routes/friend.routes');
 const chatRoutes = require('./routes/chat.routes');
-// const tournamentRoutes = require('./routes/tournament.routes');
+const tournamentRoutes = require('./routes/tournament.routes');
 
 const ServiceClient = require('./utils/service-client');
 
@@ -55,7 +55,7 @@ fastify.register(authRoutes, { prefix: '/auth' });
 fastify.register(userRoutes, { prefix: '/user' });
 fastify.register(friendRoutes, { prefix: '/friend' });
 fastify.register(chatRoutes, { prefix: '/chat' });
-// fastify.register(tournamentRoutes, { prefix: '/tournament' });
+fastify.register(tournamentRoutes, { prefix: '/tournament' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {

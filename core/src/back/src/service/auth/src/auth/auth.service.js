@@ -22,6 +22,11 @@ class AuthService {
                 userId: result.lastInsertRowid,
                 username: username
             });
+
+            await serviceClient.post(`${process.env.TOURNAMENT_SERVICE_URL}/internal/createUser`, {
+                userId: result.lastInsertRowid,
+                username: username
+            });
             
             return {
                 username: username

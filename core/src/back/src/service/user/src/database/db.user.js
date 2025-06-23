@@ -132,6 +132,8 @@ class DbUser {
         `);
         return stmt.run(userId);
     }
+
+    //static async 
 }
 
 module.exports = DbUser; 

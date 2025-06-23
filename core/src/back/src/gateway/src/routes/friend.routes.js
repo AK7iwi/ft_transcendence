@@ -31,6 +31,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    // Get friends
     fastify.get('/friends', {
         schema: friendSchema.getFriends,
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
@@ -83,6 +84,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    // Block a user
     fastify.post('/block', {
         schema: friendSchema.blockUser,
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
@@ -137,6 +139,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    // Remove a friend
     fastify.delete('/remove', {
         schema: friendSchema.removeFriend,
         preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],

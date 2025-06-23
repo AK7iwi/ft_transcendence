@@ -66,6 +66,13 @@ class AvatarService {
                 avatarPath: relativePath
             });
 
+            // Notify tournament service to update avatar
+            await serviceClient.put(`${process.env.TOURNAMENT_SERVICE_URL}/internal/updateAvatar`, {
+                userId: userId,
+                username: user.username,
+                avatarPath: relativePath
+            });
+
             return {
                 avatarUrl: relativePath
             };

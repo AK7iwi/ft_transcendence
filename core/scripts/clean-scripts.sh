@@ -15,6 +15,7 @@ rm -rf "$SRCS_DIR/back/src/service/auth/src/security"
 rm -rf "$SRCS_DIR/back/src/service/user/src/security"
 rm -rf "$SRCS_DIR/back/src/service/friend/src/security"
 rm -rf "$SRCS_DIR/back/src/service/chat/src/security"
+rm -rf "$SRCS_DIR/back/src/service/tournament/src/security"
 
 # Remove utils files
 rm -rf "$SRCS_DIR/back/src/gateway/src/utils"

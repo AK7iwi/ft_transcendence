@@ -110,26 +110,26 @@ services:
 
 
   # # Tournament Service
-  # tournament-service:
-  #   container_name: tournament-service
-  #   image: tournament-service
-  #   build:
-  #     context: ./src/back/service/tournament
-  #     dockerfile: Dockerfile
-  #   working_dir: /usr/src/app
-  #   ports:
-  #     - "3005:3005"
-  #   env_file: .env
-  #   volumes:
-  #     - tournament_data:/data
-  #   networks:
-  #     - transcendence
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
+  tournament-service:
+    container_name: tournament-service
+    image: tournament-service
+    build:
+      context: ./core/src/back/src/service/tournament
+      dockerfile: Dockerfile
+    working_dir: /usr/src/app
+    ports:
+      - "3005:3005"
+    env_file: .env
+    volumes:
+      - tournament_data:/data
+    networks:
+      - transcendence
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Frontend Service
   front:
@@ -148,7 +148,7 @@ services:
       - transcendence
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173/health"]
+      test: ["CMD", "curl", "-f", "https://localhost:5173/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -163,4 +163,4 @@ volumes:
   user_data:
   friend_data:
   chat_data:
-  # tournament_data:
+  tournament_data:

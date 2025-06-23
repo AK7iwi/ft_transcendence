@@ -28,6 +28,7 @@ mkdir -p "$SRCS_DIR/back/src/service/auth/src/security"
 mkdir -p "$SRCS_DIR/back/src/service/user/src/security"
 mkdir -p "$SRCS_DIR/back/src/service/friend/src/security"
 mkdir -p "$SRCS_DIR/back/src/service/chat/src/security"
+mkdir -p "$SRCS_DIR/back/src/service/tournament/src/security"
 
 mkdir -p "$SRCS_DIR/back/src/gateway/src/utils"
 mkdir -p "$SRCS_DIR/back/src/service/auth/src/utils"
@@ -51,6 +52,7 @@ cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/src/service/auth/src/security/
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/src/service/user/src/security/"
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/src/service/friend/src/security/"
 cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/src/service/chat/src/security/"
+cp -r "$SRCS_DIR/back/security/"* "$SRCS_DIR/back/src/service/tournament/src/security/"
 
 # Set proper permissions for security files
 find "$SRCS_DIR/back/src/gateway/src/security" -type f -exec chmod 644 {} \;
@@ -58,6 +60,7 @@ find "$SRCS_DIR/back/src/service/auth/src/security" -type f -exec chmod 644 {} \
 find "$SRCS_DIR/back/src/service/user/src/security" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/src/service/friend/src/security" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/src/service/chat/src/security" -type f -exec chmod 644 {} \;
+find "$SRCS_DIR/back/src/service/tournament/src/security" -type f -exec chmod 644 {} \;
 
 # Copy utils files to all services
 cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/src/gateway/src/utils/"

@@ -27,6 +27,12 @@ class UpdateService {
                 newUsername
             });
 
+            // Notify tournament service to update username
+            await serviceClient.put(`${process.env.TOURNAMENT_SERVICE_URL}/internal/updateUsername`, {
+                currentUsername,
+                newUsername
+            });
+
             return {
                 username: newUsername
             };

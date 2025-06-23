@@ -1,18 +1,18 @@
 require('dotenv').config();
 const fastify = require('fastify');
 const initializeDatabase = require('./database/schema');
-const friendRoutes = require('./friend/friend.routes');
+const tournamentRoutes = require('./tournament/tournament.routes');
 const internalRoutes = require('./internal/internal.routes');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
 
 // Initialize database
-initializeDatabase();   
+initializeDatabase();
 
 // Register routes
-app.register(friendRoutes, { prefix: '/friend' });
-app.register(internalRoutes, { prefix: '/friend/internal' });
+app.register(tournamentRoutes, { prefix: '/tournament' });
+app.register(internalRoutes, { prefix: '/tournament/internal' });
 
 // Test endpoint
 app.get('/', async (request, reply) => {
@@ -28,7 +28,7 @@ app.get('/health', async (request, reply) => {
 const start = async () => {
     try {
         await app.listen({ 
-            port: process.env.FRIEND_PORT,
+            port: process.env.TOURNAMENT_PORT,
             host: process.env.HOST
         });
     } catch (err) {
