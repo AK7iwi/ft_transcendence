@@ -55,7 +55,7 @@ const tournamentSchema = {
         }
     },
     validateUsername: {
-        querystring: {
+        body: {
             type: 'object',
             required: ['username'],
             properties: {
@@ -66,8 +66,6 @@ const tournamentSchema = {
             200: {
                 type: 'object',
                 properties: {
-                    valid: { type: 'boolean' },
-                    message: { type: 'string' },
                     id: { type: 'number' },
                     avatar: { type: 'string' },
                     wins: { type: 'number' },

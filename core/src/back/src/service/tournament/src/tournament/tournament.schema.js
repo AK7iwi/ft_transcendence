@@ -21,6 +21,15 @@ const tournamentSchema = {
                 scoreOpponent: { type: 'number' }
             }
         }
+    },
+    validateUsername: {
+        body: {
+            type: 'object',
+            required: ['username'],
+            properties: {
+                username: { type: 'string' }
+            }
+        }
     }
 };
 

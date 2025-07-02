@@ -72,6 +72,24 @@ class InternalController {
             });
         }
     }
+
+    async createMatchHistory(request, reply) {
+        try {
+            const { userId, opponent, result, scoreUser, scoreOpponent, playedAt } = request.body;
+            await InternalService.createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Match history created successfully'
+            });
+        } catch (error) {
+            request.log.error('[CREATE MATCH HISTORY ERROR]', error);
+            return reply.code(400).send({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }
 
 module.exports = new InternalController();

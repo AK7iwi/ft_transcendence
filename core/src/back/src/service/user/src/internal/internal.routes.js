@@ -22,4 +22,9 @@ module.exports = async function (fastify, opts) {
         schema: internalSchema.disable2FA,
         handler: InternalController.disable2FA
     });
+
+    fastify.post('/createMatchHistory', {
+        schema: internalSchema.createMatchHistory,
+        handler: InternalController.createMatchHistory
+    });
 };

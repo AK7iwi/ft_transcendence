@@ -32,6 +32,16 @@ class InternalService {
             throw error;
         }
     }
+
+    static async createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, playedAt) {
+        try {
+            await DbUser.createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
+            // Also update user statistics
+            await DbUser.updateUserStats(userId, result);
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = InternalService;

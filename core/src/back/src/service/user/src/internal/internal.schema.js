@@ -50,6 +50,24 @@ const internalSchema = {
             },
             additionalProperties: false
         }
+    },
+    createMatchHistory: {
+        body: {
+            type: 'object',
+            required: ['userId', 'opponent', 'result', 'scoreUser', 'scoreOpponent', 'playedAt'],
+            properties: {
+                userId: { type: 'number' },
+                opponent: { type: 'string' },
+                result: { 
+                    type: 'string', 
+                    enum: ['win', 'loss'] 
+                },
+                scoreUser: { type: 'number' },
+                scoreOpponent: { type: 'number' },
+                playedAt: { type: 'string', format: 'date-time' }
+            },
+            additionalProperties: false
+        }
     }
 }
 

@@ -2,6 +2,7 @@ const db = require('./connection');
 
 class DbUser {
     static async createTable() {
+        //Create user_profiles table
         const userStmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,6 +96,7 @@ class DbUser {
     }
 
     //INTERNAL ROUTES
+    
     static async createUser(userId, username, hashedPassword) {
         const stmt = db.prepare(`
             INSERT INTO user_profiles (user_id, username, password) 
@@ -107,7 +109,7 @@ class DbUser {
             UPDATE user_profiles 
             SET two_factor_secret = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE user_id = ?
         `);
         return stmt.run(secret, userId);
     }
@@ -117,7 +119,7 @@ class DbUser {
             UPDATE user_profiles 
             SET two_factor_enabled = 1,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE user_id = ?
         `);
         return stmt.run(userId);
     }
@@ -128,9 +130,39 @@ class DbUser {
             SET two_factor_enabled = 0,
                 two_factor_secret = NULL,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE user_id = ?
         `);
         return stmt.run(userId);
+    }
+
+    // Add match history entry
+    static async createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, playedAt) {
+        const stmt = db.prepare(`
+            INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent, played_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `);
+        return stmt.run(userId, opponent, result, scoreUser, scoreOpponent, playedAt);
+    }
+
+    // Update user statistics
+    static async updateUserStats(userId, result) {
+        if (result === 'win') {
+            const stmt = db.prepare(`
+                UPDATE user_profiles 
+                SET wins = wins + 1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+            `);
+            return stmt.run(userId);
+        } else if (result === 'loss') {
+            const stmt = db.prepare(`
+                UPDATE user_profiles 
+                SET losses = losses + 1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+            `);
+            return stmt.run(userId);
+        }
     }
 
     //static async 

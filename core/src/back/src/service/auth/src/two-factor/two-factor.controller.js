@@ -117,7 +117,7 @@ class TwoFactorController {
                 });
             }
             
-            const jwtToken = JWTService.generateJwtToken({
+            const jwtToken = JWTService.generateJWTToken({
                 id: userId,
                 username: username
             });

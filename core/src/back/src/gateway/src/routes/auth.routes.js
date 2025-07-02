@@ -1,5 +1,5 @@
 const authSchema  = require('../schemas/auth.schema');
-const SanitizeService = require('../security/middleware/sanitize.service');
+const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
@@ -39,7 +39,7 @@ module.exports = async function (fastify, opts) {
                 return reply.code(200).send(response);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 401;
+                const statusCode = error.status || 400;
                 const errorMessage = error.message || 'Login failed';
                 return reply.code(statusCode).send({
                     success: false,

@@ -1,5 +1,5 @@
 const tournamentSchema = require('../schemas/tournament.schema');
-const SanitizeService = require('../security/middleware/sanitize.service');
+const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
@@ -64,8 +64,8 @@ module.exports = async function (fastify, opts) {
             try {
                 const response = await fastify.serviceClient.get(
                     `${process.env.TOURNAMENT_SERVICE_URL}/validate-username`,
+                    request.body,
                     {
-                        params: { username: request.query.username },
                         headers: {
                             'Authorization': request.headers.authorization
                         }

@@ -3,9 +3,14 @@ const fastify = require('fastify');
 const initializeDatabase = require('./database/schema');
 const tournamentRoutes = require('./tournament/tournament.routes');
 const internalRoutes = require('./internal/internal.routes');
+const ServiceClient = require('./utils/service-client');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
+
+// Create and register service client
+const serviceClient = new ServiceClient(app);
+app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();

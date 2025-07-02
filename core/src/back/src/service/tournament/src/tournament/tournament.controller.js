@@ -12,8 +12,8 @@ class TournamentController {
             await TournamentService.createGameResult(winnerId, loserId);
             return reply.send({ success: true, message: 'Game result recorded successfully' });
         } catch (err) {
-            request.log.error('[❌ DB] Failed to record game result:', err);
-            return reply.code(500).send({ success: false, message: 'DB error' });
+            request.log.error('Failed to record game result:', err);
+            return reply.code(400).send({ success: false, message: 'DB error' });
         }
     }
 
@@ -31,19 +31,19 @@ class TournamentController {
         }
 
         try {
-            await TournamentService.createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent);
+            await TournamentService.createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, request.server.serviceClient);
             return reply.send({ success: true });
         } catch (err) {
-            request.log.error('[❌ DB] Failed to record match history:', err);
-            return reply.code(500).send({ success: false, message: 'DB error' });
+            request.log.error('Failed to record match history:', err);
+            return reply.code(400).send({ success: false, message: 'DB error' });
         }
     }
 
     async validateUsername(request, reply) {
-        const username = (request.query.username || '').trim();
+        const { username } = request.body;
 
         if (!username || typeof username !== 'string') {
-            return reply.code(400).send({ valid: false, message: 'Username is required' });
+            return reply.code(400).send({ success: false, message: 'Username is required' });
         }
 
         try {
@@ -51,7 +51,7 @@ class TournamentController {
             return reply.send(result);
         } catch (err) {
             request.log.error('[Validate Username Error]', err);
-            return reply.code(500).send({ valid: false, message: 'Internal server error' });
+            return reply.code(400).send({ success: false, message: 'Internal server error' });
         }
     }
 }

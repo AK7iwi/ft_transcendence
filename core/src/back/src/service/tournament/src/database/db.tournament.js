@@ -27,6 +27,21 @@ class DbTournament {
             )
         `);
         gameResultsStmt.run();
+
+        const matchStmt = db.prepare(`
+            CREATE TABLE IF NOT EXISTS match_history (
+                match_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id         INTEGER NOT NULL,
+                opponent        TEXT NOT NULL,
+                result          TEXT CHECK(result IN ('win', 'loss')) NOT NULL,
+                score_user      INTEGER NOT NULL,
+                score_opponent  INTEGER NOT NULL,
+                played_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE
+            )
+        `);
+        matchStmt.run();
+        
     }
 
     static async createGameResult(winnerId, loserId) {
@@ -37,8 +52,7 @@ class DbTournament {
         return stmt.run(winnerId, loserId);
     }
     
-    static async createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent) {
-        const playedAt = new Date().toISOString();
+    static async createMatchHistory(userId, opponent, result, scoreUser, scoreOpponent, playedAt) {
         const stmt = db.prepare(`
             INSERT INTO match_history (user_id, opponent, result, score_user, score_opponent, played_at)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -49,6 +63,11 @@ class DbTournament {
     static async getUserByUsername(username) {
         const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
         return stmt.get(username);
+    }
+
+    static async getUserById(userId) {
+        const stmt = db.prepare('SELECT * FROM users WHERE user_id = ?');
+        return stmt.get(userId);
     }
 
     // Internal routes
