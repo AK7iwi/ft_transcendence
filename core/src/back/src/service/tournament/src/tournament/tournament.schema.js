@@ -9,7 +9,7 @@ const tournamentSchema = {
             }
         }
     },
-    createMatchHistory: {
+    matchHistory: {
         body: {
             type: 'object',
             required: ['userId', 'opponent', 'result', 'scoreUser', 'scoreOpponent'],
@@ -23,7 +23,7 @@ const tournamentSchema = {
         }
     },
     validateUsername: {
-        body: {
+        querystring: {
             type: 'object',
             required: ['username'],
             properties: {

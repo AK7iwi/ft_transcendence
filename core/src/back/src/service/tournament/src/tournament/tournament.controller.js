@@ -40,7 +40,7 @@ class TournamentController {
     }
 
     async validateUsername(request, reply) {
-        const { username } = request.body;
+        const { username } = request.query;
 
         if (!username || typeof username !== 'string') {
             return reply.code(400).send({ success: false, message: 'Username is required' });

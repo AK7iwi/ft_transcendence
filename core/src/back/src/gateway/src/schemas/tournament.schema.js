@@ -55,7 +55,7 @@ const tournamentSchema = {
         }
     },
     validateUsername: {
-        body: {
+        querystring: {
             type: 'object',
             required: ['username'],
             properties: {

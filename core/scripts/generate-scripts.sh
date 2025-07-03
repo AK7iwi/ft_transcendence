@@ -33,6 +33,7 @@ mkdir -p "$SRCS_DIR/back/src/service/tournament/src/security"
 mkdir -p "$SRCS_DIR/back/src/gateway/src/utils"
 mkdir -p "$SRCS_DIR/back/src/service/auth/src/utils"
 mkdir -p "$SRCS_DIR/back/src/service/user/src/utils"
+mkdir -p "$SRCS_DIR/back/src/service/tournament/src/utils"
 
 # Copy certificates to front and back directories
 cp "$TEMP_CERTS_DIR/key.pem" "$SRCS_DIR/front/certs/"
@@ -66,12 +67,12 @@ find "$SRCS_DIR/back/src/service/tournament/src/security" -type f -exec chmod 64
 cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/src/gateway/src/utils/"
 cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/src/service/user/src/utils/"
 cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/src/service/auth/src/utils/"
-
+cp -r "$SRCS_DIR/back/utils/"* "$SRCS_DIR/back/src/service/tournament/src/utils/"
 # Set proper permissions for utils files
 find "$SRCS_DIR/back/src/gateway/src/utils" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/src/service/user/src/utils" -type f -exec chmod 644 {} \;
 find "$SRCS_DIR/back/src/service/auth/src/utils" -type f -exec chmod 644 {} \;
-
+find "$SRCS_DIR/back/src/service/tournament/src/utils" -type f -exec chmod 644 {} \;
 # Remove the temporary certs directory
 rm -rf "$TEMP_CERTS_DIR"
 
