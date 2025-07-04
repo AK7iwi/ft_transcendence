@@ -35,11 +35,6 @@ class AuthService {
             if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
                 throw new Error('Username already exists');
             }
-            
-            if (error.code === 'SQLITE_ERROR') {
-                throw new Error('Database error occurred');
-            }
-            
             throw new Error('Registration failed');
         }
     }
