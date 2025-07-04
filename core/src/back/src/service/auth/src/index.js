@@ -1,10 +1,11 @@
-const fastify = require('fastify');
 require('dotenv').config();
 const initializeDatabase = require('./database/schema');
+const fastify = require('fastify');
 const authRoutes = require('./auth/auth.routes');
 const twoFactorRoutes = require('./two-factor/two-factor.routes');
 const internalRoutes = require('./internal/internal.routes');
 const ServiceClient = require('./utils/service-client');
+const ErrorHandler = require('./utils/error/error-handler');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
@@ -15,6 +16,9 @@ app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();
+
+// Register error handler
+app.setErrorHandler(ErrorHandler.handle);
 
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });

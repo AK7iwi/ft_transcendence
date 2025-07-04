@@ -1,33 +1,33 @@
 const AuthService = require('./auth.service');
 const JWTService = require('../security/middleware/jwt/jwt.service');
+const ErrorHandler = require('../utils/error-handler');
 
 class AuthController {
     async register(request, reply) {
         try {
             const { username, password } = request.body;
+            //protect
             const user = await AuthService.registerUser(username, password, request.server.serviceClient);
 
-            return reply.code(200).send({
+            return reply.code(201).send({
                 success: true,
                 message: 'Registration successful',
                 data: {
                     user: {
+                        id: user.id,
                         username: user.username
                     }
                 }
             });
         } catch (error) {
-            request.log.error('Registration error:', error);
-            return reply.code(400).send({
-                success: false,
-                message: error.message || 'Registration failed'
-            });
+            return ErrorHandler.handle(error, request, reply);
         }
     }
     
     async login(request, reply) {
         try {
             const { username, password } = request.body;
+            //protect
             const user = await AuthService.loginUser(username, password);
             
             const token = JWTService.generateJWTToken({
@@ -35,12 +35,16 @@ class AuthController {
                 username: user.username
             });
 
-            // If 2FA is enabled, return a special response (without token) (handle the respinse in the schema)
+            // If 2FA is enabled, return a special response
             if (user.twoFactorEnabled) {
                 return reply.code(201).send({
                     success: true,
                     message: '2FA required',
-                    data: { twofa: true, userId: user.id, username: user.username }
+                    data: { 
+                        twofa: true, 
+                        userId: user.id, 
+                        username: user.username 
+                    }
                 });
             }
       
@@ -49,18 +53,14 @@ class AuthController {
                 message: 'Login successful',
                 data: {
                     user: {
+                        id: user.id,
                         username: user.username,
                         token: token
                     }
                 }
             });
-      
         } catch (error) {
-            request.log.error('Login error:', error);
-            return reply.code(401).send({
-                success: false,
-                message: error.message
-            });
+            return ErrorHandler.handle(error, request, reply);
         }
     }
 }

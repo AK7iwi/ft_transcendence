@@ -10,7 +10,6 @@ const userRoutes = require('./routes/user.routes');
 const friendRoutes = require('./routes/friend.routes');
 const chatRoutes = require('./routes/chat.routes');
 const tournamentRoutes = require('./routes/tournament.routes');
-
 const ServiceClient = require('./utils/service-client');
 
 // Initialize Fastify
@@ -40,6 +39,13 @@ fastify.register(multipart);
 const serviceClient = new ServiceClient(fastify);
 fastify.decorate('serviceClient', serviceClient);
 
+// Register routes
+fastify.register(authRoutes, { prefix: '/auth' });
+fastify.register(userRoutes, { prefix: '/user' });
+fastify.register(friendRoutes, { prefix: '/friend' });
+fastify.register(chatRoutes, { prefix: '/chat' });
+fastify.register(tournamentRoutes, { prefix: '/tournament' });
+
 // Basic route
 fastify.get('/', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is running' });
@@ -48,29 +54,6 @@ fastify.get('/', async (request, reply) => {
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
-});
-
-// Register routes
-fastify.register(authRoutes, { prefix: '/auth' });
-fastify.register(userRoutes, { prefix: '/user' });
-fastify.register(friendRoutes, { prefix: '/friend' });
-fastify.register(chatRoutes, { prefix: '/chat' });
-fastify.register(tournamentRoutes, { prefix: '/tournament' });
-
-// Error handling
-fastify.setErrorHandler((error, request, reply) => {
-    if (error.statusCode) {
-        return reply.status(error.statusCode).send({
-            success: false,
-            message: error.message
-        });
-    }
-
-    // Handle other errors
-    return reply.status(500).send({
-        success: false,
-        message: 'Internal Server Error'
-    });
 });
 
 // Start server
