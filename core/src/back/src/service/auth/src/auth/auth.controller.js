@@ -1,12 +1,13 @@
 const AuthService = require('./auth.service');
 const JWTService = require('../security/middleware/jwt/jwt.service');
-const ErrorHandler = require('../utils/error-handler');
+const ErrorHandler = require('../utils/error/error-handler');
 
 class AuthController {
+    
     async register(request, reply) {
         try {
             const { username, password } = request.body;
-            //protect
+
             const user = await AuthService.registerUser(username, password, request.server.serviceClient);
 
             return reply.code(201).send({
@@ -27,7 +28,7 @@ class AuthController {
     async login(request, reply) {
         try {
             const { username, password } = request.body;
-            //protect
+            
             const user = await AuthService.loginUser(username, password);
             
             const token = JWTService.generateJWTToken({

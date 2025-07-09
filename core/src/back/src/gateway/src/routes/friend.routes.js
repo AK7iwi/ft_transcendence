@@ -3,13 +3,13 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
-    // Add a friend
+    
     fastify.post('/add', {
         schema: friendSchema.addFriend,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.FRIEND_SERVICE_URL}/add`,
                     request.body,
                     {
@@ -18,14 +18,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to add friend';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to add friend'
                 });
             }
         }
@@ -34,10 +32,10 @@ module.exports = async function (fastify, opts) {
     // Get friends
     fastify.get('/friends', {
         schema: friendSchema.getFriends,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.FRIEND_SERVICE_URL}/friends`,
                     {
                         headers: {
@@ -45,14 +43,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to fetch friends';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to fetch friends'
                 });
             }
         }
@@ -60,10 +56,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.get('/blocked', {
         schema: friendSchema.getBlocked,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.FRIEND_SERVICE_URL}/blocked`,
                     {
                         headers: {
@@ -71,26 +67,23 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to fetch blocked users';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to fetch blocked users'
                 });
             }
         }
     });
 
-    // Block a user
     fastify.post('/block', {
         schema: friendSchema.blockUser,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.FRIEND_SERVICE_URL}/block`,
                     request.body,
                     {
@@ -99,14 +92,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(201).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to block user';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to block user'
                 });
             }
         }
@@ -114,10 +105,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/unblock', {
         schema: friendSchema.unblockUser,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.FRIEND_SERVICE_URL}/unblock`,
                     request.body,
                     {
@@ -126,26 +117,23 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to unblock user';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to unblock user'
                 });
             }
         }
     });
 
-    // Remove a friend
     fastify.delete('/remove', {
         schema: friendSchema.removeFriend,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.delete(
+                const { data, status } = await fastify.serviceClient.delete(
                     `${process.env.FRIEND_SERVICE_URL}/remove`,
                     request.body,
                     {
@@ -154,14 +142,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to remove friend';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to remove friend'
                 });
             }
         }

@@ -10,15 +10,15 @@ const ErrorHandler = require('./utils/error/error-handler');
 // Create Fastify instance
 const app = fastify({ logger: true });
 
+// Register error handler
+app.setErrorHandler(ErrorHandler.handle);
+
 // Create and register service client
 const serviceClient = new ServiceClient(app);
 app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();
-
-// Register error handler
-app.setErrorHandler(ErrorHandler.handle);
 
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });

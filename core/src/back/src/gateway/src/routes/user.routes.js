@@ -9,7 +9,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken], 
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.USER_SERVICE_URL}/me`,
                     {
                         headers: {
@@ -17,14 +17,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Get user profile failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Get user profile failed'
                 });
             }
         }
@@ -36,7 +34,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.USER_SERVICE_URL}/${request.params.id}`,
                     {
                         headers: {
@@ -44,14 +42,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
-                const errorMessage = error.message || 'Failed to get user';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to get user'
                 });
             }
         }
@@ -60,10 +56,10 @@ module.exports = async function (fastify, opts) {
     // Update username route
     fastify.put('/username', {
         schema: userSchema.updateUsername,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.put(
+                const { data, status } = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/username`,
                     request.body,
                     {
@@ -72,14 +68,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Update username failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Update username failed'
                 });
             }
         }
@@ -88,10 +82,10 @@ module.exports = async function (fastify, opts) {
     // Update password route
     fastify.put('/password', {
         schema: userSchema.updatePassword,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.put(
+                const { data, status } = await fastify.serviceClient.put(
                     `${process.env.USER_SERVICE_URL}/password`,
                     request.body,
                     {
@@ -100,14 +94,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Update password failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Update password failed'
                 });
             }
         }
@@ -119,7 +111,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.USER_SERVICE_URL}/history`,
                     {
                         headers: {
@@ -127,14 +119,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to get match history';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to get match history'
                 });
             }
         }
@@ -146,7 +136,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.USER_SERVICE_URL}/history/${request.params.id}`,
                     {
                         headers: {
@@ -154,14 +144,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to get match history for user';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to get match history for user'
                 });
             }
         }
@@ -173,7 +161,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.USER_SERVICE_URL}/stats/${request.params.id}`,
                     {
                         headers: {
@@ -181,14 +169,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to get user stats';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to get user stats'
                 });
             }
         }
@@ -197,10 +183,10 @@ module.exports = async function (fastify, opts) {
     // Upload avatar route
     fastify.post('/upload-avatar', {
         schema: userSchema.uploadAvatar,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.USER_SERVICE_URL}/upload-avatar`,
                     request.body,
                     {
@@ -209,14 +195,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Avatar upload failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Avatar upload failed'
                 });
             }
         }

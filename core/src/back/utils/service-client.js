@@ -25,7 +25,8 @@ class ServiceClient {
                 };
             }
 
-            return data;
+            // ✅ Return both data and status code
+            return { data, status: response.status };
         } catch (error) {
             if (error.status) {
                 throw error;

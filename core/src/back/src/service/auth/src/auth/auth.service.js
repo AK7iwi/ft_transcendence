@@ -6,7 +6,7 @@ const {
     ConflictError, 
     DatabaseError,
     ServiceError 
-} = require('../../../utils/errors');
+} = require('../utils/error/errors');
 
 class AuthService {
     static async registerUser(username, password, serviceClient) {

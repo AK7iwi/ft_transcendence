@@ -16,7 +16,6 @@ class DbAuth {
         stmt.run();
     }
 
-    //Create user
     static async createUser(username, password) {
         const stmt = db.prepare(`
             INSERT INTO user_profiles (username, password)
@@ -85,7 +84,9 @@ class DbAuth {
         return stmt.get(username);
     }
 
+    
     //INTERNAL ROUTES
+
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
             UPDATE user_profiles 

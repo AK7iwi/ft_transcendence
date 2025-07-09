@@ -2,9 +2,9 @@
 class AppError extends Error {
     constructor(message, statusCode, errorCode, details = null) {
         super(message);
-        this.statusCode = statusCode;
-        this.errorCode = errorCode;
-        this.details = details;
+        this.statusCode = statusCode;  // HTTP STATUS CODE
+        this.errorCode = errorCode;   // ERROR CODE
+        this.details = details;      // DETAILS
         this.timestamp = new Date().toISOString();
         
         // Maintains proper stack trace for where our error was thrown

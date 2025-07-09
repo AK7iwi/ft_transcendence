@@ -21,6 +21,8 @@ rm -rf "$SRCS_DIR/back/src/service/tournament/src/security"
 rm -rf "$SRCS_DIR/back/src/gateway/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/auth/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/user/src/utils"
+rm -rf "$SRCS_DIR/back/src/service/friend/src/utils"
+rm -rf "$SRCS_DIR/back/src/service/chat/src/utils"
 rm -rf "$SRCS_DIR/back/src/service/tournament/src/utils"
 
 echo "Cleaned up all certificates and security files"

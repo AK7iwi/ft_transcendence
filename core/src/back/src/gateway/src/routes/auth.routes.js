@@ -3,59 +3,58 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
-    // Register route
+    // Auth routes
+
     fastify.post('/register', {
         schema: authSchema.register,
-        preHandler: SanitizeService.sanitize,
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/register`,
                     request.body
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Registration failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Registration failed'
                 });
             }
         }
     });
 
-    // Login route
+
     fastify.post('/login', {
         schema: authSchema.login,
-        preHandler: SanitizeService.sanitize,
+        preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/login`,
                     request.body
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data); 
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Login failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Login failed'
                 });
             }
         }
     });
 
+
     // 2FA routes
+
     fastify.post('/2fa/setup', {
         schema: authSchema.setup2FA,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],   
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],   
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/2fa/setup`,
                     request.body,
                     {
@@ -63,16 +62,13 @@ module.exports = async function (fastify, opts) {
                             'Authorization': request.headers.authorization
                         }
                     }
-
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || '2FA setup failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false, 
-                    message: errorMessage
+                    message: error.message || '2FA setup failed'
                 });
             }
         }
@@ -80,10 +76,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/verify-setup', {
         schema: authSchema.verify_setup2FA,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken], 
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize], 
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/2fa/verify-setup`,
                     request.body,
                     {
@@ -92,14 +88,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || '2FA verification failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || '2FA verification failed'
                 }); 
             }
         }
@@ -110,18 +104,16 @@ module.exports = async function (fastify, opts) {
         preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/2fa/verify-login`,
                     request.body
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || '2FA verification failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || '2FA verification failed'
                 });
             }
         }
@@ -129,10 +121,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/2fa/disable', {
         schema: authSchema.disable2FA,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.AUTH_SERVICE_URL}/2fa/disable`,
                     request.body,
                     {
@@ -141,18 +133,14 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || '2FA disable failed';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || '2FA disable failed'
                 });
             }
         }
     });
-    
-    
 };

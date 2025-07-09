@@ -3,12 +3,13 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
+
     fastify.post('/game-result', {
         schema: tournamentSchema.gameResult,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.TOURNAMENT_SERVICE_URL}/game-result`,
                     request.body,
                     {
@@ -17,14 +18,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to create game result';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to create game result'
                 });
             }
         }
@@ -35,7 +34,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.TOURNAMENT_SERVICE_URL}/match-history`,
                     request.body,
                     {
@@ -44,14 +43,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(201).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to create match history';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to create match history'
                 });
             }
         }
@@ -59,10 +56,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.get('/validate-username', {
         schema: tournamentSchema.validateUsername,
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.TOURNAMENT_SERVICE_URL}/validate-username`,
                     request.body,
                     {
@@ -71,14 +68,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.code(200).send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 400;
-                const errorMessage = error.message || 'Failed to validate username';
-                return reply.code(statusCode).send({
-                    valid: false,
-                    message: errorMessage
+                return reply.code(error.status).send({
+                    success: false,
+                    message: error.message || 'Failed to validate username'
                 });
             }
         }

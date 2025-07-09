@@ -3,12 +3,13 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
+
     fastify.post('/message', {
         schema: chatSchema.sendMessage,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.post(
+                const { data, status } = await fastify.serviceClient.post(
                     `${process.env.CHAT_SERVICE_URL}/message`,
                     request.body,
                     {
@@ -17,14 +18,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
-                const errorMessage = error.message || 'Failed to send message';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to send message'
                 });
             }
         }
@@ -32,10 +31,10 @@ module.exports = async function (fastify, opts) {
 
     fastify.get('/messages/:userId', {
         schema: chatSchema.getMessages,
-        preHandler: [SanitizeService.sanitize, JWTAuthentication.verifyJWTToken],
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             try {
-                const response = await fastify.serviceClient.get(
+                const { data, status } = await fastify.serviceClient.get(
                     `${process.env.CHAT_SERVICE_URL}/messages/${request.params.userId}`,
                     {
                         headers: {
@@ -43,14 +42,12 @@ module.exports = async function (fastify, opts) {
                         }
                     }
                 );
-                return reply.send(response);
+                return reply.code(status).send(data);
             } catch (error) {
                 request.log.error(error);
-                const statusCode = error.status || 500;
-                const errorMessage = error.message || 'Failed to get messages';
-                return reply.code(statusCode).send({
+                return reply.code(error.status).send({
                     success: false,
-                    message: errorMessage
+                    message: error.message || 'Failed to get messages'
                 });
             }
         }
