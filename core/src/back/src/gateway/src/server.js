@@ -11,6 +11,7 @@ const friendRoutes = require('./routes/friend.routes');
 const chatRoutes = require('./routes/chat.routes');
 const tournamentRoutes = require('./routes/tournament.routes');
 const ServiceClient = require('./utils/service-client');
+const ValidationErrorHandler = require('./utils/error/validation-error-handler');
 
 // Initialize Fastify
 const fastify = fastifyModule({
@@ -55,6 +56,9 @@ fastify.get('/', async (request, reply) => {
 fastify.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
+
+// Register error handler
+fastify.setErrorHandler(ValidationErrorHandler.handle);
 
 // Start server
 const start = async () => {

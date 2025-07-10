@@ -25,7 +25,6 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-
     fastify.post('/login', {
         schema: authSchema.login,
         preHandler: [SanitizeService.sanitize],
@@ -46,7 +45,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-
+    
     // 2FA routes
 
     fastify.post('/2fa/setup', {

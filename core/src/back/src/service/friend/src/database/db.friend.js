@@ -108,6 +108,7 @@ class DbFriend {
     }
 
     //INTERNAL ROUTES
+    
     static async createUser(userId, username) {
         const stmt = db.prepare(`
             INSERT INTO users (user_id, username) 

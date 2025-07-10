@@ -10,9 +10,6 @@ const ErrorHandler = require('./utils/error/error-handler');
 // Create Fastify instance
 const app = fastify({ logger: true });
 
-// Register error handler
-app.setErrorHandler(ErrorHandler.handle);
-
 // Create and register service client
 const serviceClient = new ServiceClient(app);
 app.decorate('serviceClient', serviceClient);
@@ -34,6 +31,9 @@ app.get('/', async (request, reply) => {
 app.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
+
+// Register error handler
+app.setErrorHandler(ErrorHandler.handle);
 
 // Start server
 const start = async () => {

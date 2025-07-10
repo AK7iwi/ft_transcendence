@@ -1,18 +1,10 @@
 const PasswordService = require('../security/password/password.service');
 const DbAuth = require('../database/db.auth');
-const { 
-    ValidationError, 
-    AuthenticationError, 
-    ConflictError, 
-    DatabaseError,
-    ServiceError 
-} = require('../utils/error/errors');
+const { ValidationError, AuthenticationError, ConflictError, DatabaseError, ServiceError } = require('../utils/error/errors');
 
 class AuthService {
     static async registerUser(username, password, serviceClient) {
         try {
-
-            // Check if username already exists
             const existingUser = await DbAuth.getUserByUsername(username);
             if (existingUser) {
                 throw new ConflictError('Username already exists', {
@@ -20,7 +12,7 @@ class AuthService {
                     value: username
                 });
             }
-
+            
             const hashedPassword = await PasswordService.hashPassword(password);
             const result = await DbAuth.createUser(username, hashedPassword);
             
@@ -58,28 +50,17 @@ class AuthService {
                 username: username
             };
         } catch (error) {
-            // Re-throw our custom errors
-            if (error instanceof ValidationError || 
-                error instanceof ConflictError || 
-                error instanceof ServiceError) {
+            if (error instanceof ConflictError || error instanceof ServiceError) {
                 throw error;
             }
 
-            // Handle database errors
             if (error.code && error.code.startsWith('SQLITE_')) {
-                if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-                    throw new ConflictError('Username already exists', {
-                        field: 'username',
-                        value: username
-                    });
-                }
                 throw new DatabaseError('Database operation failed', {
                     databaseCode: error.code,
                     operation: 'createUser'
                 });
             }
 
-            // Generic error
             throw new ServiceError('Registration failed', {
                 originalError: error.message
             });
@@ -88,10 +69,9 @@ class AuthService {
 
     static async loginUser(username, password) {
         try {
-            // Input validation
-            if (!username || !password) {
-                throw new ValidationError('Username and password are required');
-            }
+            // if (!username || !password) {
+            //     throw new ValidationError('Username and password are required');
+            // }
 
             const user = await DbAuth.getUserByUsername(username);
             if (!user) {
@@ -115,13 +95,10 @@ class AuthService {
                 twoFactorEnabled: user.two_factor_enabled
             };
         } catch (error) {
-            // Re-throw our custom errors
-            if (error instanceof ValidationError || 
-                error instanceof AuthenticationError) {
+            if (error instanceof ValidationError || error instanceof AuthenticationError) {
                 throw error;
             }
 
-            // Handle database errors
             if (error.code && error.code.startsWith('SQLITE_')) {
                 throw new DatabaseError('Database operation failed', {
                     databaseCode: error.code,
@@ -129,7 +106,6 @@ class AuthService {
                 });
             }
 
-            // Generic error
             throw new ServiceError('Login failed', {
                 originalError: error.message
             });
