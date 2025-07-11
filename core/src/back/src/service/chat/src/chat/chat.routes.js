@@ -8,6 +8,7 @@ module.exports = async function (fastify, opts) {
         handler: ChatController.sendMessage
     });
 
+    
     fastify.get('/messages/:userId', {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: ChatController.getMessages

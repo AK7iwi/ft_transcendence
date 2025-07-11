@@ -23,7 +23,7 @@ Content-Type: application/json
 # Update username
 PUT https://localhost:3000/user/username
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjExIiwiaWF0IjoxNzQ5MzU4NDM1LCJleHAiOjE3NDkzNjIwMzV9.ExKOjrpWWtRNK5J5PUI3oCnh9CthnZdja1croiUdiz0
+Authorization: Bearer 
 
 {
     "currentUsername": "testuser1",
@@ -57,7 +57,7 @@ Content-Type: application/json
 # Update password
 PUT https://localhost:3000/user/password
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ1cGRhdGVkdXNlcjEiLCJpYXQiOjE3NDkzNDkwOTYsImV4cCI6MTc0OTM1MjY5Nn0.NhW3VIXUgi5KG28UZTSPt31qIm3oznlaru5pK3Y935M
+Authorization: Bearer 
 
 {
     "newPassword": "Updated123@"

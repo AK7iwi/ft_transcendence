@@ -4,6 +4,7 @@ const initializeDatabase = require('./database/schema');
 const tournamentRoutes = require('./tournament/tournament.routes');
 const internalRoutes = require('./internal/internal.routes');
 const ServiceClient = require('./utils/service-client');
+const ErrorHandler = require('./utils/error/error-handler');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
@@ -28,6 +29,9 @@ app.get('/', async (request, reply) => {
 app.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
+
+// Register error handler
+app.setErrorHandler(ErrorHandler.handle);
 
 // Start server
 const start = async () => {

@@ -11,7 +11,6 @@ class ErrorHandler {
             user: request.user?.id || 'anonymous'
         });
 
-        //Doesnt enter here, + details from where
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
             return reply.code(error.statusCode).send({
@@ -84,7 +83,6 @@ class ErrorHandler {
         return reply.code(400).send(formattedError);
     }
 
-    //doesnt show the details of the error
     static formatValidationError(validationErrors) {
         const errors = validationErrors.map(error => {
             const field = ErrorHandler.formatFieldName(error.instancePath, error.params);

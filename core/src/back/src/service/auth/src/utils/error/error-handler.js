@@ -1,5 +1,16 @@
-class ValidationErrorHandler {
+const { AppError } = require('./errors');
+
+class ErrorHandler {
     static handle(error, request, reply) {
+        console.log('=== ERROR HANDLER CALLED ===');
+        console.log('Error:', error);
+        console.log('Error type:', typeof error);
+        console.log('Error constructor:', error.constructor.name);
+        console.log('Error message:', error.message);
+        console.log('Error code:', error.code);
+        console.log('Error instanceof AppError:', error instanceof AppError);
+        console.log('==========================');
+
         // Log the error
         request.log.error({
             error: error.message,
@@ -9,55 +20,95 @@ class ValidationErrorHandler {
             user: request.user?.id || 'anonymous'
         });
 
-        // Handle validation errors
-        if (error.validation) {
-            const formattedError = this.formatValidationError(error.validation);
-            return reply.code(400).send(formattedError);
-        }
-
-        // Handle service client errors (from other services)
-        if (error.statusCode && error.message) {
-            return reply.status(error.statusCode).send({
+        //Doesnt enter here 
+        // If it's our custom error, use its properties
+        if (error instanceof AppError) {
+            console.log('Handling AppError');
+            return reply.code(error.statusCode).send({
                 success: false,
                 message: error.message,
-                errorCode: error.errorCode || 'SERVICE_ERROR',
-                timestamp: new Date().toISOString(),
+                errorCode: error.errorCode,
+                timestamp: error.timestamp,
+                details: error.details,
                 path: request.url
             });
         }
 
-        // Handle other known errors
-        if (error.statusCode) {
-            return reply.status(error.statusCode).send({
-                success: false,
-                message: error.message || 'An error occurred',
-                errorCode: 'HTTP_ERROR',
-                timestamp: new Date().toISOString(),
-                path: request.url
-            });
+        // Handle database errors
+        if (error.code && error.code.startsWith('SQLITE_')) {
+            console.log('Handling SQLite error:', error.code);
+            return ErrorHandler.handleDatabaseError(error, request, reply);
         }
 
-        // Handle unexpected errors
-        return reply.status(500).send({
+        // Handle validation errors
+        if (error.validation) {
+            console.log('Handling validation error');
+            return ErrorHandler.handleValidationError(error, request, reply);
+        }
+
+        // Default error response
+        console.log('Handling default error');
+        return reply.code(500).send({
             success: false,
-            message: 'Internal Server Error',
+            message: 'Internal server error',
             errorCode: 'INTERNAL_ERROR',
             timestamp: new Date().toISOString(),
             path: request.url
         });
     }
 
+    static handleDatabaseError(error, request, reply) {
+        const errorMap = {
+            'SQLITE_CONSTRAINT_UNIQUE': {
+                statusCode: 409,
+                errorCode: 'DUPLICATE_ENTRY',
+                message: 'Resource already exists'
+            },
+            'SQLITE_CONSTRAINT_FOREIGNKEY': {
+                statusCode: 400,
+                errorCode: 'FOREIGN_KEY_VIOLATION',
+                message: 'Referenced resource does not exist'
+            },
+            'SQLITE_CONSTRAINT_NOTNULL': {
+                statusCode: 400,
+                errorCode: 'NULL_CONSTRAINT_VIOLATION',
+                message: 'Required field is missing'
+            }
+        };
+
+        const errorInfo = errorMap[error.code] || {
+            statusCode: 500,
+            errorCode: 'DATABASE_ERROR',
+            message: 'Database operation failed'
+        };
+
+        return reply.code(errorInfo.statusCode).send({
+            success: false,
+            message: errorInfo.message,
+            errorCode: errorInfo.errorCode,
+            timestamp: new Date().toISOString(),
+            details: { databaseCode: error.code },
+            path: request.url
+        });
+    }
+
+    static handleValidationError(error, request, reply) {
+        const formattedError = ErrorHandler.formatValidationError(error.validation);
+        return reply.code(400).send(formattedError);
+    }
+
+    //doesnt show the details of the error
     static formatValidationError(validationErrors) {
         const errors = validationErrors.map(error => {
-            const field = this.formatFieldName(error.instancePath, error.params);
-            const constraint = this.getConstraintType(error);
+            const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
+            const constraint = ErrorHandler.getConstraintType(error);
             
             return {
                 field: field,
                 constraint: constraint,
-                message: this.getUserFriendlyMessage(error, field),
+                message: ErrorHandler.getUserFriendlyMessage(error, field),
                 value: error.data,
-                code: this.getErrorCode(error)
+                code: ErrorHandler.getErrorCode(error)
             };
         });
 
@@ -74,16 +125,10 @@ class ValidationErrorHandler {
     }
 
     static formatFieldName(instancePath, params) {
-        // Remove leading slash and convert to camelCase or use missingProperty
         let fieldName = instancePath.replace(/^\//, '') || params.missingProperty;
-        
-        // Convert snake_case or kebab-case to camelCase
         fieldName = fieldName.replace(/[-_]([a-z])/g, (match, letter) => letter.toUpperCase());
-        
-        // Convert to human-readable format
         fieldName = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
         fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-        
         return fieldName;
     }
 
@@ -135,7 +180,7 @@ class ValidationErrorHandler {
     }
 
     static getUserFriendlyMessage(error, fieldName) {
-        const field = fieldName || this.formatFieldName(error.instancePath, error.params);
+        const field = fieldName || ErrorHandler.formatFieldName(error.instancePath, error.params);
         
         switch (error.keyword) {
             case 'required':
@@ -179,4 +224,4 @@ class ValidationErrorHandler {
     }
 }
 
-module.exports = ValidationErrorHandler;
+module.exports = ErrorHandler; 

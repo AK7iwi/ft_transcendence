@@ -1,8 +1,9 @@
 require('dotenv').config();
-const fastify = require('fastify');
 const initializeDatabase = require('./database/schema');
+const fastify = require('fastify');
 const friendRoutes = require('./friend/friend.routes');
 const internalRoutes = require('./internal/internal.routes');
+const ErrorHandler = require('./utils/error/error-handler');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
@@ -23,6 +24,9 @@ app.get('/', async (request, reply) => {
 app.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
+
+// Register error handler
+app.setErrorHandler(ErrorHandler.handle);
 
 // Start server
 const start = async () => {
