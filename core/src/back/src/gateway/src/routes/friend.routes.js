@@ -8,24 +8,16 @@ module.exports = async function (fastify, opts) {
         schema: friendSchema.addFriend,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/add`,
-                    request.body,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.post(
+                `${process.env.FRIEND_SERVICE_URL}/add`,
+                request.body,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to add friend'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
 
@@ -34,47 +26,32 @@ module.exports = async function (fastify, opts) {
         schema: friendSchema.getFriends,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.get(
-                    `${process.env.FRIEND_SERVICE_URL}/friends`,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.get(
+                `${process.env.FRIEND_SERVICE_URL}/friends`,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to fetch friends'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
 
+    // Get blocked users
     fastify.get('/blocked', {
         schema: friendSchema.getBlocked,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.get(
-                    `${process.env.FRIEND_SERVICE_URL}/blocked`,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.get(
+                `${process.env.FRIEND_SERVICE_URL}/blocked`,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to fetch blocked users'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
 
@@ -82,24 +59,16 @@ module.exports = async function (fastify, opts) {
         schema: friendSchema.blockUser,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/block`,
-                    request.body,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.post(
+                `${process.env.FRIEND_SERVICE_URL}/block`,
+                request.body,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to block user'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
 
@@ -107,24 +76,16 @@ module.exports = async function (fastify, opts) {
         schema: friendSchema.unblockUser,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.post(
-                    `${process.env.FRIEND_SERVICE_URL}/unblock`,
-                    request.body,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.post(
+                `${process.env.FRIEND_SERVICE_URL}/unblock`,
+                request.body,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to unblock user'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
 
@@ -132,24 +93,17 @@ module.exports = async function (fastify, opts) {
         schema: friendSchema.removeFriend,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            try {
-                const { data, status } = await fastify.serviceClient.delete(
-                    `${process.env.FRIEND_SERVICE_URL}/remove`,
-                    request.body,
-                    {
-                        headers: {
-                            'Authorization': request.headers.authorization
-                        }
+            const { data, status } = await fastify.serviceClient.delete(
+                `${process.env.FRIEND_SERVICE_URL}/remove`,
+                request.body,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
                     }
-                );
-                return reply.code(status).send(data);
-            } catch (error) {
-                request.log.error(error);
-                return reply.code(error.status).send({
-                    success: false,
-                    message: error.message || 'Failed to remove friend'
-                });
-            }
+                }
+            );
+            return reply.code(status).send(data);
         }
     });
+
 };
