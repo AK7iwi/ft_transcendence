@@ -1,6 +1,6 @@
 const PasswordService = require('../security/password/password.service');
 const DbAuth = require('../database/db.auth');
-const { ValidationError, AuthenticationError, ConflictError, DatabaseError, ServiceError } = require('../utils/error/errors');
+const { AuthenticationError, ConflictError, DatabaseError, ServiceError } = require('../utils/error/errors');
 
 class AuthService {
     static async registerUser(username, password, serviceClient) {
@@ -69,10 +69,6 @@ class AuthService {
 
     static async loginUser(username, password) {
         try {
-            // if (!username || !password) {
-            //     throw new ValidationError('Username and password are required');
-            // }
-
             const user = await DbAuth.getUserByUsername(username);
             if (!user) {
                 throw new AuthenticationError('Invalid credentials', {
@@ -95,7 +91,7 @@ class AuthService {
                 twoFactorEnabled: user.two_factor_enabled
             };
         } catch (error) {
-            if (error instanceof ValidationError || error instanceof AuthenticationError) {
+            if (error instanceof AuthenticationError) {
                 throw error;
             }
 
