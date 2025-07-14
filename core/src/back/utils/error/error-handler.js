@@ -1,40 +1,48 @@
 const { AppError } = require('./errors');
 
 class ErrorHandler {
+    
     static handle(error, request, reply) {
-        // Log the error
-        request.log.error({
-            error: error.message,
-            stack: error.stack,
-            url: request.url,
-            method: request.method,
-            user: request.user?.id || 'anonymous'
-        });
+        console.log('=== ERROR HANDLER CALLED ===');
+        console.log('Error:', error);
+        console.log('Error type:', typeof error);
+        console.log('Error constructor:', error.constructor.name);
+        console.log('Error message:', error.message);
+        console.log('Error code:', error.code);
+        console.log('Error statusCode:', error.statusCode);
+        console.log('Error errorCode:', error.errorCode);
+        console.log('Error details:', error.details);
+        console.log('Error instanceof AppError:', error instanceof AppError);
+        console.log('AppError constructor:', AppError);
+        console.log('Error stack:', error.stack);
+        console.log('Request URL:', request.url);
+        console.log('Request method:', request.method);
+        console.log('Request user:', request.user?.id);
+        console.log('==========================');
 
-        //Doesnt enter here, + details from where
+        // Handle validation errors
+        if (error.validation) {
+            console.log('Handling validation error');
+            const response = ErrorHandler.handleValidationError(error, request, reply);
+            return reply.code(response.statusCode).send(response);
+        }
+    
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
-            return reply.code(error.statusCode).send({
-                success: false,
-                message: error.message,
-                errorCode: error.errorCode,
-                timestamp: error.timestamp,
-                details: error.details,
-                path: request.url
-            });
+            console.log('Handling AppError');
+            const response = ErrorHandler.createErrorResponse(error, request.url);
+            return reply.code(error.statusCode).send(response);
         }
 
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
-            return ErrorHandler.handleDatabaseError(error, request, reply);
-        }
-
-        // Handle validation errors
-        if (error.validation) {
-            return ErrorHandler.handleValidationError(error, request, reply);
+            console.log('Handling SQLite error:', error.code);
+            const response = ErrorHandler.handleDatabaseError(error, request, reply);
+            return reply.code(response.statusCode).send(response);
         }
 
         // Default error response
+        console.log('Handling default error');
         return reply.code(500).send({
             success: false,
             message: 'Internal server error',
@@ -42,6 +50,18 @@ class ErrorHandler {
             timestamp: new Date().toISOString(),
             path: request.url
         });
+    }
+
+    static createErrorResponse(error, path) {
+        return {
+            success: false,
+            message: error.message,
+            statusCode: error.statusCode,
+            errorCode: error.errorCode,
+            timestamp: error.timestamp,
+            details: error.details,
+            path: path
+        };
     }
 
     static handleDatabaseError(error, request, reply) {
@@ -79,27 +99,24 @@ class ErrorHandler {
         });
     }
 
-    static handleValidationError(error, request, reply) {
-        const formattedError = ErrorHandler.formatValidationError(error.validation);
-        return reply.code(400).send(formattedError);
-    }
-
-    //doesnt show the details of the error
-    static formatValidationError(validationErrors) {
+    //error, request, reply 
+    static handleValidationError(validationErrors) {
         const errors = validationErrors.map(error => {
             const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
             const constraint = ErrorHandler.getConstraintType(error);
             
-            return {
+            const formattedError = {
                 field: field,
                 constraint: constraint,
                 message: ErrorHandler.getUserFriendlyMessage(error, field),
                 value: error.data,
                 code: ErrorHandler.getErrorCode(error)
             };
+            
+            return formattedError; //??
         });
 
-        return {
+        const result = {
             success: false,
             message: 'Validation failed',
             errorCode: 'VALIDATION_ERROR',
@@ -109,6 +126,8 @@ class ErrorHandler {
                 totalErrors: errors.length
             }
         };
+        
+        return result;
     }
 
     static formatFieldName(instancePath, params) {

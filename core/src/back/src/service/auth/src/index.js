@@ -32,11 +32,6 @@ app.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
-// Test error endpoint
-app.get('/test-error', async (request, reply) => {
-    throw new Error('Test error');
-});
-
 // Register error handler
 app.setErrorHandler(ErrorHandler.handle);
 

@@ -3,6 +3,7 @@ const DbAuth = require('../database/db.auth');
 const { AuthenticationError, ConflictError} = require('../utils/error/errors');
 
 class AuthService {
+
     static async registerUser(username, password, serviceClient) {
         const existingUser = await DbAuth.getUserByUsername(username);
         if (existingUser) {
@@ -12,6 +13,7 @@ class AuthService {
             });
         }
         
+        //protect
         // Hash password and create user
         const hashedPassword = await PasswordService.hashPassword(password);
         const result = await DbAuth.createUser(username, hashedPassword);

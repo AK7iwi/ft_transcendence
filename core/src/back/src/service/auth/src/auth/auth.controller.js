@@ -1,6 +1,5 @@
 const AuthService = require('./auth.service');
 const JWTService = require('../security/middleware/jwt/jwt.service');
-const ErrorHandler = require('../utils/error/error-handler');
 
 class AuthController {
     
