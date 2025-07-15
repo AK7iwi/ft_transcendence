@@ -24,7 +24,7 @@ class ErrorHandler {
         if (error.validation) {
             console.log('Handling validation error');
             const response = ErrorHandler.handleValidationError(error, request, reply);
-            return reply.code(response.statusCode).send(response);
+            return reply.code(error.statusCode).send(response);
         }
     
         // If it's our custom error, use its properties
@@ -38,7 +38,7 @@ class ErrorHandler {
         if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('Handling SQLite error:', error.code);
             const response = ErrorHandler.handleDatabaseError(error, request, reply);
-            return reply.code(response.statusCode).send(response);
+            return reply.code(error.statusCode).send(response);
         }
 
         // Default error response
@@ -48,15 +48,25 @@ class ErrorHandler {
             message: 'Internal server error',
             errorCode: 'INTERNAL_ERROR',
             timestamp: new Date().toISOString(),
+            details: error.details,
             path: request.url
         });
     }
 
     static createErrorResponse(error, path) {
+
+        console.log('=== CREATE ERROR RESPONSE CALLED ===');
+        console.log('Error message:', error.message);
+        console.log('Error statusCode:', error.statusCode);
+        console.log('Error errorCode:', error.errorCode);
+        console.log('Error timestamp:', error.timestamp);
+        console.log('Error details:', error.details);
+        console.log('Request URL:', path);
+        console.log('==========================');
+
         return {
             success: false,
             message: error.message,
-            statusCode: error.statusCode,
             errorCode: error.errorCode,
             timestamp: error.timestamp,
             details: error.details,
@@ -64,6 +74,7 @@ class ErrorHandler {
         };
     }
 
+    //to be formatted 
     static handleDatabaseError(error, request, reply) {
         const errorMap = {
             'SQLITE_CONSTRAINT_UNIQUE': {
