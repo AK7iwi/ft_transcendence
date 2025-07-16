@@ -5,9 +5,6 @@ class ServiceClient {
         this.fastify = fastify;
     }
 
-    /**
-     * Maps HTTP status codes to error codes
-     */
     static getErrorCode(statusCode) {
         const errorCodeMap = {
             400: 'VALIDATION_ERROR',
@@ -30,37 +27,31 @@ class ServiceClient {
                     ...options.headers
                 }
             });
-
+            
             const data = await response.json();
 
             if (!response.ok) {
-                // Preserve the original error structure from the service
-                const errorResponse = {
+                throw {
                     success: false,
                     message: data.message || response.statusText,
-                    errorCode: data.errorCode || ServiceClient.getErrorCode(response.status),
+                    errorCode: data.errorCode || this.getErrorCode(response.status),
                     timestamp: data.timestamp || new Date().toISOString(),
-                    details: data.details || data.errors || null,
+                    details: data.details || data.errors,
                     path: serviceUrl
-                };
-
-                throw {
-                    status: response.status,
-                    ...errorResponse
                 };
             }
 
             return { data, status: response.status };
         } catch (error) {
-            if (error.status) {
+            if (error.success === false) {
                 throw error;
             }
             throw {
                 success: false,
                 message: error.message,
-                errorCode: 'INTERNAL_ERROR',
+                errorCode: 'NETWORK_ERROR',
                 timestamp: new Date().toISOString(),
-                details: null,
+                details: { url: serviceUrl },
                 path: serviceUrl
             };
         }
