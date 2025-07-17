@@ -58,7 +58,18 @@ fastify.get('/health', async (request, reply) => {
 });
 
 // Register error handler
-fastify.setErrorHandler(ErrorHandler.handle);
+// fastify.setErrorHandler(ErrorHandler.handle)
+
+fastify.setErrorHandler((error, request, reply) => {
+    // Don't handle service-client errors
+    if (error.success === false) {
+        // This is already a formatted error from a service
+        return reply.code(error.statusCode || 500).send(error);
+    }
+    
+    // Handle other errors normally
+    return ErrorHandler.handle(error, request, reply);
+});
 
 // Start server
 const start = async () => {

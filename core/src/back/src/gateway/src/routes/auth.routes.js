@@ -9,16 +9,11 @@ module.exports = async function (fastify, opts) {
         schema: authSchema.register,
         preHandler: [SanitizeService.sanitize],
         handler: async (request, reply) => {
-            // try {   
-                const { data, status } = await fastify.serviceClient.post(
-                    `${process.env.AUTH_SERVICE_URL}/register`,
-                    request.body
-                );
-
-                return reply.code(status).send(data);
-            // } catch (error) {
-                throw error;
-            // }
+            const { data, status } = await fastify.serviceClient.post(
+                `${process.env.AUTH_SERVICE_URL}/register`,
+                request.body
+            );
+            return reply.code(status).send(data);
         }
     });
 

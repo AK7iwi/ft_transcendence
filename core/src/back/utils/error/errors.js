@@ -4,8 +4,8 @@ class AppError extends Error {
         super(message);
         this.statusCode = statusCode;  // HTTP STATUS CODE
         this.errorCode = errorCode;   // ERROR CODE
-        this.details = details;      // DETAILS
         this.timestamp = new Date().toISOString();
+        this.details = details;      // DETAILS
         
         // Maintains proper stack trace for where our error was thrown
         Error.captureStackTrace(this, this.constructor);

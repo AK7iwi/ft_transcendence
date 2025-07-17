@@ -23,22 +23,24 @@ class ErrorHandler {
         // Handle validation errors
         if (error.validation) {
             console.log('Handling validation error');
-            const response = ErrorHandler.handleValidationError(error, request, reply);
-            return reply.code(error.statusCode).send(response);
+            const errorResponse = ErrorHandler.handleValidationError(error, request);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
+            return reply.code(errorResponse.statusCode).send(response);
         }
     
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
             console.log('Handling AppError');
-            const response = ErrorHandler.createErrorResponse(error, request.url);
+            const response = ErrorHandler.createFormattedErrorResponse(error, request.url);
             return reply.code(error.statusCode).send(response);
         }
 
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('Handling SQLite error:', error.code);
-            const response = ErrorHandler.handleDatabaseError(error, request, reply);
-            return reply.code(error.statusCode).send(response);
+            const errorResponse = ErrorHandler.handleDatabaseError(error, request);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
+            return reply.code(errorResponse.statusCode).send(response);
         }
 
         // Default error response
@@ -53,17 +55,7 @@ class ErrorHandler {
         });
     }
 
-    static createErrorResponse(error, path) {
-
-        console.log('=== CREATE ERROR RESPONSE CALLED ===');
-        console.log('Error message:', error.message);
-        console.log('Error statusCode:', error.statusCode);
-        console.log('Error errorCode:', error.errorCode);
-        console.log('Error timestamp:', error.timestamp);
-        console.log('Error details:', error.details);
-        console.log('Request URL:', path);
-        console.log('==========================');
-
+    static createFormattedErrorResponse(error, path) {
         return {
             success: false,
             message: error.message,
@@ -74,44 +66,7 @@ class ErrorHandler {
         };
     }
 
-    //to be formatted 
-    static handleDatabaseError(error, request, reply) {
-        const errorMap = {
-            'SQLITE_CONSTRAINT_UNIQUE': {
-                statusCode: 409,
-                errorCode: 'DUPLICATE_ENTRY',
-                message: 'Resource already exists'
-            },
-            'SQLITE_CONSTRAINT_FOREIGNKEY': {
-                statusCode: 400,
-                errorCode: 'FOREIGN_KEY_VIOLATION',
-                message: 'Referenced resource does not exist'
-            },
-            'SQLITE_CONSTRAINT_NOTNULL': {
-                statusCode: 400,
-                errorCode: 'NULL_CONSTRAINT_VIOLATION',
-                message: 'Required field is missing'
-            }
-        };
-
-        const errorInfo = errorMap[error.code] || {
-            statusCode: 500,
-            errorCode: 'DATABASE_ERROR',
-            message: 'Database operation failed'
-        };
-
-        return reply.code(errorInfo.statusCode).send({
-            success: false,
-            message: errorInfo.message,
-            errorCode: errorInfo.errorCode,
-            timestamp: new Date().toISOString(),
-            details: { databaseCode: error.code },
-            path: request.url
-        });
-    }
-
-    //error, request, reply 
-    static handleValidationError(validationErrors) {
+    static handleValidationError(error, request) {
         const errors = validationErrors.map(error => {
             const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
             const constraint = ErrorHandler.getConstraintType(error);
@@ -124,7 +79,7 @@ class ErrorHandler {
                 code: ErrorHandler.getErrorCode(error)
             };
             
-            return formattedError; //??
+            return formattedError; 
         });
 
         const result = {
@@ -196,8 +151,7 @@ class ErrorHandler {
         return codeMap[error.keyword] || 'VALIDATION_ERROR';
     }
 
-    static getUserFriendlyMessage(error, fieldName) {
-        const field = fieldName || ErrorHandler.formatFieldName(error.instancePath, error.params);
+    static getUserFriendlyMessage(error, field) {
         
         switch (error.keyword) {
             case 'required':
@@ -238,6 +192,42 @@ class ErrorHandler {
             default:
                 return `${field} is invalid`;
         }
+    }
+
+    //to be formatted 
+    static handleDatabaseError(error, request) {
+        const errorMap = {
+            'SQLITE_CONSTRAINT_UNIQUE': {
+                statusCode: 409,
+                errorCode: 'DUPLICATE_ENTRY',
+                message: 'Resource already exists'
+            },
+            'SQLITE_CONSTRAINT_FOREIGNKEY': {
+                statusCode: 400,
+                errorCode: 'FOREIGN_KEY_VIOLATION',
+                message: 'Referenced resource does not exist'
+            },
+            'SQLITE_CONSTRAINT_NOTNULL': {
+                statusCode: 400,
+                errorCode: 'NULL_CONSTRAINT_VIOLATION',
+                message: 'Required field is missing'
+            }
+        };
+
+        const errorInfo = errorMap[error.code] || {
+            statusCode: 500,
+            errorCode: 'DATABASE_ERROR',
+            message: 'Database operation failed'
+        };
+
+        return reply.code(errorInfo.statusCode).send({
+            success: false,
+            message: errorInfo.message,
+            errorCode: errorInfo.errorCode,
+            timestamp: new Date().toISOString(),
+            details: { databaseCode: error.code },
+            path: request.url
+        });
     }
 }
 

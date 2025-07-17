@@ -35,7 +35,7 @@ class ServiceClient {
                     success: false,
                     message: data.message || response.statusText,
                     errorCode: data.errorCode || this.getErrorCode(response.status),
-                    timestamp: data.timestamp || new Date().toISOString(),
+                    timestamp: data.timestamp || new Date().toISOString(), 
                     details: data.details || data.errors,
                     path: serviceUrl
                 };
