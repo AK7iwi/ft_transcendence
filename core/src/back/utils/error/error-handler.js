@@ -24,30 +24,30 @@ class ErrorHandler {
         if (error.validation) {
             console.log('Handling validation error');
             const errorResponse = ErrorHandler.handleValidationError(error);
-            console.log('Ca paaaaaaaaaaaaaaasssssssssse pas');
+            console.log('VALIDATION RESPONSE:', errorResponse);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            console.log('Response:', response);
+            console.log('FINAL VALIDATION RESPONSE:', response);
             //status code 422
             return reply.code(error.statusCode).send(response);
         }
     
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
-            console.log('Handling AppError');
+            console.log('GOING TO APPERROR BRANCH');
             const response = ErrorHandler.createFormattedErrorResponse(error, request.url);
             return reply.code(error.statusCode).send(response);
         }
 
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
-            console.log('Handling SQLite error:', error.code);
+            console.log('GOING TO DATABASE BRANCH');
             const errorResponse = ErrorHandler.handleDatabaseError(error, request);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             return reply.code(error.statusCode).send(response);
         }
 
+        console.log('GOING TO DEFAULT BRANCH');
         // Default error response
-        console.log('Handling default error');
         return reply.code(500).send({
             success: false,
             message: 'Internal server error',
@@ -59,6 +59,17 @@ class ErrorHandler {
     }
 
     static createFormattedErrorResponse(error, path) {
+        console.log('Ca paaaaaaaaaaaaaaasssssssssse pas'); // This should show if the function is called
+        
+        console.log('=== CREATE ERROR RESPONSE CALLED ===');
+        console.log('Error message:', error.message);
+        console.log('Error statusCode:', error.statusCode);
+        console.log('Error errorCode:', error.errorCode);
+        console.log('Error timestamp:', error.timestamp);
+        console.log('Error details:', error.details);
+        console.log('Request URL:', path);
+        console.log('==========================');
+
         return {
             success: false,
             message: error.message,
@@ -86,7 +97,7 @@ class ErrorHandler {
                 field: field,
                 value: value,
                 constraint: constraint
-            },
+            }
         };
         
         return errorResponse;
