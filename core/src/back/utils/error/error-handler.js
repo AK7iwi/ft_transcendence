@@ -24,7 +24,7 @@ class ErrorHandler {
         if (error.validation) {
             console.log('Handling validation error');
             const errorResponse = ErrorHandler.handleValidationError(error);
-            console.log('Ca paaaaaaaaaaaaaaasssssssssse');
+            console.log('Ca paaaaaaaaaaaaaaasssssssssse pas');
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             console.log('Response:', response);
             //status code 422
@@ -69,6 +69,7 @@ class ErrorHandler {
         };
     }
 
+    //ya pe une fct qui fail dedans 
     static handleValidationError(error) {
         const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
         const message = ErrorHandler.getUserFriendlyMessage(error, field);
