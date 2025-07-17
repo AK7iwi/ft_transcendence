@@ -57,9 +57,6 @@ fastify.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
-// Register error handler
-// fastify.setErrorHandler(ErrorHandler.handle)
-
 fastify.setErrorHandler((error, request, reply) => {
     // Don't handle service-client errors
     if (error.success === false) {

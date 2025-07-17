@@ -19,13 +19,16 @@ class ErrorHandler {
         console.log('Request method:', request.method);
         console.log('Request user:', request.user?.id);
         console.log('==========================');
-
+        
         // Handle validation errors
         if (error.validation) {
             console.log('Handling validation error');
-            const errorResponse = ErrorHandler.handleValidationError(error, request);
+            const errorResponse = ErrorHandler.handleValidationError(error);
+            console.log('Ca paaaaaaaaaaaaaaasssssssssse');
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            return reply.code(errorResponse.statusCode).send(response);
+            console.log('Response:', response);
+            //status code 422
+            return reply.code(error.statusCode).send(response);
         }
     
         // If it's our custom error, use its properties
@@ -40,7 +43,7 @@ class ErrorHandler {
             console.log('Handling SQLite error:', error.code);
             const errorResponse = ErrorHandler.handleDatabaseError(error, request);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            return reply.code(errorResponse.statusCode).send(response);
+            return reply.code(error.statusCode).send(response);
         }
 
         // Default error response
@@ -66,34 +69,26 @@ class ErrorHandler {
         };
     }
 
-    static handleValidationError(error, request) {
-        const errors = validationErrors.map(error => {
-            const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
-            const constraint = ErrorHandler.getConstraintType(error);
-            
-            const formattedError = {
-                field: field,
-                constraint: constraint,
-                message: ErrorHandler.getUserFriendlyMessage(error, field),
-                value: error.data,
-                code: ErrorHandler.getErrorCode(error)
-            };
-            
-            return formattedError; 
-        });
+    static handleValidationError(error) {
+        const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
+        const message = ErrorHandler.getUserFriendlyMessage(error, field);
+        const errorCode = ErrorHandler.getErrorCode(error);
+        const value = error.data;
+        const constraint = ErrorHandler.getConstraintType(error); //maybe delete
 
-        const result = {
+        const errorResponse = {
             success: false,
-            message: 'Validation failed',
-            errorCode: 'VALIDATION_ERROR',
+            message: message,
+            errorCode: errorCode,
             timestamp: new Date().toISOString(),
             details: {
-                errors: errors,
-                totalErrors: errors.length
-            }
+                field: field,
+                value: value,
+                constraint: constraint
+            },
         };
         
-        return result;
+        return errorResponse;
     }
 
     static formatFieldName(instancePath, params) {
@@ -101,6 +96,7 @@ class ErrorHandler {
         fieldName = fieldName.replace(/[-_]([a-z])/g, (match, letter) => letter.toUpperCase());
         fieldName = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
         fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+
         return fieldName;
     }
 
