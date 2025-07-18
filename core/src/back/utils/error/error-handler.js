@@ -23,26 +23,25 @@ class ErrorHandler {
         // Handle validation errors
         if (error.validation) {
             console.log('Handling validation error');
-            const errorResponse = ErrorHandler.handleValidationError(error);
+            const errorResponse = ErrorHandler.handleValidationError(error, request.url);
             console.log('VALIDATION RESPONSE:', errorResponse);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse);
             console.log('FINAL VALIDATION RESPONSE:', response);
-            //status code 422
             return reply.code(error.statusCode).send(response);
         }
     
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
             console.log('GOING TO APPERROR BRANCH');
-            const response = ErrorHandler.createFormattedErrorResponse(error, request.url);
+            const response = ErrorHandler.createFormattedErrorResponse(error);
             return reply.code(error.statusCode).send(response);
         }
 
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('GOING TO DATABASE BRANCH');
-            const errorResponse = ErrorHandler.handleDatabaseError(error, request);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
+            const errorResponse = ErrorHandler.handleDatabaseError(error, request.url);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse);
             return reply.code(error.statusCode).send(response);
         }
 
@@ -58,82 +57,63 @@ class ErrorHandler {
         });
     }
 
-    static createFormattedErrorResponse(error, path) {
-        console.log('Ca paaaaaaaaaaaaaaasssssssssse pas'); // This should show if the function is called
-        
+    static createFormattedErrorResponse(error) {
+
         console.log('=== CREATE ERROR RESPONSE CALLED ===');
         console.log('Error message:', error.message);
-        console.log('Error statusCode:', error.statusCode);
         console.log('Error errorCode:', error.errorCode);
         console.log('Error timestamp:', error.timestamp);
         console.log('Error details:', error.details);
-        console.log('Request URL:', path);
+        console.log('Error instancePath:', error.instancePath);
         console.log('==========================');
 
+        //value and field for the details
         return {
             success: false,
             message: error.message,
             errorCode: error.errorCode,
             timestamp: error.timestamp,
             details: error.details,
-            path: path
+            path: error.instancePath 
         };
     }
 
-    //ya pe une fct qui fail dedans 
-    static handleValidationError(error) {
-        const field = ErrorHandler.formatFieldName(error.instancePath, error.params);
+    static handleValidationError(error, path) {
+        console.log("path:", path);
+        const field = ErrorHandler.formatFieldName(path);
+        console.log('Fieldname:', field);
         const message = ErrorHandler.getUserFriendlyMessage(error, field);
+        console.log('Message:', message);
         const errorCode = ErrorHandler.getErrorCode(error);
+        console.log('Errorcode:', errorCode);
         const value = error.data;
-        const constraint = ErrorHandler.getConstraintType(error); //maybe delete
+        console.log('Value:', value);
 
         const errorResponse = {
-            success: false,
             message: message,
             errorCode: errorCode,
             timestamp: new Date().toISOString(),
             details: {
                 field: field,
-                value: value,
-                constraint: constraint
+                value: value
             }
         };
         
         return errorResponse;
     }
 
-    static formatFieldName(instancePath, params) {
-        let fieldName = instancePath.replace(/^\//, '') || params.missingProperty;
+    static formatFieldName(path) {
+        console.log('Instancepath:', path);
+        let fieldName = path.replace(/^\//, '');
+        console.log('Fieldname 1:', fieldName);
         fieldName = fieldName.replace(/[-_]([a-z])/g, (match, letter) => letter.toUpperCase());
+        console.log('Fieldname 2:', fieldName);
         fieldName = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
+        console.log('Fieldname 3:', fieldName);
         fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        console.log('Fieldname 4:', fieldName);
 
         return fieldName;
-    }
-
-    static getConstraintType(error) {
-        const constraintMap = {
-            'required': 'required',
-            'type': 'type',
-            'minLength': 'minLength',
-            'maxLength': 'maxLength',
-            'pattern': 'pattern',
-            'enum': 'enum',
-            'minimum': 'minimum',
-            'maximum': 'maximum',
-            'minItems': 'minItems',
-            'maxItems': 'maxItems',
-            'uniqueItems': 'uniqueItems',
-            'format': 'format',
-            'email': 'email',
-            'uri': 'uri',
-            'date': 'date',
-            'date-time': 'dateTime',
-            'custom': 'custom'
-        };
-        
-        return constraintMap[error.keyword] || 'unknown';
     }
 
     static getErrorCode(error) {
@@ -160,7 +140,9 @@ class ErrorHandler {
     }
 
     static getUserFriendlyMessage(error, field) {
-        
+        //check is paramas. exist
+
+        console.log('keyword:', error.keyword);
         switch (error.keyword) {
             case 'required':
                 return `${field} is required`;
