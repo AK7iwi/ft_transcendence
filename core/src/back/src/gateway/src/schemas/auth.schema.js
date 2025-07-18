@@ -42,7 +42,16 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    errorCode: { type: 'string' },
+                    details: {
+                        type: 'object',
+                        properties: {
+                            field: { type: 'string' },
+                            value: { type: 'string' }
+                        }
+                    },
+                    path: { type: 'string' }
                 }
             }
         }

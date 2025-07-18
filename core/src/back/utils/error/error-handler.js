@@ -119,6 +119,7 @@ class ErrorHandler {
         console.log('Fieldname 3:', fieldName);
         fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
         console.log('Fieldname 4:', fieldName);
+        
         return fieldName;
     }
 
