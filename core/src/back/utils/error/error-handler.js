@@ -23,9 +23,9 @@ class ErrorHandler {
         // Handle validation errors
         if (error.validation) {
             console.log('Handling validation error');
-            const errorResponse = ErrorHandler.handleValidationError(error, request.url);
+            const errorResponse = ErrorHandler.handleValidationError(error);
             console.log('VALIDATION RESPONSE:', errorResponse);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             console.log('FINAL VALIDATION RESPONSE:', response);
             return reply.code(error.statusCode).send(response);
         }
@@ -33,15 +33,15 @@ class ErrorHandler {
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
             console.log('GOING TO APPERROR BRANCH');
-            const response = ErrorHandler.createFormattedErrorResponse(error);
+            const response = ErrorHandler.createFormattedErrorResponse(error, request.url);
             return reply.code(error.statusCode).send(response);
         }
 
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('GOING TO DATABASE BRANCH');
-            const errorResponse = ErrorHandler.handleDatabaseError(error, request.url);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse);
+            const errorResponse = ErrorHandler.handleDatabaseError(error);
+            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             return reply.code(error.statusCode).send(response);
         }
 
@@ -57,14 +57,14 @@ class ErrorHandler {
         });
     }
 
-    static createFormattedErrorResponse(error) {
+    static createFormattedErrorResponse(error, path) {
 
         console.log('=== CREATE ERROR RESPONSE CALLED ===');
         console.log('Error message:', error.message);
         console.log('Error errorCode:', error.errorCode);
         console.log('Error timestamp:', error.timestamp);
         console.log('Error details:', error.details);
-        console.log('Error instancePath:', error.instancePath);
+        console.log('Error path:', path);
         console.log('==========================');
 
         //value and field for the details
@@ -72,27 +72,35 @@ class ErrorHandler {
             success: false,
             message: error.message,
             errorCode: error.errorCode,
-            timestamp: error.timestamp,
-            details: error.details,
-            path: error.instancePath 
+            timestamp: new Date().toISOString(),
+            details: error.details || 'No details',
+            path: path
         };
     }
 
-    static handleValidationError(error, path) {
-        console.log("path:", path);
-        const field = ErrorHandler.formatFieldName(path);
+    static handleValidationError(error) {
+
+        const validationError = error.validation[0];
+        console.log('=== VALIDATION ERROR DEBUG ===');
+        console.log('Validation error:', validationError);
+        console.log('instancePath:', validationError.instancePath);  // '/username'
+        console.log('keyword:', validationError.keyword);           // 'minLength'
+        console.log('params:', validationError.params);             // [Object]
+        console.log('message:', validationError.message);           // 'must NOT have fewer than 3 characters'
+        console.log('================================');
+
+        const field = ErrorHandler.formatFieldName(validationError.instancePath);
         console.log('Fieldname:', field);
-        const message = ErrorHandler.getUserFriendlyMessage(error, field);
+        const message = ErrorHandler.getUserFriendlyMessage(validationError, field);
         console.log('Message:', message);
-        const errorCode = ErrorHandler.getErrorCode(error);
+        const errorCode = ErrorHandler.getErrorCode(validationError);
         console.log('Errorcode:', errorCode);
-        const value = error.data;
+        const value = validationError.data;
         console.log('Value:', value);
 
         const errorResponse = {
             message: message,
             errorCode: errorCode,
-            timestamp: new Date().toISOString(),
             details: {
                 field: field,
                 value: value
@@ -103,7 +111,6 @@ class ErrorHandler {
     }
 
     static formatFieldName(path) {
-        console.log('Instancepath:', path);
         let fieldName = path.replace(/^\//, '');
         console.log('Fieldname 1:', fieldName);
         fieldName = fieldName.replace(/[-_]([a-z])/g, (match, letter) => letter.toUpperCase());
@@ -112,7 +119,6 @@ class ErrorHandler {
         console.log('Fieldname 3:', fieldName);
         fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
         console.log('Fieldname 4:', fieldName);
-
         return fieldName;
     }
 
@@ -140,7 +146,7 @@ class ErrorHandler {
     }
 
     static getUserFriendlyMessage(error, field) {
-        //check is paramas. exist
+        //check is paramas. exist, print it with the logs 
 
         console.log('keyword:', error.keyword);
         switch (error.keyword) {
@@ -211,12 +217,9 @@ class ErrorHandler {
         };
 
         return reply.code(errorInfo.statusCode).send({
-            success: false,
             message: errorInfo.message,
             errorCode: errorInfo.errorCode,
-            timestamp: new Date().toISOString(),
-            details: { databaseCode: error.code },
-            path: request.url
+            details: { databaseCode: error.code }
         });
     }
 }
