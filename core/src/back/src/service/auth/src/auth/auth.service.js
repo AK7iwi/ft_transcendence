@@ -4,7 +4,7 @@ const { AuthenticationError, ConflictError} = require('../utils/error/errors');
 
 class AuthService {
 
-    static async registerUser(username, password, serviceClient) {
+    static async registerUser(username, password, serviceClient) { 
         const existingUser = await DbAuth.getUserByUsername(username);
         if (existingUser) {
             throw new ConflictError('Username already exists', {
@@ -13,7 +13,9 @@ class AuthService {
             });
         }
 
+        console.log('===================================');
         console.log(`[AUTH SERVICE] User registration attempt - username: ${username} - User does not exist, proceeding with registration`);
+        console.log('===================================');
         
         //protect
         // Hash password and create user

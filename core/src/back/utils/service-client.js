@@ -5,19 +5,6 @@ class ServiceClient {
         this.fastify = fastify;
     }
 
-    static getErrorCode(statusCode) {
-        const errorCodeMap = {
-            400: 'VALIDATION_ERROR',
-            401: 'AUTHENTICATION_ERROR', 
-            403: 'AUTHORIZATION_ERROR',
-            404: 'NOT_FOUND_ERROR',
-            409: 'CONFLICT_ERROR',
-            422: 'VALIDATION_ERROR',
-            500: 'INTERNAL_ERROR'
-        };
-        return errorCodeMap[statusCode] || 'INTERNAL_ERROR';
-    }
-
     async request(serviceUrl, options) {
         try {
             const response = await fetch(serviceUrl, {
@@ -29,15 +16,29 @@ class ServiceClient {
             });
             
             const data = await response.json();
-
+            
+            //test what is print 
             if (!response.ok) {
+                const serviceUrlObj = new URL(serviceUrl);
+                
+                console.log('=== SERVICE CLIENT ERROR (!response.ok) ===');
+                console.log('response.status:', response.status);
+                console.log('data:', data);
+                console.log('message:', data.message);
+                console.log('errorCode:', data.errorCode);
+                console.log('timestamp:', data.timestamp);
+                console.log('details:', data.details);
+                console.log('path:', serviceUrlObj.pathname);
+                console.log('===================================');
+
                 throw {
                     success: false,
-                    message: data.message || response.statusText,
-                    errorCode: data.errorCode || this.getErrorCode(response.status),
-                    timestamp: data.timestamp || new Date().toISOString(), 
-                    details: data.details || data.errors,
-                    path: serviceUrl
+                    statusCode: response.status,
+                    message: data.message,
+                    errorCode: data.errorCode,
+                    timestamp: data.timestamp,
+                    details: data.details,
+                    path: serviceUrlObj.pathname,
                 };
             }
 
@@ -46,13 +47,16 @@ class ServiceClient {
             if (error.success === false) {
                 throw error;
             }
+            
+            const serviceUrlObj = new URL(serviceUrl);
+            
             throw {
                 success: false,
                 message: error.message,
                 errorCode: 'NETWORK_ERROR',
                 timestamp: new Date().toISOString(),
                 details: { url: serviceUrl },
-                path: serviceUrl
+                path: serviceUrlObj.pathname
             };
         }
     }

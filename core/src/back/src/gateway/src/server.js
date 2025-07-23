@@ -60,11 +60,10 @@ fastify.get('/health', async (request, reply) => {
 fastify.setErrorHandler((error, request, reply) => {
     // Don't handle service-client errors
     if (error.success === false) {
-        // This is already a formatted error from a service
         return reply.code(error.statusCode || 500).send(error);
     }
     
-    // Handle other errors normally
+    // Handle other errors normally (include validation errors)
     return ErrorHandler.handle(error, request, reply);
 });
 
