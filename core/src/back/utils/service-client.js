@@ -17,20 +17,11 @@ class ServiceClient {
             
             const data = await response.json();
             
-            //test what is print 
             if (!response.ok) {
                 const serviceUrlObj = new URL(serviceUrl);
-                
-                console.log('=== SERVICE CLIENT ERROR (!response.ok) ===');
-                console.log('response.status:', response.status);
-                console.log('data:', data);
-                console.log('message:', data.message);
-                console.log('errorCode:', data.errorCode);
-                console.log('timestamp:', data.timestamp);
-                console.log('details:', data.details);
-                console.log('path:', serviceUrlObj.pathname);
-                console.log('===================================');
 
+
+                //why status and not statusCode?
                 throw {
                     success: false,
                     statusCode: response.status,
@@ -92,6 +83,8 @@ class ServiceClient {
         });
     }
 
+
+    //can be deleted 
     async patch(serviceUrl, data, options = {}) {
         return this.request(serviceUrl, {
             method: 'PATCH',

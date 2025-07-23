@@ -48,7 +48,7 @@ class ErrorHandler {
             errorCode: error.errorCode,
             message: error.message,
             timestamp: new Date().toISOString(),
-            details: error.details || 'No details',
+            details: error.details,
             path: path
         };
     }
