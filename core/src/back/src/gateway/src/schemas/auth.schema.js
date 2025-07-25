@@ -56,6 +56,24 @@ const authSchema = {
                     path: { type: 'string' }
                 }
             },
+            409: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    statusCode: { type: 'number' },
+                    message: { type: 'string' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {
+                        type: 'object',
+                        properties: {
+                            field: { type: 'string' },
+                            value: { type: 'string' }
+                        }
+                    },
+                    path: { type: 'string' }
+                }
+            },
             500: {
                 type: 'object',
                 properties: {

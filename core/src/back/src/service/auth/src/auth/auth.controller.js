@@ -45,7 +45,6 @@ class AuthController {
             message: 'Login successful',
             data: {
                 user: {
-                    id: user.id,
                     username: user.username,
                     token: token
                 }

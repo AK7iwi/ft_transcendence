@@ -3,10 +3,27 @@ const { AppError } = require('./errors');
 class ErrorHandler {
     
     static handle(error, request, reply) {
+        console.log('=== ERROR HANDLER CALLED ===');
+        console.log('Error:', error);
+        console.log('Error type:', typeof error);
+        console.log('Error constructor:', error.constructor.name);
+        console.log('Error message:', error.message);
+        console.log('Error code:', error.code);
+        console.log('Error statusCode:', error.statusCode);
+        console.log('Error errorCode:', error.errorCode);
+        console.log('Error details:', error.details);
+        console.log('Error instanceof AppError:', error instanceof AppError);
+        console.log('AppError constructor:', AppError);
+        console.log('Error stack:', error.stack);
+        console.log('Request URL:', request.url);
+        console.log('Request method:', request.method);
+        console.log('Request user:', request.user?.id);
+        console.log('==========================');
+        
         // Handle validation errors (from schemas)
         if (error.validation) {
             console.log('Handling validation error');
-            const errorResponse = ErrorHandler.handleValidationError(error);
+            const errorResponse = ErrorHandler.handleValidationError(error, request);
             console.log('VALIDATION RESPONSE:', errorResponse);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             console.log('FINAL VALIDATION RESPONSE:', response);
@@ -23,13 +40,14 @@ class ErrorHandler {
         // Handle database errors
         if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('GOING TO DATABASE BRANCH');
-            const errorResponse = ErrorHandler.handleDatabaseError(error);
+            const errorResponse = ErrorHandler.handleDatabaseError(error, request);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             return reply.code(response.statusCode).send(response);
         }
 
         console.log('GOING TO DEFAULT BRANCH');
         // Default error response
+        //createFormattedErrorResponse
         return reply.code(500).send({
             success: false,
             statusCode: 500,
@@ -53,35 +71,26 @@ class ErrorHandler {
         };
     }
 
-    static handleValidationError(error) {
+    static handleValidationError(error, request) {
 
         const validationError = error.validation[0];
-        const field = ErrorHandler.formatFieldName(validationError.instancePath);
-        const message = ErrorHandler.getUserFriendlyMessage(validationError, field);
+        
+        const fieldPath = validationError.instancePath.replace(/^\//, '');
+        const message = ErrorHandler.getUserFriendlyMessage(validationError, fieldPath);
         const errorCode = ErrorHandler.getErrorCode(validationError);
-        const value = validationError.data;
+        const value = fieldPath.split('/').reduce((obj, key) => obj?.[key], request.body);
 
         const errorResponse = {
-            statusCode: error.statusCode,
+            statusCode: 400,
             message: message,
             errorCode: errorCode,
             details: {
-                field: field,
+                field: fieldPath,
                 value: value
             }
         };
         
         return errorResponse;
-    }
-
-    // check step by step
-    static formatFieldName(path) {
-        let fieldName = path.replace(/^\//, '');
-        fieldName = fieldName.replace(/[-_]([a-z])/g, (match, letter) => letter.toUpperCase());
-        fieldName = fieldName.replace(/([A-Z])/g, ' $1').toLowerCase();
-        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-        
-        return fieldName;
     }
 
     static getErrorCode(error) {
@@ -107,7 +116,11 @@ class ErrorHandler {
         return codeMap[error.keyword] || 'VALIDATION_ERROR';
     }
 
-    static getUserFriendlyMessage(error, field) {
+    static getUserFriendlyMessage(error, fieldPath) {
+
+        const field = fieldPath.charAt(0).toUpperCase() + fieldPath.slice(1);
+        const limit = error.params.limit;
+
         switch (error.keyword) {
             case 'required':
                 return `${field} is required`;
@@ -116,22 +129,22 @@ class ErrorHandler {
                 const receivedType = typeof error.data;
                 return `${field} must be a ${expectedType} (received ${receivedType})`;
             case 'minLength':
-                return `${field} must be at least ${error.params.limit} characters long`;
+                return `${field} must be at least ${limit} characters long`;
             case 'maxLength':
-                return `${field} must be no more than ${error.params.limit} characters long`;
+                return `${field} must be no more than ${limit} characters long`;
             case 'pattern':
                 return `${field} format is invalid`;
             case 'enum':
                 const allowedValues = error.params.allowedValues || [];
                 return `${field} must be one of: ${allowedValues.join(', ')}`;
             case 'minimum':
-                return `${field} must be at least ${error.params.limit}`;
+                return `${field} must be at least ${limit}`;
             case 'maximum':
-                return `${field} must be no more than ${error.params.limit}`;
+                return `${field} must be no more than ${limit}`;
             case 'minItems':
-                return `${field} must have at least ${error.params.limit} items`;
+                return `${field} must have at least ${limit} items`;
             case 'maxItems':
-                return `${field} must have no more than ${error.params.limit} items`;
+                return `${field} must have no more than ${limit} items`;
             case 'uniqueItems':
                 return `${field} must not contain duplicate items`;
             case 'format':

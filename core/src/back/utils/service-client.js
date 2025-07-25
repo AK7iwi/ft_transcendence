@@ -5,6 +5,8 @@ class ServiceClient {
         this.fastify = fastify;
     }
 
+
+    //test return instead of try and catch 
     async request(serviceUrl, options) {
         try {
             const response = await fetch(serviceUrl, {
@@ -20,8 +22,6 @@ class ServiceClient {
             if (!response.ok) {
                 const serviceUrlObj = new URL(serviceUrl);
 
-
-                //why status and not statusCode?
                 throw {
                     success: false,
                     statusCode: response.status,
@@ -43,6 +43,7 @@ class ServiceClient {
             
             throw {
                 success: false,
+                statusCode: 500,
                 message: error.message,
                 errorCode: 'NETWORK_ERROR',
                 timestamp: new Date().toISOString(),
