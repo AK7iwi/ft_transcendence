@@ -11,12 +11,7 @@ class AuthService {
                 field: 'username',
                 value: username
             });
-        }
-
-        console.log('===================================');
-        console.log(`[AUTH SERVICE] User registration attempt - username: ${username} - User does not exist, proceeding with registration`);
-        console.log('===================================');
-        
+        } 
         //protect
         // Hash password and create user
         const hashedPassword = await PasswordService.hashPassword(password);

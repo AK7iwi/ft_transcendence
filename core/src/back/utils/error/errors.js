@@ -4,7 +4,6 @@ class AppError extends Error {
         super(message);
         this.statusCode = statusCode;
         this.errorCode = errorCode;
-        this.timestamp = new Date().toISOString();
         this.details = details;
         
         // Maintains proper stack trace for where our error was thrown

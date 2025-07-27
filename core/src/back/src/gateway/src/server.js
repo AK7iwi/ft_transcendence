@@ -25,7 +25,7 @@ const fastify = fastifyModule({
 // Register plugins
 fastify.register(cors, {
     origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // OPTIONS ?? 
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 });
@@ -57,13 +57,13 @@ fastify.get('/health', async (request, reply) => {
     reply.code(200).send({ success: true, message: 'Server is healthy' });
 });
 
+// Main error handler
 fastify.setErrorHandler((error, request, reply) => {
     // Don't handle service-client errors
     if (error.success === false) {
         return reply.code(error.statusCode || 500).send(error);
     }
     
-    // Handle other errors normally (include validation errors)
     return ErrorHandler.handle(error, request, reply);
 });
 

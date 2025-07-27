@@ -13,6 +13,7 @@ module.exports = async function (fastify, opts) {
                 `${process.env.AUTH_SERVICE_URL}/register`,
                 request.body
             );
+            
             return reply.code(status).send(data);
         }
     });

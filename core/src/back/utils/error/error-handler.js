@@ -22,11 +22,9 @@ class ErrorHandler {
         
         // Handle validation errors (from schemas)
         if (error.validation) {
-            console.log('Handling validation error');
+            console.log('GOING TO VALIDATION BRANCH');
             const errorResponse = ErrorHandler.handleValidationError(error, request);
-            console.log('VALIDATION RESPONSE:', errorResponse);
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            console.log('FINAL VALIDATION RESPONSE:', response);
             return reply.code(response.statusCode).send(response);
         }
     
@@ -45,9 +43,9 @@ class ErrorHandler {
             return reply.code(response.statusCode).send(response);
         }
 
-        console.log('GOING TO DEFAULT BRANCH');
         // Default error response
         //createFormattedErrorResponse
+        console.log('GOING TO DEFAULT BRANCH');
         return reply.code(500).send({
             success: false,
             statusCode: 500,
@@ -74,7 +72,6 @@ class ErrorHandler {
     static handleValidationError(error, request) {
 
         const validationError = error.validation[0];
-        
         const fieldPath = validationError.instancePath.replace(/^\//, '');
         const message = ErrorHandler.getUserFriendlyMessage(validationError, fieldPath);
         const errorCode = ErrorHandler.getErrorCode(validationError);

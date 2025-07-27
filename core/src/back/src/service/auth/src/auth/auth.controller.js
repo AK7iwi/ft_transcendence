@@ -7,10 +7,6 @@ class AuthController {
         const { username, password } = request.body;
         const user = await AuthService.registerUser(username, password, request.server.serviceClient);
 
-        console.log('===================================');
-        console.log(`[AUTH CONTROLLER] User registration attempt - username: ${username} - User does not exist, proceeding with registration`);
-        console.log('===================================');
-
         return reply.code(201).send({
             success: true,
             message: 'Registration successful',
