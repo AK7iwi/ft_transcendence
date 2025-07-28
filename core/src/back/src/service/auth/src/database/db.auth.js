@@ -84,7 +84,6 @@ class DbAuth {
         return stmt.get(username);
     }
 
-    
     //INTERNAL ROUTES
 
     static async updateUsername(currentUsername, newUsername) {

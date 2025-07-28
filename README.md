@@ -48,6 +48,20 @@ Fastify: https://dev.to/code42cate/how-to-dockerize-and-deploy-fastify-apis-3f7i
 
 Tailwind CSS: https://medium.com/@gustavoinzunza/how-to-set-up-node-and-tailwind-with-docker-step-by-step-e40a4cff05b3
 
+# Status code
+
+
+# Error handling 
+
+## Validation errors
+
+### Error flow 
+
+## Service errors
+
+### Error flow
+
+
 # Source:
 
 ## Technical Overview: 
@@ -64,5 +78,3 @@ Tailwind CSS: https://medium.com/@gustavoinzunza/how-to-set-up-node-and-tailwind
 
 
 ## Docker:
-
-

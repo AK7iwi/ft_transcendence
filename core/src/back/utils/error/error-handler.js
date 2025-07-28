@@ -27,7 +27,7 @@ class ErrorHandler {
             const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
             return reply.code(response.statusCode).send(response);
         }
-    
+
         // If it's our custom error, use its properties
         if (error instanceof AppError) {
             console.log('GOING TO APPERROR BRANCH');
@@ -52,7 +52,7 @@ class ErrorHandler {
             message: 'Internal server error',
             errorCode: 'INTERNAL_ERROR',
             timestamp: new Date().toISOString(),
-            details: error.details,
+            details: error.details, //null 
             path: request.url
         });
     }
@@ -91,6 +91,7 @@ class ErrorHandler {
     }
 
     static getErrorCode(error) {
+
         const codeMap = {
             'required': 'FIELD_REQUIRED',
             'type': 'INVALID_TYPE',
@@ -161,6 +162,7 @@ class ErrorHandler {
 
     //to be formatted 
     static handleDatabaseError(error, request) {
+        
         const errorMap = {
             'SQLITE_CONSTRAINT_UNIQUE': {
                 statusCode: 409,

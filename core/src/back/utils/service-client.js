@@ -16,8 +16,7 @@ class ServiceClient {
         
         const data = await response.json();
 
-        console.log('SERVICE CLIENT RESPONSE:', data);
-        console.log('SERVICE CLIENT RESPONSE STATUS:', response);
+        console.log('SERVICE CLIENT RESPONSE (data):', data);
 
         return { data, status: response.status };
     }
@@ -53,8 +52,6 @@ class ServiceClient {
         });
     }
 
-
-    //can be deleted 
     async patch(serviceUrl, data, options = {}) {
         return this.request(serviceUrl, {
             method: 'PATCH',

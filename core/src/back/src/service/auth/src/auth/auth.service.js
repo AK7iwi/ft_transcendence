@@ -4,7 +4,8 @@ const { AuthenticationError, ConflictError} = require('../utils/error/errors');
 
 class AuthService {
 
-    static async registerUser(username, password, serviceClient) { 
+    static async registerUser(username, password, serviceClient) {
+        //Check if user already exists
         const existingUser = await DbAuth.getUserByUsername(username);
         if (existingUser) {
             throw new ConflictError('Username already exists', {
@@ -12,12 +13,12 @@ class AuthService {
                 value: username
             });
         } 
-        //protect
-        // Hash password and create user
+
+        // Hash password and create user (to protect)
         const hashedPassword = await PasswordService.hashPassword(password);
         const result = await DbAuth.createUser(username, hashedPassword);
         
-        // Create user in other services
+        // Create user in other services (to protect)
         await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/createUser`, {
             userId: result.lastInsertRowid,
             username: username,
@@ -40,7 +41,6 @@ class AuthService {
         });
         
         return {
-            id: result.lastInsertRowid,
             username: username
         };
     }
