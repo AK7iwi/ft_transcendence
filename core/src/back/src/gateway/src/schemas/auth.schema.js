@@ -46,13 +46,7 @@ const authSchema = {
                     message: { type: 'string' },
                     errorCode: { type: 'string' },
                     timestamp: { type: 'string' },
-                    details: {
-                        type: 'object',
-                        properties: {
-                            field: { type: 'string' },
-                            value: { type: 'string' }
-                        }
-                    },
+                    details: {},
                     path: { type: 'string' }
                 }
             },
@@ -64,13 +58,7 @@ const authSchema = {
                     message: { type: 'string' },
                     errorCode: { type: 'string' },
                     timestamp: { type: 'string' },
-                    details: {
-                        type: 'object',
-                        properties: {
-                            field: { type: 'string' },
-                            value: { type: 'string' }
-                        }
-                    },
+                    details: {},
                     path: { type: 'string' }
                 }
             },
@@ -82,13 +70,7 @@ const authSchema = {
                     message: { type: 'string' }, 
                     errorCode: { type: 'string' },
                     timestamp: { type: 'string' },
-                    details: {
-                        type: 'object',
-                        properties: {
-                            field: { type: 'string' },
-                            value: { type: 'string' }
-                        }
-                    },
+                    details: {},
                     path: { type: 'string' }
                 }
             }

@@ -1,6 +1,6 @@
 const PasswordService = require('../security/password/password.service');
 const DbAuth = require('../database/db.auth');
-const { AuthenticationError, ConflictError} = require('../utils/error/errors');
+const { AuthenticationError, ConflictError } = require('../utils/error/errors');
 
 class AuthService {
 

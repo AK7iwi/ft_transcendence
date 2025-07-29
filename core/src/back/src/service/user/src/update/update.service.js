@@ -45,7 +45,6 @@ class UpdateService {
         try {
             const hashedPassword = await PasswordService.hashPassword(newPassword);
             const result = await DbUser.updatePassword(username, hashedPassword);
-
             if (!result.changes) {
                 throw new Error('User not found');
             }

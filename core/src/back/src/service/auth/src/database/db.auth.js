@@ -88,7 +88,7 @@ class DbAuth {
 
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
-            UPDATE user_profiles 
+            UPDATE user_profiles
             SET username = ?,
                 updated_at = CURRENT_TIMESTAMP
              WHERE username = ?

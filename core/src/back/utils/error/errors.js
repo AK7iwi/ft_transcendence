@@ -12,11 +12,6 @@ class AppError extends Error {
 }
 
 // Specific error types
-class ValidationError extends AppError {
-    constructor(message, details = null) {
-        super(message, 400, 'VALIDATION_ERROR', details);
-    }
-}
 
 class AuthenticationError extends AppError {
     constructor(message, details = null) {
@@ -42,12 +37,6 @@ class ConflictError extends AppError {
     }
 }
 
-class DatabaseError extends AppError {
-    constructor(message, details = null) {
-        super(message, 500, 'DATABASE_ERROR', details);
-    }
-}
-
 class ServiceError extends AppError {
     constructor(message, details = null) {
         super(message, 500, 'SERVICE_ERROR', details);
@@ -56,11 +45,9 @@ class ServiceError extends AppError {
 
 module.exports = {
     AppError,
-    ValidationError,
     AuthenticationError,
     AuthorizationError,
     NotFoundError,
     ConflictError,
-    DatabaseError,
     ServiceError
 }; 
