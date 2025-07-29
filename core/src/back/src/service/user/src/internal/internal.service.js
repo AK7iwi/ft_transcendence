@@ -2,11 +2,7 @@ const DbUser = require('../database/db.user');
 
 class InternalService {
     static async createUser(userId, username, hashedPassword) {
-        try {
-            await DbUser.createUser(userId, username, hashedPassword);
-        } catch (error) {
-            throw error;
-        }
+        await DbUser.createUser(userId, username, hashedPassword);
     }
 
     static async update2FASecret(userId, secret) {

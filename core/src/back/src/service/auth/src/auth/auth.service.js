@@ -14,11 +14,11 @@ class AuthService {
             });
         } 
 
-        // Hash password and create user (to protect)
+        // Hash password and create user
         const hashedPassword = await PasswordService.hashPassword(password);
         const result = await DbAuth.createUser(username, hashedPassword);
         
-        // Create user in other services (to protect)
+        // Create user in other services
         await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/createUser`, {
             userId: result.lastInsertRowid,
             username: username,
@@ -46,6 +46,7 @@ class AuthService {
     }
 
     static async loginUser(username, password) {
+        // Check if user exists
         const user = await DbAuth.getUserByUsername(username);
         if (!user) {
             throw new AuthenticationError('Invalid credentials', {
@@ -54,6 +55,7 @@ class AuthService {
             });
         }
 
+        // Check if password is valid
         const isValid = await PasswordService.verifyPassword(password, user.password);
         if (!isValid) {
             throw new AuthenticationError('Invalid credentials', {

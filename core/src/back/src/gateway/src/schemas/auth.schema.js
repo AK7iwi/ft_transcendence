@@ -135,14 +135,12 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
-                }
-            },
-            401: {
-                type: 'object',
-                properties: {
-                    success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
