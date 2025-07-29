@@ -3,6 +3,7 @@ const { AppError } = require('./errors');
 class ErrorHandler {
     
     static handle(error, request, reply) {
+        
         console.log('=== ERROR HANDLER CALLED ===');
         console.log('Error:', error);
         console.log('Error type:', typeof error);
@@ -19,42 +20,37 @@ class ErrorHandler {
         console.log('Request method:', request.method);
         console.log('Request user:', request.user?.id);
         console.log('==========================');
-        
+
+        let errorResponse = null;
+
         // Handle validation errors (from schemas)
         if (error.validation) {
             console.log('GOING TO VALIDATION BRANCH');
-            const errorResponse = ErrorHandler.handleValidationError(error, request);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            return reply.code(response.statusCode).send(response);
+            errorResponse = ErrorHandler.handleValidationError(error, request);
         }
-
-        // If it's our custom error, use its properties
-        if (error instanceof AppError) {
+        // Handle our custom AppError instances
+        else if (error instanceof AppError) {
             console.log('GOING TO APPERROR BRANCH');
-            const response = ErrorHandler.createFormattedErrorResponse(error, request.url);
-            return reply.code(response.statusCode).send(response);
+            errorResponse = error;
         }
-
         // Handle database errors
-        if (error.code && error.code.startsWith('SQLITE_')) {
+        else if (error.code && error.code.startsWith('SQLITE_')) {
             console.log('GOING TO DATABASE BRANCH');
-            const errorResponse = ErrorHandler.handleDatabaseError(error, request);
-            const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
-            return reply.code(response.statusCode).send(response);
+            errorResponse = ErrorHandler.handleDatabaseError(error, request);
+        }
+        // Handle any other errors (fallback)
+        else {
+            console.log('GOING TO DEFAULT BRANCH');
+            errorResponse = {
+                statusCode: 500,
+                errorCode: 'INTERNAL_ERROR',
+                message: 'Internal server error',
+                details: { originalError: error.message }
+            };
         }
 
-        // Default error response
-        //createFormattedErrorResponse
-        console.log('GOING TO DEFAULT BRANCH');
-        return reply.code(500).send({
-            success: false,
-            statusCode: 500,
-            message: 'Internal server error',
-            errorCode: 'INTERNAL_ERROR',
-            timestamp: new Date().toISOString(),
-            details: error.details, //null 
-            path: request.url
-        });
+        const response = ErrorHandler.createFormattedErrorResponse(errorResponse, request.url);
+        return reply.code(response.statusCode).send(response);    
     }
 
     static createFormattedErrorResponse(error, path) {
@@ -73,14 +69,14 @@ class ErrorHandler {
 
         const validationError = error.validation[0];
         const fieldPath = validationError.instancePath.replace(/^\//, '');
-        const message = ErrorHandler.getUserFriendlyMessage(validationError, fieldPath);
         const errorCode = ErrorHandler.getErrorCode(validationError);
+        const message = ErrorHandler.getUserFriendlyMessage(validationError, fieldPath);
         const value = fieldPath.split('/').reduce((obj, key) => obj?.[key], request.body);
 
         const errorResponse = {
             statusCode: 400,
-            message: message,
             errorCode: errorCode,
+            message: message,
             details: {
                 field: fieldPath,
                 value: value
@@ -162,7 +158,7 @@ class ErrorHandler {
 
     //to be formatted 
     static handleDatabaseError(error, request) {
-        
+
         const errorMap = {
             'SQLITE_CONSTRAINT_UNIQUE': {
                 statusCode: 409,
@@ -187,11 +183,12 @@ class ErrorHandler {
             message: 'Database operation failed'
         };
 
-        return reply.code(errorInfo.statusCode).send({
-            message: errorInfo.message,
+        return {
+            statusCode: errorInfo.statusCode,
             errorCode: errorInfo.errorCode,
+            message: errorInfo.message,
             details: { databaseCode: error.code }
-        });
+        };
     }
 }
 
