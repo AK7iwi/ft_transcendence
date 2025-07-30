@@ -4,6 +4,10 @@ const JWTService = require('../security/middleware/jwt/jwt.service');
 class AuthController {
     async register(request, reply) {
         const { username, password } = request.body;
+
+        //check if user already exists
+        // create user 
+        //create user in other services
         const user = await AuthService.registerUser(username, password, request.server.serviceClient);
 
         return reply.code(201).send({
@@ -19,6 +23,10 @@ class AuthController {
     
     async login(request, reply) {
         const { username, password } = request.body;
+
+        //check if user exists
+        //check if password is correct
+        //generate token
         const user = await AuthService.loginUser(username, password);
         const token = JWTService.generateJWTToken(user);
 

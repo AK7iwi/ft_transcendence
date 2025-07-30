@@ -1,7 +1,6 @@
-const AuthController = require('./auth.controller');
 const authSchema = require('./auth.schema');
 const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
-
+const AuthController = require('./auth.controller');
 
 module.exports = async function (fastify, opts) {    
     // Register route

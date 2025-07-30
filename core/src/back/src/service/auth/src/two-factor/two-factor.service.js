@@ -4,113 +4,72 @@ const DbAuth = require('../database/db.auth');
 
 class TwoFactorService {
     static async generateSecret(username) {
-        try {
-            const secret = speakeasy.generateSecret({
-                name: 'Transcendence (' + username + ')'
-            });
+        const secret = speakeasy.generateSecret({
+            name: 'Transcendence (' + username + ')'
+        });
 
-            if (!secret.otpauth_url) {
-                throw new Error('Missing otpauth_url');
-            }
-
-            return secret;
-        } catch (error) {
-            throw new Error('Failed to generate secret');
+        if (!secret.otpauth_url) {
+            throw new Error('Missing otpauth_url');
         }
+
+        return secret;
     }
 
     static async generateQRCode(secret) {
-        try {
-            return await QRCode.toDataURL(secret.otpauth_url);
-        } catch (error) {
-            throw new Error('Failed to generate QR code');
-        }
+        return await QRCode.toDataURL(secret.otpauth_url);
     }
 
     static async verify2FAToken(secret, token) {
-        try {
-            if (!secret) {
-                throw new Error('No 2FA secret found');
-            }
-
-            console.log('Verifying token:', {
-                secret,
-                token,
-                encoding: 'base32'
-            });
-
-            const result = speakeasy.totp.verify({
-                secret: secret,
-                encoding: 'base32',
-                token: token,
-                window: 1 // Allow 30 seconds clock skew
-            });
-
-            console.log('Verification result:', result);
-            return result;
-        } catch (error) {
-            console.error('Token verification error:', error);
-            throw new Error('Failed to verify token');
+        if (!secret) {
+            throw new Error('No 2FA secret found');
         }
+
+        const result = speakeasy.totp.verify({
+            secret: secret,
+            encoding: 'base32',
+            token: token,
+            window: 1 // Allow 30 seconds clock skew
+        });
+
+        return result;
     }
 
     static async store2FASecret(userId, secret, serviceClient) {
-        try {
-            //send secret to user
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
-                userId: userId,
-                secret: secret
-            });
+        //Send secret to user
+        await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
+            userId: userId,
+            secret: secret
+        });
 
-            return await DbAuth.update2FASecret(userId, secret);
-        } catch (error) {
-            throw new Error('Failed to store 2FA secret');
-        }
+        return await DbAuth.update2FASecret(userId, secret);
     }
 
     static async enable2FA(userId, serviceClient) {
-        try {
-            // First enable 2FA in the user service
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/enable2FA`, {
-                userId: userId
-            }); 
+        // First enable 2FA in the user service
+        await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/enable2FA`, {
+            userId: userId
+        }); 
 
-            return await DbAuth.enable2FA(userId);
-
-        } catch (error) {
-            console.error('Enable 2FA error:', error);
-            throw new Error('Failed to enable 2FA');
-        }
+        return await DbAuth.enable2FA(userId);
     }
 
     static async disable2FA(userId, serviceClient) {
-        try {
-            //send disable 2fa to user
-            await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/disable2FA`, {
-                userId: userId
-            });
+        //send disable 2fa to user
+        await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/disable2FA`, {
+            userId: userId
+        });
 
-            return await DbAuth.disable2FA(userId);
-        } catch (error) {
-            throw new Error('Failed to disable 2FA');
-        }
+        return await DbAuth.disable2FA(userId);
     }
 
+    // test
     static async getTwoFactorEnabled(userId) {
-        try {
-            const enabled = await DbAuth.getTwoFactorEnabled(userId);
-            return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
-        } catch (error) {
-            throw new Error(`Failed to get 2FA enabled: ${error.message}`);
-        }
+        const enabled = await DbAuth.getTwoFactorEnabled(userId);
+        return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
     }
 
     static async getTwoFactorSecret(userId) {
-        try {
-            return await DbAuth.getTwoFactorSecret(userId);
-        } catch (error) {
-            throw new Error(`Failed to get 2FA secret: ${error.message}`);
-        }
+        return await DbAuth.getTwoFactorSecret(userId);
     }
 }
 

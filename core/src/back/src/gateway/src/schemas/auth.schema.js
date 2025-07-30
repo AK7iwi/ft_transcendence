@@ -185,7 +185,8 @@ const authSchema = {
         body: {
             type: 'object',
             required: [],
-            properties: {}
+            properties: {},
+            additionalProperties: false
         },
         response: {
             200: {
@@ -211,14 +212,24 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -229,7 +240,8 @@ const authSchema = {
             required: ['token'],
             properties: {
                 token: { type: 'string', minLength: 6, maxLength: 6 }
-            }
+            },
+            additionalProperties: false
         },
         response: {
             200: {
@@ -255,7 +267,12 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -266,7 +283,8 @@ const authSchema = {
             required: ['token'],
             properties: {
                 token: { type: 'string', minLength: 6, maxLength: 6 }
-            }
+            },
+            additionalProperties: false
         },
         response: {
             200: {
@@ -293,7 +311,12 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -302,7 +325,8 @@ const authSchema = {
         body: {
             type: 'object',
             required: [],
-            properties: {}
+            properties: {},
+            additionalProperties: false
         },
         response: {
             200: {
@@ -324,7 +348,12 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
