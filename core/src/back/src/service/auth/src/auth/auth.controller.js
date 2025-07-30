@@ -5,10 +5,9 @@ class AuthController {
     async register(request, reply) {
         const { username, password } = request.body;
 
-        //check if user already exists
-        // create user 
-        //create user in other services
-        const user = await AuthService.registerUser(username, password, request.server.serviceClient);
+        await AuthService.checkIfUserExists(username);
+        const user = await AuthService.createUser(username, password);
+        await AuthService.createUserInOtherServices(user.id, user.username, user.hashedPassword, request.server.serviceClient);
 
         return reply.code(201).send({
             success: true,
