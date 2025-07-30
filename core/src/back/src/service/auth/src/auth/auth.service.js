@@ -24,6 +24,7 @@ class AuthService {
         };
     }
 
+    //if this fail, need to delete the user from the database
     static async createUserInOtherServices(userId, username, hashedPassword, serviceClient) {
         await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/createUser`, {
             userId: userId,
