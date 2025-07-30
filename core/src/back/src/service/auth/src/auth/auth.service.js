@@ -3,7 +3,6 @@ const DbAuth = require('../database/db.auth');
 const { AuthenticationError, ConflictError } = require('../utils/error/errors');
 
 class AuthService {
-
     static async registerUser(username, password, serviceClient) {
         //Check if user already exists
         const existingUser = await DbAuth.getUserByUsername(username);
@@ -49,19 +48,13 @@ class AuthService {
         // Check if user exists
         const user = await DbAuth.getUserByUsername(username);
         if (!user) {
-            throw new AuthenticationError('Invalid credentials', {
-                field: 'username',
-                reason: 'user_not_found'
-            });
+            throw new AuthenticationError('Username or password is incorrect');
         }
 
         // Check if password is valid
         const isValid = await PasswordService.verifyPassword(password, user.password);
         if (!isValid) {
-            throw new AuthenticationError('Invalid credentials', {
-                field: 'password',
-                reason: 'invalid_password'
-            });
+            throw new AuthenticationError('Username or password is incorrect');
         }
 
         return {
