@@ -55,6 +55,8 @@ class DbAuth {
         return stmt.run(userId);
     }
 
+
+    // can be replace by getUserByUsername
     static async getTwoFactorEnabled(userId) {
         const stmt = db.prepare(`
             SELECT two_factor_enabled

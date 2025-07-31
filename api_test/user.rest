@@ -38,7 +38,7 @@ Content-Type: application/json
 
 ### Get first user profile (me)
 GET https://localhost:3000/user/me
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjEiLCJpYXQiOjE3NTM5NTA1MjMsImV4cCI6MTc1Mzk1NDEyM30.3-Ynnjezp36CbT5yQRNoYfcJrv7J57bAV1nR-KCq_yY
 
 ### Get second user profile (me)
 GET https://localhost:3000/user/me

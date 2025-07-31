@@ -3,14 +3,20 @@ const DbAuth = require('../database/db.auth');
 const { AuthenticationError, ConflictError } = require('../utils/error/errors');
 
 class AuthService {
-    static async checkIfUserExists(username) {
+    static async checkIfUserExists(username, shouldExist) {
         const user = await DbAuth.getUserByUsername(username);
-        if (user) {
+        
+        if (shouldExist && !user) {
+            throw new AuthenticationError('Username or password is incorrect');
+        }
+        else if (!shouldExist && user) {
             throw new ConflictError('Username already exists', {
                 field: 'username',
                 value: username
             });
         }
+        
+        return user;
     }
 
     static async createUser(username, password) {
@@ -24,48 +30,35 @@ class AuthService {
         };
     }
 
-    //if this fail, need to delete the user from the database
-    static async createUserInOtherServices(userId, username, hashedPassword, serviceClient) {
+    //if this fail, need to delete the user from others database
+    static async createUserInOtherServices(user, serviceClient) {
         await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/createUser`, {
-            userId: userId,
-            username: username,
-            hashedPassword: hashedPassword
+            userId: user.id,
+            username: user.username,
+            hashedPassword: user.hashedPassword
         });
 
         await serviceClient.post(`${process.env.FRIEND_SERVICE_URL}/internal/createUser`, {
-            userId: userId,
-            username: username
+            userId: user.id,
+            username: user.username
         });
 
         await serviceClient.post(`${process.env.CHAT_SERVICE_URL}/internal/createUser`, {
-            userId: userId,
-            username: username
+            userId: user.id,
+            username: user.username
         });
 
         await serviceClient.post(`${process.env.TOURNAMENT_SERVICE_URL}/internal/createUser`, {
-            userId: userId,
-            username: username
+            userId: user.id,
+            username: user.username
         });
     }
 
-    static async loginUser(username, password) {
-        // Check if user exists
-        const user = await DbAuth.getUserByUsername(username);
-        if (!user) {
-            throw new AuthenticationError('Username or password is incorrect');
-        }
-
-        // Check if password is valid
-        const isValid = await PasswordService.verifyPassword(password, user.password);
+    static async checkPassword(password, userPassword) {
+        const isValid = await PasswordService.verifyPassword(password, userPassword);
         if (!isValid) {
             throw new AuthenticationError('Username or password is incorrect');
         }
-
-        return {
-            id: user.id,
-            username: user.username,
-            twoFactorEnabled: user.two_factor_enabled
-        };
     }
 }
 

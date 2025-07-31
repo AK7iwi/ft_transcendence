@@ -5,9 +5,9 @@ class AuthController {
     async register(request, reply) {
         const { username, password } = request.body;
 
-        await AuthService.checkIfUserExists(username);
+        await AuthService.checkIfUserExists(username, false);
         const user = await AuthService.createUser(username, password);
-        await AuthService.createUserInOtherServices(user.id, user.username, user.hashedPassword, request.server.serviceClient);
+        await AuthService.createUserInOtherServices(user, request.server.serviceClient);
 
         return reply.code(201).send({
             success: true,
@@ -23,14 +23,12 @@ class AuthController {
     async login(request, reply) {
         const { username, password } = request.body;
 
-        //check if user exists
-        //check if password is correct
-        //generate token
-        const user = await AuthService.loginUser(username, password);
+        const user = await AuthService.checkIfUserExists(username, true);
+        await AuthService.checkPassword(password, user.password);
         const token = JWTService.generateJWTToken(user);
 
         // If 2FA is enabled, return a special response
-        if (user.twoFactorEnabled) {
+        if (user.two_factor_enabled) {
             return reply.code(201).send({
                 success: true,
                 message: '2FA required',

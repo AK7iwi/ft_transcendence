@@ -2,7 +2,6 @@ const db = require('./connection');
 
 class DbUser {
     static async createTable() {
-        //Create user_profiles table
         const userStmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS user_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,8 +163,6 @@ class DbUser {
             return stmt.run(userId);
         }
     }
-
-    //static async 
 }
 
 module.exports = DbUser; 

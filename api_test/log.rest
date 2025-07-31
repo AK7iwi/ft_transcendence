@@ -3,7 +3,7 @@ POST https://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-    "username": "testuser15",
+    "username": "testuser11",
     "password": "Test123@"
 }
 
@@ -13,7 +13,7 @@ POST https://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-    "username": "testuser15",
+    "username": "testuser",
     "password": "Test123@"
 }
 
