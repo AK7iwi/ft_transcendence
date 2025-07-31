@@ -4,9 +4,14 @@ const JWTService = require('../security/middleware/jwt/jwt.service');
 class TwoFactorController {
     async setup2FA(request, reply) {
         const userId = request.user.id;
-        const username = request.user.username; 
+        const username = request.user.username;
+
+        console.log("================SETUP 2FA=================");
+        console.log(userId);
+        console.log(username);
+        console.log("===========================================");
         
-        await TwoFactorService.checkIf2FAEnabled(username);
+        await TwoFactorService.checkIf2FAEnabled(userId);
         const secret = await TwoFactorService.generateSecret(username);
         await TwoFactorService.store2FASecret(userId, secret.base32, request.server.serviceClient);
         const qrCode = await TwoFactorService.generateQRCode(secret);
@@ -26,16 +31,9 @@ class TwoFactorController {
     async verify_setup2FA(request, reply) {
         const { token } = request.body;
         const userId = request.user.id;
-        const username = request.user.username; 
+        const username = request.user.username;
+
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
-
-        if (!secret) {
-            return reply.code(400).send({
-                success: false,
-                message: '2FA not set up'
-            });
-        }
-
         const isValid = await TwoFactorService.verify2FAToken(secret, token);
         if (!isValid) {
             return reply.code(400).send({
@@ -65,12 +63,6 @@ class TwoFactorController {
         const username = request.user.username;
 
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
-        if (!secret) {
-            return reply.code(400).send({
-                success: false,
-                message: '2FA not set up'
-            });
-        }
 
         const isValid = await TwoFactorService.verify2FAToken(secret, token);
         if (!isValid) {
@@ -102,7 +94,6 @@ class TwoFactorController {
         const userId = request.user.id;
         const username = request.user.username;
 
-        //verify the token before disable
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
         if (!secret) {
             return reply.code(400).send({

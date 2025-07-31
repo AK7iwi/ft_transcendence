@@ -73,8 +73,16 @@ class DbAuth {
         return stmt.get(username);
     }
 
-    //INTERNAL ROUTES
+    static async getUserById(userId) {
+        const stmt = db.prepare(`
+            SELECT id, username, password, two_factor_enabled
+            FROM user_profiles
+            WHERE id = ?
+        `);
+        return stmt.get(userId);
+    }
 
+    //INTERNAL ROUTES
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
             UPDATE user_profiles

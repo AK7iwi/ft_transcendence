@@ -1,0 +1,127 @@
+### 2FA API Tests
+
+### First, register a user for testing
+POST https://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser2fa",
+    "password": "Test123@"
+}
+
+###
+
+### Login to get JWT token for 2FA setup
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser2fa",
+    "password": "Test123@"
+}
+
+###
+
+### Setup 2FA (requires JWT token)
+POST https://localhost:3000/2fa/setup
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{}
+
+###
+
+### Verify 2FA Setup (requires JWT token + 6-digit token from authenticator app)
+POST https://localhost:3000/2fa/verify-setup
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+    "token": "123456"
+}
+
+###
+
+### Login with 2FA enabled (first step - username/password)
+POST https://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser2fa",
+    "password": "Test123@"
+}
+
+###
+
+### Verify 2FA Login (second step - 6-digit token from authenticator app)
+POST https://localhost:3000/2fa/verify-login
+Content-Type: application/json
+
+{
+    "token": "123456"
+}
+
+###
+
+### Disable 2FA (requires JWT token)
+POST https://localhost:3000/2fa/disable
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{}
+
+###
+
+### Test Setup 2FA without JWT token (should fail)
+POST https://localhost:3000/2fa/setup
+Content-Type: application/json
+
+{}
+
+###
+
+### Test Verify Setup with invalid token format (should fail)
+POST https://localhost:3000/2fa/verify-setup
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+    "token": "12345"
+}
+
+###
+
+### Test Verify Setup with missing token (should fail)
+POST https://localhost:3000/2fa/verify-setup
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{}
+
+###
+
+### Test Verify Login with invalid token format (should fail)
+POST https://localhost:3000/2fa/verify-login
+Content-Type: application/json
+
+{
+    "token": "12345"
+}
+
+###
+
+### Test Verify Login with missing token (should fail)
+POST https://localhost:3000/2fa/verify-login
+Content-Type: application/json
+
+{}
+
+###
+
+### Test Disable 2FA without JWT token (should fail)
+POST https://localhost:3000/2fa/disable
+Content-Type: application/json
+
+{}
+
+###
