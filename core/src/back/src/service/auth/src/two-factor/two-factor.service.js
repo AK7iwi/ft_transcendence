@@ -3,20 +3,26 @@ const QRCode = require('qrcode');
 const DbAuth = require('../database/db.auth');
 
 class TwoFactorService {
+    static async checkIf2FAEnabled(username) {
+        //use getUserByUsername
+        const user = await DbAuth.getUserByUsername(username);
+        if (user.two_factor_enabled) {
+            throw new Error('2FA is already enabled');
+        }
+    }
+
     static async generateSecret(username) {
         const secret = speakeasy.generateSecret({
             name: 'Transcendence (' + username + ')'
         });
 
-        if (!secret.otpauth_url) {
-            throw new Error('Missing otpauth_url');
-        }
-
         return secret;
     }
 
     static async generateQRCode(secret) {
-        return await QRCode.toDataURL(secret.otpauth_url);
+        const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+
+        return qrCode;
     }
 
     static async verify2FAToken(secret, token) {
@@ -28,7 +34,7 @@ class TwoFactorService {
             secret: secret,
             encoding: 'base32',
             token: token,
-            window: 1 // Allow 30 seconds clock skew
+            window: 1
         });
 
         return result;
@@ -60,12 +66,6 @@ class TwoFactorService {
         });
 
         return await DbAuth.disable2FA(userId);
-    }
-
-    // test
-    static async getTwoFactorEnabled(userId) {
-        const enabled = await DbAuth.getTwoFactorEnabled(userId);
-        return enabled === 1 || enabled === true; // Handle both SQLite boolean (1) and JavaScript boolean (true)
     }
 
     static async getTwoFactorSecret(userId) {

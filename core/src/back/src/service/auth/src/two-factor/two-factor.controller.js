@@ -5,23 +5,10 @@ class TwoFactorController {
     async setup2FA(request, reply) {
         const userId = request.user.id;
         const username = request.user.username; 
-
-        //check if 2fa is already enabled
-        const twoFactorEnabled = await TwoFactorService.getTwoFactorEnabled(userId);
-        if (twoFactorEnabled) {
-            return reply.code(400).send({
-                success: false,
-                message: '2FA already setup'
-            });
-        }
-
-        // Generate secret
+        
+        await TwoFactorService.checkIf2FAEnabled(username);
         const secret = await TwoFactorService.generateSecret(username);
-            
-        // Store secret temporarily (don't enable 2FA yet)
         await TwoFactorService.store2FASecret(userId, secret.base32, request.server.serviceClient);
-
-        // Generate QR code
         const qrCode = await TwoFactorService.generateQRCode(secret);
 
         return reply.code(200).send({

@@ -54,18 +54,6 @@ class DbAuth {
         `);
         return stmt.run(userId);
     }
-
-
-    // can be replace by getUserByUsername
-    static async getTwoFactorEnabled(userId) {
-        const stmt = db.prepare(`
-            SELECT two_factor_enabled
-            FROM user_profiles
-            WHERE id = ?
-        `);
-        const result = stmt.get(userId);
-        return result ? result.two_factor_enabled : false;
-    }
     
     static async getTwoFactorSecret(userId) {
         const stmt = db.prepare(`
@@ -73,8 +61,7 @@ class DbAuth {
             FROM user_profiles
             WHERE id = ?
         `);
-        const result = stmt.get(userId);
-        return result ? result.two_factor_secret : null;
+        return stmt.get(userId);
     }
 
     static async getUserByUsername(username) {
