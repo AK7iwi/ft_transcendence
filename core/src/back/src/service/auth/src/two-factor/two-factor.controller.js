@@ -34,15 +34,7 @@ class TwoFactorController {
         const username = request.user.username;
 
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
-        const isValid = await TwoFactorService.verify2FAToken(secret, token);
-        if (!isValid) {
-            return reply.code(400).send({
-                success: false,
-                message: 'Invalid 2FA token'
-            });
-        }
-
-            // Always enable 2FA after successful verification
+        await TwoFactorService.verify2FAToken(secret, token);
         await TwoFactorService.enable2FA(userId, request.server.serviceClient);
 
         return reply.code(200).send({
@@ -63,15 +55,8 @@ class TwoFactorController {
         const username = request.user.username;
 
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
-
-        const isValid = await TwoFactorService.verify2FAToken(secret, token);
-        if (!isValid) {
-            return reply.code(400).send({
-                success: false,
-                message: 'Invalid 2FA token'
-            });
-        }
-            
+        await TwoFactorService.verify2FAToken(secret, token);
+        
         const jwtToken = JWTService.generateJWTToken({
             id: userId,
             username: username

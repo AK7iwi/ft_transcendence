@@ -1,12 +1,16 @@
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const DbAuth = require('../database/db.auth');
+const { ConflictError } = require('../utils/error/errors');
 
 class TwoFactorService {
     static async checkIf2FAEnabled(userId) {
         const user = await DbAuth.getUserById(userId);
         if (user.two_factor_enabled) {
-            throw new Error('2FA is already enabled');
+            throw new ConflictError('2FA is already enabled', {
+                field: 'twoFactorEnabled',
+                currentState: true
+            });
         }
     }
 
@@ -24,15 +28,6 @@ class TwoFactorService {
         return qrCode;
     }
 
-    static async store2FASecret(userId, secret, serviceClient) {
-        await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
-            userId: userId,
-            secret: secret
-        });
-
-        return await DbAuth.update2FASecret(userId, secret);
-    }
-
     static async verify2FAToken(secret, token) {
         const result = speakeasy.totp.verify({
             secret: secret,
@@ -41,7 +36,23 @@ class TwoFactorService {
             window: 1
         });
 
-        return result;
+        //check 
+        if (!result) {
+            throw new ConflictError('Invalid 2FA token', {
+                field: 'twoFactorToken',
+                currentState: false
+            });
+        }
+        return result; 
+    }
+
+    static async store2FASecret(userId, secret, serviceClient) {
+        await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
+            userId: userId,
+            secret: secret
+        });
+
+        await DbAuth.update2FASecret(userId, secret);
     }
 
     static async enable2FA(userId, serviceClient) {
@@ -49,7 +60,7 @@ class TwoFactorService {
             userId: userId
         });
 
-        return await DbAuth.enable2FA(userId);
+        await DbAuth.enable2FA(userId);
     }
 
     static async disable2FA(userId, serviceClient) {
@@ -57,11 +68,13 @@ class TwoFactorService {
             userId: userId
         });
 
-        return await DbAuth.disable2FA(userId);
+        await DbAuth.disable2FA(userId);
     }
 
     static async getTwoFactorSecret(userId) {
-        return await DbAuth.getTwoFactorSecret(userId);
+        const secret = await DbAuth.getTwoFactorSecret(userId);
+
+        return secret;
     }
 }
 

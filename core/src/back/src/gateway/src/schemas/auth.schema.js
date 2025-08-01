@@ -220,6 +220,18 @@ const authSchema = {
                     path: { type: 'string' }
                 }
             },
+            409: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
             500: {
                 type: 'object',
                 properties: {
@@ -274,7 +286,20 @@ const authSchema = {
                     details: {},
                     path: { type: 'string' }
                 }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
             }
+
         }
     },
     verify_login2FA: {
@@ -318,6 +343,18 @@ const authSchema = {
                     details: {},
                     path: { type: 'string' }
                 }
+            },
+            500: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
             }
         }
     },
@@ -345,6 +382,18 @@ const authSchema = {
                 }
             },
             400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
+            500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },

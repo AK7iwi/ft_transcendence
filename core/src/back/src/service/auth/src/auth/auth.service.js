@@ -5,7 +5,6 @@ const { AuthenticationError, ConflictError } = require('../utils/error/errors');
 class AuthService {
     static async checkIfUserExists(username, shouldExist) {
         const user = await DbAuth.getUserByUsername(username);
-        
         if (shouldExist && !user) {
             throw new AuthenticationError('Username or password is incorrect');
         }
