@@ -13,7 +13,10 @@ class TwoFactorController {
         
         await TwoFactorService.checkIf2FAEnabled(userId, false);
         const secret = await TwoFactorService.generateSecret(username);
-        await TwoFactorService.update2FASecret(userId, secret.base32, request.server.serviceClient);
+        console.log("SECRET: ", secret);
+        console.log("SECRET.SECRET: ", secret.base32);
+        console.log("SECRET.BASE64: ", secret.base64);
+        await TwoFactorService.update2FASecret(userId, secret.base64, request.server.serviceClient);
         const qrCode = await TwoFactorService.generateQRCode(secret);
 
         return reply.code(200).send({
@@ -34,8 +37,12 @@ class TwoFactorController {
         const username = request.user.username;
 
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
+        console.log("================ VERIFY 2FA =================");
+        console.log("SECRET: ", secret);
         await TwoFactorService.verify2FAToken(secret, token);
+        console.log("================ VERIFY 2FA 2 =================");
         await TwoFactorService.enable2FA(userId, request.server.serviceClient);
+        console.log("================ VERIFY 2FA 3 =================");
 
         return reply.code(200).send({
             success: true,

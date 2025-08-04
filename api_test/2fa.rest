@@ -23,7 +23,7 @@ Content-Type: application/json
 ###
 
 ### Setup 2FA (requires JWT token)
-POST https://localhost:3000/2fa/setup
+POST https://localhost:3000/auth/2fa/setup
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
@@ -32,7 +32,7 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 ###
 
 ### Verify 2FA Setup (requires JWT token + 6-digit token from authenticator app)
-POST https://localhost:3000/2fa/verify-setup
+POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
@@ -54,7 +54,7 @@ Content-Type: application/json
 ###
 
 ### Verify 2FA Login (second step - 6-digit token from authenticator app)
-POST https://localhost:3000/2fa/verify-login
+POST https://localhost:3000/auth/2fa/verify-login
 Content-Type: application/json
 
 {
@@ -64,7 +64,7 @@ Content-Type: application/json
 ###
 
 ### Disable 2FA (requires JWT token)
-POST https://localhost:3000/2fa/disable
+POST https://localhost:3000/auth/2fa/disable
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
@@ -73,7 +73,7 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 ###
 
 ### Test Setup 2FA without JWT token (should fail)
-POST https://localhost:3000/2fa/setup
+POST https://localhost:3000/auth/2fa/setup
 Content-Type: application/json
 
 {}
@@ -81,7 +81,7 @@ Content-Type: application/json
 ###
 
 ### Test Verify Setup with invalid token format (should fail)
-POST https://localhost:3000/2fa/verify-setup
+POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
@@ -92,7 +92,7 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 ###
 
 ### Test Verify Setup with missing token (should fail)
-POST https://localhost:3000/2fa/verify-setup
+POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
@@ -101,7 +101,7 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 ###
 
 ### Test Verify Login with invalid token format (should fail)
-POST https://localhost:3000/2fa/verify-login
+POST https://localhost:3000/auth/2fa/verify-login
 Content-Type: application/json
 
 {
@@ -111,7 +111,7 @@ Content-Type: application/json
 ###
 
 ### Test Verify Login with missing token (should fail)
-POST https://localhost:3000/2fa/verify-login
+POST https://localhost:3000/auth/2fa/verify-login
 Content-Type: application/json
 
 {}
@@ -119,7 +119,7 @@ Content-Type: application/json
 ###
 
 ### Test Disable 2FA without JWT token (should fail)
-POST https://localhost:3000/2fa/disable
+POST https://localhost:3000/auth/2fa/disable
 Content-Type: application/json
 
 {}
