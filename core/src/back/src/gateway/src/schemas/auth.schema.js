@@ -50,18 +50,6 @@ const authSchema = {
                     path: { type: 'string' }
                 }
             },
-            401: {
-                type: 'object',
-                properties: {
-                    success: { type: 'boolean' },
-                    message: { type: 'string' },
-                    statusCode: { type: 'number' },
-                    errorCode: { type: 'string' },
-                    timestamp: { type: 'string' },
-                    details: {},
-                    path: { type: 'string' }
-                }
-            },
             409: {
                 type: 'object',
                 properties: {
@@ -287,6 +275,18 @@ const authSchema = {
                     path: { type: 'string' }
                 }
             },
+            409: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
             500: {
                 type: 'object',
                 properties: {
@@ -344,6 +344,18 @@ const authSchema = {
                     path: { type: 'string' }
                 }
             },
+            409: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
             500: {
                 type: 'object',
                 properties: {
@@ -382,6 +394,18 @@ const authSchema = {
                 }
             },
             400: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
+            409: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },

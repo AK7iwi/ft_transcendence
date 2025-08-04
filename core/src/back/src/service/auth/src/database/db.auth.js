@@ -54,15 +54,6 @@ class DbAuth {
         `);
         return stmt.run(userId);
     }
-    
-    static async getTwoFactorSecret(userId) {
-        const stmt = db.prepare(`
-            SELECT two_factor_secret
-            FROM user_profiles
-            WHERE id = ?
-        `);
-        return stmt.get(userId);
-    }
 
     static async getUserByUsername(username) {
         const stmt = db.prepare(`
@@ -82,7 +73,16 @@ class DbAuth {
         return stmt.get(userId);
     }
 
-    ///////////////////////INTERNAL ROUTES/////////////////////
+    static async getTwoFactorSecret(userId) {
+        const stmt = db.prepare(`
+            SELECT two_factor_secret
+            FROM user_profiles
+            WHERE id = ?
+        `);
+        return stmt.get(userId);
+    }
+
+    /////////////////////// INTERNAL ROUTES /////////////////////
 
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`

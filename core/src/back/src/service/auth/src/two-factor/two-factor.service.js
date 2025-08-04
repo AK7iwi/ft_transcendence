@@ -4,14 +4,22 @@ const DbAuth = require('../database/db.auth');
 const { ConflictError } = require('../utils/error/errors');
 
 class TwoFactorService {
-    static async checkIf2FAEnabled(userId) {
+    static async checkIf2FAEnabled(userId, shouldBeEnabled) {
         const user = await DbAuth.getUserById(userId);
-        if (user.two_factor_enabled) {
+        if (!shouldBeEnabled && user.two_factor_enabled ) {
             throw new ConflictError('2FA is already enabled', {
                 field: 'twoFactorEnabled',
                 currentState: true
             });
         }
+        else if (shouldBeEnabled && !user.two_factor_enabled) {
+            throw new ConflictError('2FA is already disabled', {
+                field: 'twoFactorEnabled',
+                currentState: false
+            });
+        }
+
+        return user;
     }
 
     static async generateSecret(username) {
@@ -36,17 +44,17 @@ class TwoFactorService {
             window: 1
         });
 
-        //check 
         if (!result) {
             throw new ConflictError('Invalid 2FA token', {
                 field: 'twoFactorToken',
                 currentState: false
             });
         }
+
         return result; 
     }
 
-    static async store2FASecret(userId, secret, serviceClient) {
+    static async update2FASecret(userId, secret, serviceClient) {
         await serviceClient.post(`${process.env.USER_SERVICE_URL}/internal/update2FASecret`, {
             userId: userId,
             secret: secret

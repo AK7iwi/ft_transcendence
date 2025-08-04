@@ -11,9 +11,9 @@ class TwoFactorController {
         console.log(username);
         console.log("===========================================");
         
-        await TwoFactorService.checkIf2FAEnabled(userId);
+        await TwoFactorService.checkIf2FAEnabled(userId, false);
         const secret = await TwoFactorService.generateSecret(username);
-        await TwoFactorService.store2FASecret(userId, secret.base32, request.server.serviceClient);
+        await TwoFactorService.update2FASecret(userId, secret.base32, request.server.serviceClient);
         const qrCode = await TwoFactorService.generateQRCode(secret);
 
         return reply.code(200).send({
@@ -56,7 +56,6 @@ class TwoFactorController {
 
         const secret = await TwoFactorService.getTwoFactorSecret(userId);
         await TwoFactorService.verify2FAToken(secret, token);
-        
         const jwtToken = JWTService.generateJWTToken({
             id: userId,
             username: username
@@ -79,14 +78,7 @@ class TwoFactorController {
         const userId = request.user.id;
         const username = request.user.username;
 
-        const secret = await TwoFactorService.getTwoFactorSecret(userId);
-        if (!secret) {
-            return reply.code(400).send({
-                success: false,
-                message: '2FA not set up'
-            });
-        }
-
+        await TwoFactorService.checkIf2FAEnabled(userId, true);
         await TwoFactorService.disable2FA(userId, request.server.serviceClient);
             
         return reply.code(200).send({
