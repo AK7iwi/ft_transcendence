@@ -25,7 +25,7 @@ Content-Type: application/json
 ### Setup 2FA (requires JWT token)
 POST https://localhost:3000/auth/2fa/setup
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjJmYSIsImlhdCI6MTc1NDQ5Mzk4OSwiZXhwIjoxNzU0NDk3NTg5fQ.7wNQ3Rk0NyjgP9iyC68Ny4BVjlPxH2x5irm-cCTwFsM
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
 {}
 
@@ -34,10 +34,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 ### Verify 2FA Setup (requires JWT token + 6-digit token from authenticator app)
 POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjJmYSIsImlhdCI6MTc1NDQ5Mzk4OSwiZXhwIjoxNzU0NDk3NTg5fQ.7wNQ3Rk0NyjgP9iyC68Ny4BVjlPxH2x5irm-cCTwFsM
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
 {
-    "token": "493450"
+    "token": "123456"
 }
 
 ###
@@ -59,7 +59,7 @@ Content-Type: application/json
 
 {
     "userId": "1",
-    "token": "102698"
+    "token": "123456"
 }
 
 ###
@@ -67,7 +67,7 @@ Content-Type: application/json
 ### Disable 2FA (requires JWT token)
 POST https://localhost:3000/auth/2fa/disable
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjJmYSIsImlhdCI6MTc1NDQ5NDEzMywiZXhwIjoxNzU0NDk3NzMzfQ.iUTjVBscCS2tOr_xvCa2QNg3LPSU1d_Tx4A5_RT7DtE
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
 {}
 
@@ -76,10 +76,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hb
 ### Test Verify Setup with invalid token format (should fail)
 POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjJmYSIsImlhdCI6MTc1NDQ5NDEzMywiZXhwIjoxNzU0NDk3NzMzfQ.iUTjVBscCS2tOr_xvCa2QNg3LPSU1d_Tx4A5_RT7DtE
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
 {
-    "token": "123945"
+    "token": "12345"
 }
 
 ###
