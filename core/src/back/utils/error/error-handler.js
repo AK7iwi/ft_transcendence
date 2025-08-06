@@ -8,7 +8,7 @@ class ErrorHandler {
 
         switch (error.keyword) {
             case 'required':
-                return `${field} is required`;
+                return 'Required field is missing';
             case 'type':
                 const expectedType = error.params.type;
                 const receivedType = typeof error.data;
@@ -77,7 +77,7 @@ class ErrorHandler {
             errorCode: error.errorCode,
             message: error.message,
             timestamp: new Date().toISOString(),
-            details: error.details,
+            details: error.details || null,
             path: path
         };
     }
@@ -103,8 +103,8 @@ class ErrorHandler {
             errorCode: errorCode,
             message: message,
             details: {
-                field: fieldPath,
-                value: value
+                field: fieldPath || null,
+                value: value || null
             }
         };
         
