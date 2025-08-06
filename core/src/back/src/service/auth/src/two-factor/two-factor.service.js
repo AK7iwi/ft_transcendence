@@ -39,14 +39,10 @@ class TwoFactorService {
     static async verify2FAToken(secret, token) {
         const result = speakeasy.totp.verify({
             secret: secret,
-            encoding: 'base64',
+            encoding: 'base32',
             token: token,
             window: 1
         });
-
-        console.log("================ VERIFY 2FA IN SERVICE =================");
-        console.log(result);
-        console.log("===========================================");
 
         if (!result) {
             throw new ConflictError('Invalid 2FA token', {
@@ -83,13 +79,9 @@ class TwoFactorService {
         await DbAuth.disable2FA(userId);
     }
 
-    //2FA in fct name 
-    static async getTwoFactorSecret(userId) {
-        console.log("USER ID: ", userId);
-        const result = await DbAuth.getTwoFactorSecret(userId);
+    static async get2FASecret(userId) {
+        const result = await DbAuth.get2FASecret(userId);
 
-        console.log("RESULT: ", result);
-        console.log("RESULT.TWO_FACTOR_SECRET: ", result.two_factor_secret);
         return result.two_factor_secret;
     }
 }

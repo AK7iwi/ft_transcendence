@@ -73,7 +73,7 @@ class DbAuth {
         return stmt.get(userId);
     }
 
-    static async getTwoFactorSecret(userId) {
+    static async get2FASecret(userId) {
         const stmt = db.prepare(`
             SELECT two_factor_secret
             FROM user_profiles

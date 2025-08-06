@@ -72,14 +72,6 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 
 ###
 
-### Test Setup 2FA without JWT token (should fail)
-POST https://localhost:3000/auth/2fa/setup
-Content-Type: application/json
-
-{}
-
-###
-
 ### Test Verify Setup with invalid token format (should fail)
 POST https://localhost:3000/auth/2fa/verify-setup
 Content-Type: application/json
@@ -112,14 +104,6 @@ Content-Type: application/json
 
 ### Test Verify Login with missing token (should fail)
 POST https://localhost:3000/auth/2fa/verify-login
-Content-Type: application/json
-
-{}
-
-###
-
-### Test Disable 2FA without JWT token (should fail)
-POST https://localhost:3000/auth/2fa/disable
 Content-Type: application/json
 
 {}

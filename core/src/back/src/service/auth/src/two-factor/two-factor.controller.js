@@ -5,18 +5,10 @@ class TwoFactorController {
     async setup2FA(request, reply) {
         const userId = request.user.id;
         const username = request.user.username;
-
-        console.log("================SETUP 2FA=================");
-        console.log(userId);
-        console.log(username);
-        console.log("===========================================");
         
         await TwoFactorService.checkIf2FAEnabled(userId, false);
         const secret = await TwoFactorService.generateSecret(username);
-        console.log("SECRET: ", secret);
-        console.log("SECRET.SECRET: ", secret.base32);
-        console.log("SECRET.BASE64: ", secret.base64);
-        await TwoFactorService.update2FASecret(userId, secret.base64, request.server.serviceClient);
+        await TwoFactorService.update2FASecret(userId, secret.base32, request.server.serviceClient);
         const qrCode = await TwoFactorService.generateQRCode(secret);
 
         return reply.code(200).send({
@@ -36,47 +28,38 @@ class TwoFactorController {
         const userId = request.user.id;
         const username = request.user.username;
 
-        const secret = await TwoFactorService.getTwoFactorSecret(userId);
-        console.log("================ VERIFY 2FA =================");
-        console.log("SECRET: ", secret);
+        const secret = await TwoFactorService.get2FASecret(userId);
         await TwoFactorService.verify2FAToken(secret, token);
-        console.log("================ VERIFY 2FA 2 =================");
         await TwoFactorService.enable2FA(userId, request.server.serviceClient);
-        console.log("================ VERIFY 2FA 3 =================");
 
         return reply.code(200).send({
             success: true,
             message: '2FA verification successful',
             data: {
                 user: {
-                    id: userId,
                     username: username
                 }
             }
         });
     }
 
+    //need to send userId in the body (from the login route)
     async verify_login2FA(request, reply) {
-        const { token } = request.body;
-        const userId = request.user.id;
-        const username = request.user.username;
+        const { userId, token } = request.body;
 
-        const secret = await TwoFactorService.getTwoFactorSecret(userId);
+        const user = await TwoFactorService.checkIf2FAEnabled(userId, true);
+        const secret = await TwoFactorService.get2FASecret(userId);
         await TwoFactorService.verify2FAToken(secret, token);
-        const jwtToken = JWTService.generateJWTToken({
-            id: userId,
-            username: username
-        });
+        const jwtToken = JWTService.generateJWTToken(user);
 
         return reply.code(200).send({
             success: true,
             message: '2FA verification successful',
             data: {
                 user: {
-                    id: userId,
-                    username: username
-                },
-                token: jwtToken
+                    username: user.username,
+                    token: jwtToken
+                }
             }
         });
     }
@@ -93,7 +76,6 @@ class TwoFactorController {
             message: '2FA disabled successfully',
             data: {
                 user: {
-                    id: userId,
                     username: username
                 }
             }

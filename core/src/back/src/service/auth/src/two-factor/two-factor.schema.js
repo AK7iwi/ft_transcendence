@@ -20,8 +20,9 @@ const twoFactorSchema = {
     verify_login2FA: {
         body: {
             type: 'object',
-            required: ['token'],
+            required: ['userId', 'token'],
             properties: {
+                userId: { type: 'string' },
                 token: { type: 'string', minLength: 6, maxLength: 6 }
             },
             additionalProperties: false

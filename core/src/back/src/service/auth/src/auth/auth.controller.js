@@ -25,20 +25,22 @@ class AuthController {
 
         const user = await AuthService.checkIfUserExists(username, true);
         await AuthService.checkPassword(password, user.password);
-        const token = JWTService.generateJWTToken(user);
-
+        
         // If 2FA is enabled, return a special response
         if (user.two_factor_enabled) {
             return reply.code(201).send({
                 success: true,
                 message: '2FA required',
-                data: { 
-                    username: user.username,
-                    twofa: true
+                data: {
+                    user: {
+                        username: user.username,
+                        twofa: true
+                    }
                 }
             });
         }
-  
+        
+        const token = JWTService.generateJWTToken(user);
         return reply.code(200).send({
             success: true,
             message: 'Login successful',

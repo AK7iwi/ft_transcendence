@@ -124,9 +124,13 @@ const authSchema = {
                     data: {
                         type: 'object',
                         properties: {
-                            twofa: { type: 'boolean' },
-                            userId: { type: 'string' },
-                            username: { type: 'string' }
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' },
+                                    twofa: { type: 'boolean' }
+                                }
+                            }
                         }
                     }
                 }
@@ -255,7 +259,6 @@ const authSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    id: { type: 'string' },
                                     username: { type: 'string' }
                                 }
                             }
@@ -305,8 +308,9 @@ const authSchema = {
     verify_login2FA: {
         body: {
             type: 'object',
-            required: ['token'],
+            required: ['userId', 'token'],
             properties: {
+                userId: { type: 'string' },
                 token: { type: 'string', minLength: 6, maxLength: 6 }
             },
             additionalProperties: false
@@ -323,11 +327,10 @@ const authSchema = {
                             user: { 
                                 type: 'object', 
                                 properties: {
-                                    id: { type: 'string' },
-                                    username: { type: 'string' }
+                                    username: { type: 'string' },
+                                    token: { type: 'string' }
                                 }
                             },
-                            token: { type: 'string' }
                         }
                     }
                 }
@@ -384,10 +387,13 @@ const authSchema = {
                     success: { type: 'boolean' },
                     message: { type: 'string' },
                     data: {
-                        user: {
-                            type: 'object',
-                            properties: {
-                                id: { type: 'string' }
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
                             }
                         }
                     }
