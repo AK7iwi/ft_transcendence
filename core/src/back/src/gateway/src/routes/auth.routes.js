@@ -3,8 +3,7 @@ const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
 
 module.exports = async function (fastify, opts) {
-    // Auth routes
-
+    /////////////////////// Auth routes ///////////////////////
     fastify.post('/register', {
         schema: authSchema.register,
         preHandler: [SanitizeService.sanitize],
@@ -31,8 +30,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-    // 2FA routes
-
+    /////////////////////// 2FA routes ///////////////////////
     fastify.post('/2fa/setup', {
         schema: authSchema.setup2FA,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],   

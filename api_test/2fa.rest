@@ -25,7 +25,7 @@ Content-Type: application/json
 ### Setup 2FA (requires JWT token)
 POST https://localhost:3000/auth/2fa/setup
 Content-Type: application/json
-Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlcjJmYSIsImlhdCI6MTc1NTE4NTM4MiwiZXhwIjoxNzU1MTg4OTgyfQ.Z7p-r3lq-WenZapVvSHAtwJt6MdQTWzIxPujL_9fLz8
 
 {}
 

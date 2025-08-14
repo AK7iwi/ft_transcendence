@@ -3,8 +3,7 @@ const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
 
 module.exports = async function (fastify, opts) {
-
-    fastify.post('/message', {
+    fastify.post('/send-message', {
         schema: chatSchema.sendMessage,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
@@ -21,7 +20,7 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-    fastify.get('/messages/:userId', {
+    fastify.get('/get-messages/:userId', {
         schema: chatSchema.getMessages,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {

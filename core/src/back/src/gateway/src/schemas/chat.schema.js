@@ -21,21 +21,43 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' },
+                                    message: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             400: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -43,10 +65,14 @@ const chatSchema = {
     getMessages: {
         params: {
             type: 'object',
+            required: ['userId'],
             properties: {
-                userId: { type: 'integer', minimum: 1 }
+                userId: {
+                    type: 'string', 
+                    minimum: 1
+                }
             },
-            required: ['userId']
+            additionalProperties: false
         },
         response: {
             200: {
@@ -74,14 +100,24 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }

@@ -243,7 +243,11 @@ const authSchema = {
             type: 'object',
             required: ['token'],
             properties: {
-                token: { type: 'string', minLength: 6, maxLength: 6 }
+                token: { 
+                    type: 'string',
+                    minLength: 6,
+                    maxLength: 6 
+                }
             },
             additionalProperties: false
         },
@@ -310,8 +314,15 @@ const authSchema = {
             type: 'object',
             required: ['userId', 'token'],
             properties: {
-                userId: { type: 'string' },
-                token: { type: 'string', minLength: 6, maxLength: 6 }
+                userId: {
+                    type: 'string',
+                    minLength: 1
+                },
+                token: {
+                    type: 'string',
+                    minLength: 6,
+                    maxLength: 6
+                }
             },
             additionalProperties: false
         },

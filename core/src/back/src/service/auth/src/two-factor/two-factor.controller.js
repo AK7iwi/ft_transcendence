@@ -43,7 +43,7 @@ class TwoFactorController {
         });
     }
 
-    //need to send userId in the body (from the login route)
+    //need to send userId in the body or params(from the login route)
     async verify_login2FA(request, reply) {
         const { userId, token } = request.body;
 

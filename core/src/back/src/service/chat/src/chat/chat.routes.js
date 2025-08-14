@@ -2,7 +2,6 @@ const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 const ChatController = require('./chat.controller');
 
 module.exports = async function (fastify, opts) {
-    // Send message
     fastify.post('/message', {
         preHandler: [JWTAuthentication.verifyJWTToken],
         handler: ChatController.sendMessage
