@@ -1,7 +1,6 @@
 const { AppError } = require('./errors');
 
 class ErrorHandler {
-
     static getUserFriendlyMessage(error, fieldPath) {
         const field = fieldPath.charAt(0).toUpperCase() + fieldPath.slice(1);
         const limit = error.params.limit;
@@ -71,7 +70,7 @@ class ErrorHandler {
     }
 
     static createFormattedErrorResponse(error, path) {
-        return {
+        const response = {
             success: false,
             statusCode: error.statusCode,
             errorCode: error.errorCode,
@@ -80,14 +79,18 @@ class ErrorHandler {
             details: error.details || null,
             path: path
         };
+
+        return response;
     }
 
     static handleDefaultError() {
-        return {
+        const errorResponse = {
             statusCode: 500,
             errorCode: 'INTERNAL_ERROR',
             message: 'Internal server error'
         };
+
+        return errorResponse;
     }
 
     static handleValidationError(error, request) {
@@ -97,7 +100,6 @@ class ErrorHandler {
         const message = ErrorHandler.getUserFriendlyMessage(validationError, fieldPath);
         const value = fieldPath.split('/').reduce((obj, key) => obj?.[key], request.body);
 
-        //test return instead of errorResponse
         const errorResponse = {
             statusCode: 400,
             errorCode: errorCode,
@@ -112,7 +114,6 @@ class ErrorHandler {
     }
     
     static handle(error, request, reply) {
-        
         console.log('=== ERROR HANDLER CALLED ===');
         console.log('Error:', error);
         console.log('Error type:', typeof error);

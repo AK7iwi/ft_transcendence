@@ -40,9 +40,9 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -52,9 +52,9 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -100,9 +100,9 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -112,9 +112,9 @@ const chatSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }

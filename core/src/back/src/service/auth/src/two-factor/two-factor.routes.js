@@ -4,25 +4,25 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const TwoFactorController = require('./two-factor.controller');
 
 module.exports = async function (fastify, opts) {
-    fastify.post('/2fa/setup', {
+    fastify.post('/setup', {
         schema: twoFactorSchema.setup2FA,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: TwoFactorController.setup2FA
     });
 
-    fastify.post('/2fa/verify-setup', {
+    fastify.post('/verify-setup', {
         schema: twoFactorSchema.verify_setup2FA, 
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: TwoFactorController.verify_setup2FA
     });
 
-    fastify.post('/2fa/verify-login', {
+    fastify.post('/verify-login', {
         schema: twoFactorSchema.verify_login2FA,
         preHandler: [SanitizeService.sanitize],
         handler: TwoFactorController.verify_login2FA
     });
 
-    fastify.post('/2fa/disable', {
+    fastify.post('/disable', {
         schema: twoFactorSchema.disable2FA,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: TwoFactorController.disable2FA

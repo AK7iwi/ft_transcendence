@@ -19,7 +19,7 @@ initializeDatabase();
 
 // Register routes
 app.register(authRoutes, { prefix: '/auth' });
-app.register(twoFactorRoutes, { prefix: '/auth' }); //add /2fa
+app.register(twoFactorRoutes, { prefix: '/auth/2fa' });
 app.register(internalRoutes, { prefix: '/auth/internal' });
 
 // Test endpoint

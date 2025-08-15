@@ -8,7 +8,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             const { data, status } = await fastify.serviceClient.post(
-                `${process.env.CHAT_SERVICE_URL}/message`,
+                `${process.env.CHAT_SERVICE_URL}/send-message`,
                 request.body,
                 {
                     headers: {
@@ -25,7 +25,7 @@ module.exports = async function (fastify, opts) {
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
             const { data, status } = await fastify.serviceClient.get(
-                `${process.env.CHAT_SERVICE_URL}/messages/${request.params.userId}`,
+                `${process.env.CHAT_SERVICE_URL}/get-messages/${request.params.userId}`,
                 {
                     headers: {
                         'Authorization': request.headers.authorization

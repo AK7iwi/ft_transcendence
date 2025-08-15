@@ -43,8 +43,8 @@ const authSchema = {
                 properties: {
                     success: { type: 'boolean' },
                     statusCode: { type: 'number' },
-                    message: { type: 'string' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -55,8 +55,8 @@ const authSchema = {
                 properties: {
                     success: { type: 'boolean' },
                     statusCode: { type: 'number' },
-                    message: { type: 'string' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -67,8 +67,8 @@ const authSchema = {
                 properties: {
                     success: { type: 'boolean' },
                     statusCode: { type: 'number' },
-                    message: { type: 'string' }, 
                     errorCode: { type: 'string' },
+                    message: { type: 'string' }, 
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -139,9 +139,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -151,9 +151,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -163,9 +163,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -204,9 +204,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -216,9 +216,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -228,9 +228,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -274,9 +274,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -286,9 +286,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -298,9 +298,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -350,9 +350,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -362,9 +362,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -374,9 +374,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -414,9 +414,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -426,9 +426,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
@@ -438,9 +438,9 @@ const authSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' },
                     statusCode: { type: 'number' },
                     errorCode: { type: 'string' },
+                    message: { type: 'string' },
                     timestamp: { type: 'string' },
                     details: {},
                     path: { type: 'string' }
