@@ -2,7 +2,6 @@ const db = require('./connection');
 
 class DbChat {
     static async createTable() {
-        // Create users table
         const usersStmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
@@ -15,7 +14,6 @@ class DbChat {
         `);
         usersStmt.run();
 
-        // Create messages table
         const messagesStmt = db.prepare(`
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

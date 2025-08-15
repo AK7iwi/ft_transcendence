@@ -85,12 +85,10 @@ const chatSchema = {
                         items: {
                             type: 'object',
                             properties: {
-                                id: { type: 'integer' },
-                                sender_id: { type: 'integer' },
-                                receiver_id: { type: 'integer' },
+                                sender_username: { type: 'string' },
+                                receiver_username: { type: 'string' },
                                 content: { type: 'string' },
-                                timestamp: { type: 'string' },
-                                sender_username: { type: 'string' }
+                                timestamp: { type: 'string' }
                             }
                         }
                     }
