@@ -6,6 +6,7 @@ const DbUser = require('../database/db.user');
 class AvatarService {
     static async uploadAvatar(file, userId, serviceClient) {
         try {
+            //handle by the schema 
             if (!file || !file.filename) {
                 throw new Error('No file uploaded');
             }
@@ -46,7 +47,7 @@ class AvatarService {
                 throw new Error('User not found or avatar unchanged');
             }
 
-            // Get user info for notifications
+            // Get user info for notifications (useless)
             const user = await DbUser.getUser(userId);
             if (!user) {
                 throw new Error('User not found');
@@ -55,21 +56,18 @@ class AvatarService {
             // Notify friend service to update avatar
             await serviceClient.put(`${process.env.FRIEND_SERVICE_URL}/internal/updateAvatar`, {
                 userId: userId,
-                username: user.username,
                 avatarPath: relativePath
             });
 
             // Notify chat service to update avatar
             await serviceClient.put(`${process.env.CHAT_SERVICE_URL}/internal/updateAvatar`, {
                 userId: userId,
-                username: user.username,
                 avatarPath: relativePath
             });
 
             // Notify tournament service to update avatar
             await serviceClient.put(`${process.env.TOURNAMENT_SERVICE_URL}/internal/updateAvatar`, {
                 userId: userId,
-                username: user.username,
                 avatarPath: relativePath
             });
 

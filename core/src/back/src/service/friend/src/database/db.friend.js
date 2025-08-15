@@ -127,7 +127,7 @@ class DbFriend {
         return stmt.run(newUsername, currentUsername);
     }
 
-    static async updateAvatar(userId, username, avatarPath) {
+    static async updateAvatar(userId, avatarPath) {
         const stmt = db.prepare(`
             UPDATE users 
             SET avatar = ?,

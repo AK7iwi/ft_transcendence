@@ -83,7 +83,6 @@ class DbAuth {
     }
 
     /////////////////////// INTERNAL ROUTES /////////////////////
-
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
             UPDATE user_profiles

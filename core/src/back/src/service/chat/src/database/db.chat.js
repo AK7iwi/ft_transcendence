@@ -35,8 +35,7 @@ class DbChat {
             INSERT INTO messages (sender_id, receiver_id, content)
             VALUES (?, ?, ?)
         `);
-        const result = stmt.run(senderId, receiverId, content);
-        return result.lastInsertRowid;
+        return stmt.run(senderId, receiverId, content);
     }
 
     static async getMessages(senderId, receiverId) {
@@ -57,7 +56,7 @@ class DbChat {
         return stmt.all(senderId, receiverId, receiverId, senderId);
     }
 
-    // Internal routes
+    /////////////////////// INTERNAL ROUTES /////////////////////
     static async createUser(userId, username) {
         const stmt = db.prepare(`
             INSERT INTO users (user_id, username) 
@@ -66,7 +65,6 @@ class DbChat {
         return stmt.run(userId, username);
     }
 
-    // Internal method to update username
     static async updateUsername(currentUsername, newUsername) {
         const stmt = db.prepare(`
             UPDATE users 
@@ -77,8 +75,7 @@ class DbChat {
         return stmt.run(newUsername, currentUsername);
     }
 
-    // Internal method to update avatar
-    static async updateAvatar(userId, username, avatarPath) {
+    static async updateAvatar(userId, avatarPath) {
         const stmt = db.prepare(`
             UPDATE users 
             SET avatar = ?,

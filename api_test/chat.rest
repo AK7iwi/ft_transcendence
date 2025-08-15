@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 
 ### Send message from user1 to user2
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN_HERE
 
@@ -46,7 +46,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 }
 
 ### Send message from user2 to user1
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 
@@ -56,7 +56,7 @@ Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 }
 
 ### Send another message from user1 to user2
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN_HERE
 
@@ -66,15 +66,15 @@ Authorization: Bearer YOUR_TOKEN_HERE
 }
 
 ### Get messages between user1 and user2 (as user1)
-GET https://localhost:3000/chat/messages/2
+GET https://localhost:3000/chat/get-messages/2
 Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get messages between user1 and user2 (as user2)
-GET https://localhost:3000/chat/messages/1
+GET https://localhost:3000/chat/get-messages/1
 Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 
 ### Send message with empty content (should fail)
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN_HERE
 
@@ -84,7 +84,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 }
 
 ### Send message without content (should fail)
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN_HERE
 
@@ -93,7 +93,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 }
 
 ### Send message without receiverId (should fail)
-POST https://localhost:3000/chat/message
+POST https://localhost:3000/chat/send-message
 Content-Type: application/json
 Authorization: Bearer YOUR_TOKEN_HERE
 
@@ -102,5 +102,5 @@ Authorization: Bearer YOUR_TOKEN_HERE
 }
 
 ### Get messages with invalid user ID (should fail)
-GET https://localhost:3000/chat/messages/999
+GET https://localhost:3000/chat/get-messages/999
 Authorization: Bearer YOUR_TOKEN_HERE
