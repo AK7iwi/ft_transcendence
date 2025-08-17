@@ -252,7 +252,7 @@ const authSchema = {
             additionalProperties: false
         },
         response: {
-            200: {
+            201: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },

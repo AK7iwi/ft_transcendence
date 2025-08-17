@@ -54,6 +54,15 @@ class DbChat {
         return stmt.all(senderId, receiverId, receiverId, senderId);
     }
 
+    static async getUserById(userId) {
+        const stmt = db.prepare(`
+            SELECT user_id, username
+            FROM users
+            WHERE user_id = ?
+        `);
+        return stmt.get(userId);
+    }
+
     /////////////////////// INTERNAL ROUTES /////////////////////
     static async createUser(userId, username) {
         const stmt = db.prepare(`

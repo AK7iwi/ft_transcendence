@@ -32,7 +32,7 @@ class TwoFactorController {
         await TwoFactorService.verify2FAToken(secret, token);
         await TwoFactorService.enable2FA(userId, request.server.serviceClient);
 
-        return reply.code(200).send({
+        return reply.code(201).send({
             success: true,
             message: '2FA verification successful',
             data: {

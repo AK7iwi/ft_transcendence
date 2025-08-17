@@ -17,7 +17,7 @@ const chatSchema = {
             additionalProperties: false
         },
         response: {
-            200: {
+            201: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
@@ -81,14 +81,16 @@ const chatSchema = {
                     success: { type: 'boolean' },
                     message: { type: 'string' },
                     data: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                sender_username: { type: 'string' },
-                                receiver_username: { type: 'string' },
-                                content: { type: 'string' },
-                                timestamp: { type: 'string' }
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    sender_username: { type: 'string' },
+                                    receiver_username: { type: 'string' },
+                                    timestamp: { type: 'string' },
+                                    content: { type: 'string' }
+                                }
                             }
                         }
                     }

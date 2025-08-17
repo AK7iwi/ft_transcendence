@@ -10,6 +10,12 @@ class ChatService {
 
         return messages;
     }
+
+    static async getUserById(userId) {
+        const user = await DbChat.getUserById(userId);
+        
+        return user.username;
+    }
 }
 
 module.exports = ChatService;
