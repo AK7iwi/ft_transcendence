@@ -25,11 +25,17 @@ const chatSchema = {
                     data: {
                         type: 'object',
                         properties: {
-                            user: {
+                            users: {
                                 type: 'object',
                                 properties: {
-                                    username: { type: 'string' },
-                                    message: { type: 'string' }
+                                    sender: { type: 'string' },
+                                    receiver: { type: 'string' }
+                                }
+                            },
+                            message: {
+                                type: 'object',
+                                properties: {
+                                    content: { type: 'string' }
                                 }
                             }
                         }
@@ -83,13 +89,24 @@ const chatSchema = {
                     data: {
                         type: 'object',
                         properties: {
-                            user: {
+                            users: {
                                 type: 'object',
                                 properties: {
-                                    sender_username: { type: 'string' },
-                                    receiver_username: { type: 'string' },
-                                    timestamp: { type: 'string' },
-                                    content: { type: 'string' }
+                                    user1: { type: 'string' },
+                                    user2: { type: 'string' }
+                                }
+                            },
+                            messages: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        id: { type: 'integer' },
+                                        sender: { type: 'string' },
+                                        receiver: { type: 'string' },
+                                        timestamp: { type: 'string' },
+                                        content: { type: 'string' }
+                                    }
                                 }
                             }
                         }

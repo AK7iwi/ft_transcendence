@@ -38,7 +38,7 @@ Content-Type: application/json
 ### Send message from user1 to user2
 POST https://localhost:3000/chat/send-message
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1NTUyODM0NiwiZXhwIjoxNzU1NTMxOTQ2fQ.L7OIPClVJtyzWsqyPZ6gqWSMmCfvnqd2o6GCkHekoGk
 
 {
     "receiverId": 2,
@@ -48,7 +48,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 ### Send message from user2 to user1
 POST https://localhost:3000/chat/send-message
 Content-Type: application/json
-Authorization: Bearer YOUR_SECOND_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJmcmllbmR1c2VyIiwiaWF0IjoxNzU1NTI4MzU3LCJleHAiOjE3NTU1MzE5NTd9.z0UcaxlUS6CId4Y3Uhf6QOOW6ISn2xgt6PxeZbVvQ6Q
 
 {
     "receiverId": 1,
@@ -58,7 +58,7 @@ Authorization: Bearer YOUR_SECOND_TOKEN_HERE
 ### Send another message from user1 to user2
 POST https://localhost:3000/chat/send-message
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1NTUyODM0NiwiZXhwIjoxNzU1NTMxOTQ2fQ.L7OIPClVJtyzWsqyPZ6gqWSMmCfvnqd2o6GCkHekoGk
 
 {
     "receiverId": 2,
@@ -67,7 +67,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get messages between user1 and user2 (as user1)
 GET https://localhost:3000/chat/get-messages/2
-Authorization: Bearer YOUR_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImlhdCI6MTc1NTUyODM0NiwiZXhwIjoxNzU1NTMxOTQ2fQ.L7OIPClVJtyzWsqyPZ6gqWSMmCfvnqd2o6GCkHekoGk
 
 ### Get messages between user1 and user2 (as user2)
 GET https://localhost:3000/chat/get-messages/1

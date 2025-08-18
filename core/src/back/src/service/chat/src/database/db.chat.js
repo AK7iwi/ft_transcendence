@@ -40,13 +40,13 @@ class DbChat {
         const stmt = db.prepare(`
             SELECT
                 m.id,
-                m.sender_id,
-                m.receiver_id,
-                m.content,
                 m.timestamp,
-                u.username AS sender_username
+                m.content,
+                sender.username AS sender,
+                receiver.username AS receiver
             FROM messages m
-            JOIN users u ON m.sender_id = u.id
+            JOIN users sender ON m.sender_id = sender.id
+            JOIN users receiver ON m.receiver_id = receiver.id
             WHERE (m.sender_id = ? AND m.receiver_id = ?)
                 OR (m.sender_id = ? AND m.receiver_id = ?)
             ORDER BY m.timestamp ASC

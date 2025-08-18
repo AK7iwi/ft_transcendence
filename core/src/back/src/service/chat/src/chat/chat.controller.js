@@ -6,43 +6,41 @@ class ChatController {
         const senderId = request.user.id;
         const senderUsername = request.user.username;
 
+        const receiverUsername = await ChatService.getUserById(receiverId);
         await ChatService.sendMessage(senderId, receiverId, content);
 
-        //201??
         return reply.code(201).send({
             success: true,
             message: 'Message sent successfully',
             data: {
-                user: {
-                    username: senderUsername,
-                    message: content
+                users: {
+                    sender: senderUsername,
+                    receiver: receiverUsername
+                },
+                message: {
+                    content: content
                 }
             }
         });
     }
 
     async getMessages(request, reply) {
-        const senderId = request.user.id;
-        const senderUsername = request.user.username;
-        const receiverId = parseInt(request.params.userId, 10);
+        const user1Id = request.user.id;
+        const user1Username = request.user.username;
+        const user2Id = parseInt(request.params.userId, 10);
 
-        const receiverUsername = await ChatService.getUserById(receiverId);
-        const messages = await ChatService.getMessages(senderId, receiverId);
-
-        console.log(messages);
-        console.log(messages.timestamp);
-        console.log(messages.content);
+        const user2Username = await ChatService.getUserById(user2Id);
+        const messages = await ChatService.getMessages(user1Id, user2Id);
         
         return reply.code(200).send({
             success: true,
             message: 'Messages retrieved successfully',
             data: {
-                user: {
-                    sender_username: senderUsername,
-                    receiver_username: receiverUsername,
-                    timestamp: messages.timestamp,
-                    content: messages.content
-                }
+                users: {
+                    user1: user1Username,
+                    user2: user2Username
+                },
+                messages:  messages
             }
         });
     }
