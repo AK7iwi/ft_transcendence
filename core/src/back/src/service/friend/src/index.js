@@ -3,10 +3,15 @@ const initializeDatabase = require('./database/schema');
 const fastify = require('fastify');
 const friendRoutes = require('./friend/friend.routes');
 const internalRoutes = require('./internal/internal.routes');
+const ServiceClient = require('./utils/service-client');
 const ErrorHandler = require('./utils/error/error-handler');
 
 // Create Fastify instance
 const app = fastify({ logger: true });
+
+// Create and register service client
+const serviceClient = new ServiceClient(app);
+app.decorate('serviceClient', serviceClient);
 
 // Initialize database
 initializeDatabase();   

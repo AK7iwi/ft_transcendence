@@ -3,7 +3,6 @@ const SanitizeService = require('../security/middleware/sanitize/sanitize.servic
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
 
 module.exports = async function (fastify, opts) {
-    
     fastify.post('/add', {
         schema: friendSchema.addFriend,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
@@ -17,6 +16,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -34,6 +34,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -51,6 +52,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -68,6 +70,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -85,6 +88,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -102,6 +106,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+            
             return reply.code(status).send(data);
         }
     });

@@ -1,42 +1,44 @@
+const friendSchema = require('./friend.schema');
 const JWTAuthentication = require('../security/middleware/jwt/jwt.auth');
+const SanitizeService = require('../security/middleware/sanitize/sanitize.service');
 const FriendController = require('./friend.controller');
 
-async function friendRoutes(fastify, options) {
-    // Add a friend
+module.exports = async function (fastify, opts) {
     fastify.post('/add', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.addFriend,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.addFriend
     });
 
     // Get friends
     fastify.get('/friends', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.getFriends,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.getFriends
     });
 
     // Get blocked users
     fastify.get('/blocked', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.getBlocked,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.getBlockedUsers
     });
 
-    // Block a user
     fastify.post('/block', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.blockUser,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.blockUser
     });
 
-    // Unblock a user
     fastify.post('/unblock', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.unblockUser,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.unblockUser
     });
 
-    // Remove a friend
     fastify.delete('/remove', {
-        preHandler: [JWTAuthentication.verifyJWTToken],
+        schema: friendSchema.removeFriend,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.removeFriend
     });
-}
-
-module.exports = friendRoutes;
+};

@@ -16,6 +16,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+
             return reply.code(status).send(data);
         }
     });
@@ -32,6 +33,7 @@ module.exports = async function (fastify, opts) {
                     }
                 }
             );
+            
             return reply.code(status).send(data);
         }
     });

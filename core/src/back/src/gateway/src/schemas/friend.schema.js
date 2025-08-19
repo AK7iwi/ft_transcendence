@@ -10,7 +10,8 @@ const friendSchema = {
                     maxLength: 20,
                     pattern: '^[a-zA-Z0-9_-]+$'
                 }
-            }
+            },
+            additionalProperties: false
         },
         response: {
             200: {
@@ -24,7 +25,6 @@ const friendSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    user_id: { type: 'number' },
                                     username: { type: 'string' },
                                     avatar: { type: 'string' }
                                 }
@@ -37,26 +37,47 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             404: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
     },
     getFriends: {
+        body: {
+            type: 'object',
+            required: [],
+            properties: {},
+            additionalProperties: false
+        },
         response: {
             200: {
                 type: 'object',
@@ -68,7 +89,6 @@ const friendSchema = {
                         items: {
                             type: 'object',
                             properties: {
-                                user_id: { type: 'number' },
                                 username: { type: 'string' },
                                 avatar: { type: 'string' }
                             }
@@ -80,19 +100,35 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
     },
     getBlocked: {
+        body: {
+            type: 'object',
+            required: [],
+            properties: {},
+            additionalProperties: false
+        },
         response: {
             200: {
                 type: 'object',
@@ -111,14 +147,24 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -139,21 +185,42 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             400: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -174,28 +241,54 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             400: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             404: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
@@ -216,21 +309,42 @@ const friendSchema = {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    message: { type: 'string' },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             400: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             },
             500: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
-                    message: { type: 'string' }
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
                 }
             }
         }
