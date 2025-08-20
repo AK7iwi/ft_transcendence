@@ -2,9 +2,9 @@ const friendSchema = {
     addFriend: {
         body: {
             type: 'object',
-            required: ['username'],
+            required: ['friendUsername'],
             properties: {
-                username: {
+                friendUsername: {
                     type: 'string',
                     minLength: 3,
                     maxLength: 20,

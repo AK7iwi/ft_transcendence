@@ -1,29 +1,41 @@
 const DbFriend = require('../database/db.friend');
+const { NotFoundError, ConflictError } = require('../utils/error/errors');
 
 class FriendService {
-    static async addFriend(userId, username) {
-        const friend = await DbFriend.findUserByUsername(username);
+    static async checkIfFriendExists(userId, username) {
+        const friend = await DbFriend.getUserByUsername(username);
         if (!friend) {
-            throw new Error('User not found');
+            throw new NotFoundError('Friend not found', { 
+                field: 'username',
+                value: friend.username 
+            });
+        }
+        else if (friend.user_id === userId) {
+            throw new ConflictError('Cannot add yourself as a friend', { 
+                field: 'username',
+                value: friend.username 
+            });
         }
 
-        // Check if trying to add self
-        if (friend.user_id === userId) {
-            throw new Error('Cannot add yourself as a friend');
-        }
+        return friend;
+    }
 
-            // Check if friendship already exists
+    static async checkIfFriendshipExists(userId, friend) {
         const exists = await DbFriend.findFriendship(userId, friend.user_id);
         if (exists) {
-            throw new Error('Friend already added');
+            throw new ConflictError('Friend already added', { 
+                field: 'username',
+                value: friend.username
+            });
         }
+    }
 
-        // Add friend
-        await DbFriend.createFriendship(userId, friend.user_id);
-            
-        return {
-            username: username
-        };
+    static async addFriend(userId, friendId) {
+        await DbFriend.createFriendship(userId, friendId);
+    }
+
+    static async removeFriend(userId, friendId) {
+        await DbFriend.removeFriend(userId, friendId);
     }
 
     static async getFriends(userId) {
@@ -32,33 +44,24 @@ class FriendService {
         return friends;
     }
 
+    static async blockUser(userId, blockedId) {
+        await DbFriend.blockUser(userId, blockedId);
+    }
+
+    static async unblockUser(userId, unblockId) {
+        await DbFriend.unblockUser(userId, unblockId);   
+    }
+
     static async getBlockedUsers(userId) {
         const rows = await DbFriend.getBlockedIds(userId);
 
         return rows.map(r => r.blocked_id);
     }
 
-    static async blockUser(userId, blockedId) {
-        await DbFriend.blockUser(userId, blockedId);
-        return { message: 'User blocked successfully' };
-    }
+    static async getUserById(userId) {
+        const user = await DbFriend.getUserById(userId);
 
-    static async unblockUser(userId, unblockId) {
-        const result = await DbFriend.unblockUser(userId, unblockId);
-        if (result.changes === 0) {
-            throw new Error('No blocking relationship found');
-        }
-
-        return { message: 'User unblocked successfully' };
-    }
-
-    static async removeFriend(userId, friendId) {
-        const result = await DbFriend.removeFriend(userId, friendId);
-        if (result.changes === 0) {
-            throw new Error('Friend not found');
-        }
-        
-        return { message: 'Friend removed successfully' };
+        return user.username;
     }
 }
 

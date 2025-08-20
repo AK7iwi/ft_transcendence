@@ -2,10 +2,13 @@ const FriendService = require('./friend.service');
 
 class FriendController {
     async addFriend(request, reply) {
-        const { username } = request.body;
+        const { friendUsername } = request.body;
         const userId = request.user.id;
+        const username = request.user.username;
 
-        await FriendService.addFriend(userId, username);
+        const friend = await FriendService.checkIfFriendExists(userId, friendUsername);
+        await FriendService.checkIfFriendshipExists(userId, friend);
+        await FriendService.addFriend(userId, friend.user_id);
 
         return reply.code(200).send({ 
             success: true, 
@@ -13,6 +16,31 @@ class FriendController {
             data: {
                 user: {
                     username: username
+                },
+                friend: {
+                    username: friend.username
+                }
+            }
+        });
+    }
+
+    async removeFriend(request, reply) {
+        const { friendId } = request.body;
+        const userId = request.user.id;
+        const username = request.user.username;
+
+        const removedUsername = await FriendService.getUserById(friendId);
+        await FriendService.removeFriend(userId, friendId);
+            
+        return reply.code(200).send({
+            success: true,
+            message: 'Friend removed successfully',
+            data: {
+                user: {
+                    username: username
+                },
+                removedFriend: {
+                    username: removedUsername
                 }
             }
         });
@@ -20,66 +48,81 @@ class FriendController {
 
     async getFriends(request, reply) {
         const userId = request.user.id;
+        const username = request.user.username;
+
         const friends = await FriendService.getFriends(userId);
             
         return reply.code(200).send({
             success: true,
             message: 'Friends retrieved successfully',
-            data: friends
+            data: {
+                user: {
+                    username: username
+                },
+                friends: friends
+            }
+        });
+    }
+
+    async blockUser(request, reply) {
+        const { blockedId } = request.body;
+        const userId = request.user.id;
+        const username = request.user.username;
+
+        const blockedUsername = await FriendService.getUserById(blockedId);
+        await FriendService.blockUser(userId, blockedId);
+            
+        return reply.code(200).send({
+            success: true,
+            message: 'User blocked successfully',
+            data: {
+                user: {
+                    username: username
+                },
+                blockedFriend: {
+                    username: blockedUsername
+                }
+            }
+        });
+    }
+
+    async unblockUser(request, reply) {
+        const { unblockId } = request.body;
+        const userId = request.user.id;
+        const username = request.user.username;
+
+        const unblockedUsername = await FriendService.getUserById(unblockId);
+        await FriendService.unblockUser(userId, unblockId);
+            
+        return reply.code(200).send({
+            success: true,
+            message: 'User unblocked successfully',
+            data: {
+                user: {
+                    username: username
+                },
+                unblockedFriend: {
+                    username: unblockedUsername
+                }
+            }
         });
     }
 
     async getBlockedUsers(request, reply) {
         const userId = request.user.id;
-        const blockedIds = await FriendService.getBlockedUsers(userId);
+        const username = request.user.username;
+
+        const blockedFriends = await FriendService.getBlockedUsers(userId);
             
         return reply.code(200).send({
             success: true,
             message: 'Blocked users retrieved successfully',
-            data: blockedIds
-        });
-    }
-
-    async blockUser(request, reply) {
-        const userId = request.user.id;
-        const { blockedId } = request.body;
-
-        if (!blockedId) {
-            return reply.code(400).send({
-                success: false,
-                message: 'blockedId required'
-            });
-        }
-
-        await FriendService.blockUser(userId, blockedId);
-            
-        return reply.code(201).send({
-            success: true,
-            message: 'User blocked successfully'
-        });
-    }
-
-    async unblockUser(request, reply) {
-        const userId = request.user.id;
-        const { unblockId } = request.body;
-
-        await FriendService.unblockUser(userId, unblockId);
-            
-        return reply.code(200).send({
-            success: true,
-            message: 'User unblocked successfully'
-        });
-    }
-
-    async removeFriend(request, reply) {
-        const userId = request.user.id;
-        const { friendId } = request.body;
-
-        await FriendService.removeFriend(userId, friendId);
-            
-        return reply.code(200).send({
-            success: true,
-            message: 'Friend removed successfully'
+            data: {
+                user: {
+                    username: username
+                },
+                blockedFriends: blockedFriends
+            }
         });
     }
 }

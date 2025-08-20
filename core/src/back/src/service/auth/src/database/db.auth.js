@@ -55,6 +55,15 @@ class DbAuth {
         return stmt.run(userId);
     }
 
+    static async get2FASecret(userId) {
+        const stmt = db.prepare(`
+            SELECT two_factor_secret
+            FROM user_profiles
+            WHERE id = ?
+        `);
+        return stmt.get(userId);
+    }
+
     static async getUserByUsername(username) {
         const stmt = db.prepare(`
             SELECT id, username, password, two_factor_enabled
@@ -67,15 +76,6 @@ class DbAuth {
     static async getUserById(userId) {
         const stmt = db.prepare(`
             SELECT id, username, password, two_factor_enabled
-            FROM user_profiles
-            WHERE id = ?
-        `);
-        return stmt.get(userId);
-    }
-
-    static async get2FASecret(userId) {
-        const stmt = db.prepare(`
-            SELECT two_factor_secret
             FROM user_profiles
             WHERE id = ?
         `);

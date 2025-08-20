@@ -21,6 +21,24 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    fastify.delete('/remove', {
+        schema: friendSchema.removeFriend,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: async (request, reply) => {
+            const { data, status } = await fastify.serviceClient.delete(
+                `${process.env.FRIEND_SERVICE_URL}/remove`,
+                request.body,
+                {
+                    headers: {
+                        'Authorization': request.headers.authorization
+                    }
+                }
+            );
+            
+            return reply.code(status).send(data);
+        }
+    });
+
     // Get friends
     fastify.get('/friends', {
         schema: friendSchema.getFriends,
@@ -28,24 +46,6 @@ module.exports = async function (fastify, opts) {
         handler: async (request, reply) => {
             const { data, status } = await fastify.serviceClient.get(
                 `${process.env.FRIEND_SERVICE_URL}/friends`,
-                {
-                    headers: {
-                        'Authorization': request.headers.authorization
-                    }
-                }
-            );
-
-            return reply.code(status).send(data);
-        }
-    });
-
-    // Get blocked users
-    fastify.get('/blocked', {
-        schema: friendSchema.getBlocked,
-        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
-        handler: async (request, reply) => {
-            const { data, status } = await fastify.serviceClient.get(
-                `${process.env.FRIEND_SERVICE_URL}/blocked`,
                 {
                     headers: {
                         'Authorization': request.headers.authorization
@@ -93,22 +93,21 @@ module.exports = async function (fastify, opts) {
         }
     });
 
-    fastify.delete('/remove', {
-        schema: friendSchema.removeFriend,
+    // Get blocked users
+    fastify.get('/blocked', {
+        schema: friendSchema.getBlocked,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: async (request, reply) => {
-            const { data, status } = await fastify.serviceClient.delete(
-                `${process.env.FRIEND_SERVICE_URL}/remove`,
-                request.body,
+            const { data, status } = await fastify.serviceClient.get(
+                `${process.env.FRIEND_SERVICE_URL}/blocked`,
                 {
                     headers: {
                         'Authorization': request.headers.authorization
                     }
                 }
             );
-            
+
             return reply.code(status).send(data);
         }
     });
-
 };

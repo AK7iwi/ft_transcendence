@@ -2,9 +2,9 @@ const friendSchema = {
     addFriend: {
         body: {
             type: 'object',
-            required: ['username'],
+            required: ['friendUsername'],
             properties: {
-                username: {
+                friendUsername: {
                     type: 'string',
                     minLength: 3,
                     maxLength: 20,
@@ -25,8 +25,13 @@ const friendSchema = {
                             user: {
                                 type: 'object',
                                 properties: {
-                                    username: { type: 'string' },
-                                    avatar: { type: 'string' }
+                                    username: { type: 'string' }
+                                }
+                            },
+                            friend: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
                                 }
                             }
                         }
@@ -46,6 +51,18 @@ const friendSchema = {
                 }
             },
             404: {
+                type: 'object',
+                properties: {
+                    success: { type: 'boolean' },
+                    statusCode: { type: 'number' },
+                    errorCode: { type: 'string' },
+                    message: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    details: {},
+                    path: { type: 'string' }
+                }
+            },
+            409: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
@@ -85,12 +102,23 @@ const friendSchema = {
                     success: { type: 'boolean' },
                     message: { type: 'string' },
                     data: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                username: { type: 'string' },
-                                avatar: { type: 'string' }
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            },
+                            friends: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        username: { type: 'string' },
+                                        avatar: { type: 'string' }
+                                    }
+                                }
                             }
                         }
                     }
@@ -136,9 +164,23 @@ const friendSchema = {
                     success: { type: 'boolean' },
                     message: { type: 'string' },
                     data: {
-                        type: 'array',
-                        items: {
-                            type: 'number'
+                        type: 'object',
+                        properties: {
+                            user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            },
+                            blockedFriends: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        username: { type: 'string' }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -181,7 +223,7 @@ const friendSchema = {
             additionalProperties: false
         },
         response: {
-            201: {
+            200: {
                 type: 'object',
                 properties: {
                     success: { type: 'boolean' },
@@ -190,6 +232,12 @@ const friendSchema = {
                         type: 'object',
                         properties: {
                             user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            },
+                            blockedFriend: {
                                 type: 'object',
                                 properties: {
                                     username: { type: 'string' }
@@ -246,6 +294,12 @@ const friendSchema = {
                         type: 'object',
                         properties: {
                             user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            },
+                            unblockedFriend: {
                                 type: 'object',
                                 properties: {
                                     username: { type: 'string' }
@@ -314,6 +368,12 @@ const friendSchema = {
                         type: 'object',
                         properties: {
                             user: {
+                                type: 'object',
+                                properties: {
+                                    username: { type: 'string' }
+                                }
+                            },
+                            removedFriend: {
                                 type: 'object',
                                 properties: {
                                     username: { type: 'string' }

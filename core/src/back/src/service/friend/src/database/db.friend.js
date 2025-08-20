@@ -2,7 +2,6 @@ const db = require('./connection');
 
 class DbFriend {
     static async createTable() {
-        // Create users table
         const createUsersTable = db.prepare(`
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
@@ -45,30 +44,59 @@ class DbFriend {
         createBlocksTable.run();
     }
 
-    static async findUserByUsername(username) {
-        return db.prepare('SELECT user_id FROM users WHERE username = ?').get(username);
-    }
-
-    // Friendship operations
     static async findFriendship(userId, friendId) {
-        return db.prepare(`
-            SELECT 1 FROM friends
+        const stmt = db.prepare(`
+            SELECT 1 
+            FROM friends
             WHERE user_id = ? AND friend_id = ?
-        `).get(userId, friendId);
+        `);
+
+        return stmt.get(userId, friendId);
     }
 
     static async createFriendship(userId, friendId) {
-        return db.prepare(`
+        const stmt = db.prepare(`
             INSERT INTO friends (user_id, friend_id, status)
             VALUES (?, ?, 'accepted')
-        `).run(userId, friendId);
+        `);
+
+        return stmt.run(userId, friendId);
     }
 
     static async deleteFriendship(userId, friendId) {
-        return db.prepare(`
+        const stmt = db.prepare(`
             DELETE FROM friends
             WHERE user_id = ? AND friend_id = ?
-        `).run(userId, friendId);
+        `);
+
+        return stmt.run(userId, friendId);
+    }
+
+    static async blockUser(blockerId, blockedId) {
+        const stmt = db.prepare(`
+            INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) 
+            VALUES (?, ?)
+        `);
+
+        return stmt.run(blockerId, blockedId);
+    }
+
+    static async unblockUser(blockerId, blockedId) {
+        const stmt = db.prepare(`
+            DELETE FROM blocks 
+            WHERE blocker_id = ? AND blocked_id = ?
+        `);
+
+        return stmt.run(blockerId, blockedId);
+    }
+
+    static async removeFriend(userId, friendId) {
+        const stmt = db.prepare(`
+            DELETE FROM friends 
+            WHERE user_id = ? AND friend_id = ?
+        `);
+
+        return stmt.run(userId, friendId);
     }
 
     static async getFriends(userId) {
@@ -83,37 +111,48 @@ class DbFriend {
             JOIN users u ON u.id = f.friend_id
             WHERE f.user_id = ?
         `);
+
         return stmt.all(userId);
     }
 
+    //get the username 
     static async getBlockedIds(blockerId) {
-        return db.prepare('SELECT blocked_id FROM blocks WHERE blocker_id = ?').all(blockerId);
+        const stmt = db.prepare(`
+            SELECT blocked_id 
+            FROM blocks 
+            WHERE blocker_id = ?
+        `);
+
+        return stmt.all(blockerId);
     }
 
-    static async blockUser(blockerId, blockedId) {
-        return db.prepare('INSERT OR IGNORE INTO blocks (blocker_id, blocked_id) VALUES (?, ?)')
-            .run(blockerId, blockedId);
+    static async getUserByUsername(username) {
+        const stmt = db.prepare(`
+            SELECT user_id, username 
+            FROM users 
+            WHERE username = ?
+        `);
+
+        return stmt.get(username);
     }
 
-    static async unblockUser(blockerId, blockedId) {
-        return db.prepare('DELETE FROM blocks WHERE blocker_id = ? AND blocked_id = ?')
-            .run(blockerId, blockedId);
+    static async getUserById(userId) {
+        const stmt = db.prepare(`
+            SELECT username 
+            FROM users 
+            WHERE user_id = ?
+        `);
+
+        return stmt.get(userId);
     }
 
-    static async removeFriend(userId, friendId) {
-        return db.prepare(`
-            DELETE FROM friends 
-            WHERE user_id = ? AND friend_id = ?
-        `).run(userId, friendId);
-    }
-
-    //INTERNAL ROUTES
-    
+    ///////////////////// INTERNAL ROUTES /////////////////////
     static async createUser(userId, username) {
         const stmt = db.prepare(`
             INSERT INTO users (user_id, username) 
             VALUES (?, ?)
         `);
+
         return stmt.run(userId, username);
     }
 
@@ -124,6 +163,7 @@ class DbFriend {
                 updated_at = CURRENT_TIMESTAMP
              WHERE username = ?
         `);
+
         return stmt.run(newUsername, currentUsername);
     }
 
@@ -134,6 +174,7 @@ class DbFriend {
                 updated_at = CURRENT_TIMESTAMP
              WHERE user_id = ?
         `);
+
         return stmt.run(avatarPath, userId);
     }
 }

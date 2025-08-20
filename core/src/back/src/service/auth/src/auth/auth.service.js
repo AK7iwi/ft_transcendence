@@ -8,7 +8,7 @@ class AuthService {
         if (!shouldExist && user) {
             throw new ConflictError('Username already exists', {
                 field: 'username',
-                value: username
+                value: user.username
             });
         }
         else if (shouldExist && !user) {

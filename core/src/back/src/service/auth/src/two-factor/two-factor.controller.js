@@ -47,7 +47,7 @@ class TwoFactorController {
     async verify_login2FA(request, reply) {
         const { userId, token } = request.body;
 
-        // always true but we need to get the user
+        // always true but used to get the user
         const user = await TwoFactorService.checkIf2FAEnabled(userId, true);
         const secret = await TwoFactorService.get2FASecret(userId);
         await TwoFactorService.verify2FAToken(secret, token);

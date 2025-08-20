@@ -10,18 +10,17 @@ module.exports = async function (fastify, opts) {
         handler: FriendController.addFriend
     });
 
+    fastify.delete('/remove', {
+        schema: friendSchema.removeFriend,
+        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
+        handler: FriendController.removeFriend
+    });
+
     // Get friends
     fastify.get('/friends', {
         schema: friendSchema.getFriends,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
         handler: FriendController.getFriends
-    });
-
-    // Get blocked users
-    fastify.get('/blocked', {
-        schema: friendSchema.getBlocked,
-        preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
-        handler: FriendController.getBlockedUsers
     });
 
     fastify.post('/block', {
@@ -36,9 +35,10 @@ module.exports = async function (fastify, opts) {
         handler: FriendController.unblockUser
     });
 
-    fastify.delete('/remove', {
-        schema: friendSchema.removeFriend,
+    // Get blocked users
+    fastify.get('/blocked', {
+        schema: friendSchema.getBlocked,
         preHandler: [JWTAuthentication.verifyJWTToken, SanitizeService.sanitize],
-        handler: FriendController.removeFriend
+        handler: FriendController.getBlockedUsers
     });
 };
