@@ -112,7 +112,7 @@ class FriendController {
         const userId = request.user.id;
         const username = request.user.username;
 
-        const blockedFriends = await FriendService.getBlockedUsers(userId);
+        const blockedUsers = await FriendService.getBlockedUsers(userId);
             
         return reply.code(200).send({
             success: true,
@@ -121,7 +121,7 @@ class FriendController {
                 user: {
                     username: username
                 },
-                blockedFriends: blockedFriends
+                blockedUsers: blockedUsers
             }
         });
     }

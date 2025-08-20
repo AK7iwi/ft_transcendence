@@ -172,7 +172,7 @@ const friendSchema = {
                                     username: { type: 'string' }
                                 }
                             },
-                            blockedFriends: {
+                            blockedUsers: {
                                 type: 'array',
                                 items: {
                                     type: 'object',

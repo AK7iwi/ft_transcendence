@@ -115,12 +115,12 @@ class DbFriend {
         return stmt.all(userId);
     }
 
-    //get the username 
-    static async getBlockedIds(blockerId) {
+    static async getBlockedUsers(blockerId) {
         const stmt = db.prepare(`
-            SELECT blocked_id 
-            FROM blocks 
-            WHERE blocker_id = ?
+            SELECT u.username 
+            FROM blocks b
+            JOIN users u ON u.id = b.blocked_id
+            WHERE b.blocker_id = ?
         `);
 
         return stmt.all(blockerId);

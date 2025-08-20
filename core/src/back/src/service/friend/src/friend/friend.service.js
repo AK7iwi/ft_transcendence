@@ -53,9 +53,9 @@ class FriendService {
     }
 
     static async getBlockedUsers(userId) {
-        const rows = await DbFriend.getBlockedIds(userId);
+        const blockedUsers = await DbFriend.getBlockedUsers(userId);
 
-        return rows.map(r => r.blocked_id);
+        return blockedUsers;
     }
 
     static async getUserById(userId) {
